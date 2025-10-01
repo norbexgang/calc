@@ -187,6 +187,7 @@ public partial class MainForm : Form
         {
             "sin" => Math.Sin(current),
             "cos" => Math.Cos(current),
+            "tan" => Math.Tan(current),
             "sqrt" => current < 0 ? double.NaN : Math.Sqrt(current),
             "fact" => CalculateFactorial(current),
             _ => current
@@ -197,6 +198,7 @@ public partial class MainForm : Form
         {
             "sin" => $"sin({FormatDouble(current)}) =",
             "cos" => $"cos({FormatDouble(current)}) =",
+            "tan" => $"tan({FormatDouble(current)}) =",
             "sqrt" => $"√({FormatDouble(current)}) =",
             "fact" => $"n!({FormatDouble(current)}) =",
             _ => string.Empty
@@ -206,6 +208,33 @@ public partial class MainForm : Form
 
         if (!string.IsNullOrEmpty(operationText))
         {
+            AddToMemory(new MemoryEntry(operationText, FormatDouble(result)));
+        }
+
+        _shouldResetDisplay = true;
+    }
+
+    private void OnPercentClick(object? sender, EventArgs e)
+    {
+        if (!TryGetDisplayValue(out var current))
+        {
+            return;
+        }
+
+        double result;
+
+        if (_pendingValue.HasValue && _pendingOperator is not null)
+        {
+            result = _pendingValue.Value * current / 100d;
+            UpdateDisplayFromDouble(result);
+            UpdateOperationLabel($"{FormatDouble(_pendingValue.Value)} {GetDisplayOperator(_pendingOperator)} {FormatDouble(result)}");
+        }
+        else
+        {
+            result = current / 100d;
+            UpdateDisplayFromDouble(result);
+            var operationText = $"{FormatDouble(current)}% =";
+            UpdateOperationLabel(operationText);
             AddToMemory(new MemoryEntry(operationText, FormatDouble(result)));
         }
 
@@ -398,7 +427,7 @@ public partial class MainForm : Form
         {
             background = clearBackColor;
         }
-        else if (button.Text is "sin" or "cos" or "√" or "n!")
+        else if (button.Text is "sin" or "cos" or "tan" or "√" or "n!" or "%")
         {
             background = functionBackColor;
         }
