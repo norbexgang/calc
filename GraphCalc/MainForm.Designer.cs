@@ -26,7 +26,7 @@ public partial class MainForm
         LayoutPanel = new TableLayoutPanel
         {
             ColumnCount = 4,
-            RowCount = 11,
+            RowCount = 12,
             Dock = DockStyle.Fill,
             Padding = new Padding(8),
             BackColor = Color.FromArgb(245, 245, 245)
@@ -155,33 +155,39 @@ public partial class MainForm
 
         AddButton("sin", OnUnaryOperationClick, 0, 5, tag: "sin");
         AddButton("cos", OnUnaryOperationClick, 1, 5, tag: "cos");
-        AddButton("√", OnUnaryOperationClick, 2, 5, tag: "sqrt");
-        AddButton("n!", OnUnaryOperationClick, 3, 5, tag: "fact");
+        AddButton("tan", OnUnaryOperationClick, 2, 5, tag: "tan");
+        AddButton("√", OnUnaryOperationClick, 3, 5, tag: "sqrt");
 
-        AddButton("CE", OnClearEntryClick, 0, 6);
-        AddButton("C", OnClearAllClick, 1, 6);
-        AddButton("⌫", OnBackspaceClick, 2, 6, tag: "Backspace");
-        AddButton("÷", OnOperatorClick, 3, 6, tag: "/");
+        AddButton("n!", OnUnaryOperationClick, 0, 6, tag: "fact");
+        AddButton("%", OnPercentClick, 1, 6, tag: "%");
+        AddButton("CE", OnClearEntryClick, 2, 6);
+        AddButton("C", OnClearAllClick, 3, 6);
 
-        AddButton("7", OnDigitClick, 0, 7);
-        AddButton("8", OnDigitClick, 1, 7);
-        AddButton("9", OnDigitClick, 2, 7);
-        AddButton("×", OnOperatorClick, 3, 7, tag: "*");
+        var backspaceButton = CreateButton("⌫", OnBackspaceClick, "Backspace");
+        LayoutPanel.Controls.Add(backspaceButton, 0, 7);
+        LayoutPanel.SetColumnSpan(backspaceButton, 3);
+        var divideButton = CreateButton("÷", OnOperatorClick, "/");
+        LayoutPanel.Controls.Add(divideButton, 3, 7);
 
-        AddButton("4", OnDigitClick, 0, 8);
-        AddButton("5", OnDigitClick, 1, 8);
-        AddButton("6", OnDigitClick, 2, 8);
-        AddButton("-", OnOperatorClick, 3, 8);
+        AddButton("7", OnDigitClick, 0, 8);
+        AddButton("8", OnDigitClick, 1, 8);
+        AddButton("9", OnDigitClick, 2, 8);
+        AddButton("×", OnOperatorClick, 3, 8, tag: "*");
 
-        AddButton("1", OnDigitClick, 0, 9);
-        AddButton("2", OnDigitClick, 1, 9);
-        AddButton("3", OnDigitClick, 2, 9);
-        AddButton("+", OnOperatorClick, 3, 9);
+        AddButton("4", OnDigitClick, 0, 9);
+        AddButton("5", OnDigitClick, 1, 9);
+        AddButton("6", OnDigitClick, 2, 9);
+        AddButton("-", OnOperatorClick, 3, 9);
 
-        AddButton("±", OnToggleSignClick, 0, 10);
-        AddButton("0", OnDigitClick, 1, 10);
-        AddButton(",", OnDecimalClick, 2, 10);
-        AddButton("=", OnEqualsClick, 3, 10);
+        AddButton("1", OnDigitClick, 0, 10);
+        AddButton("2", OnDigitClick, 1, 10);
+        AddButton("3", OnDigitClick, 2, 10);
+        AddButton("+", OnOperatorClick, 3, 10);
+
+        AddButton("±", OnToggleSignClick, 0, 11);
+        AddButton("0", OnDigitClick, 1, 11);
+        AddButton(",", OnDecimalClick, 2, 11);
+        AddButton("=", OnEqualsClick, 3, 11);
 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
