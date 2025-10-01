@@ -349,9 +349,9 @@ public partial class MainForm : Form
 
     private void ApplyTheme()
     {
-        var formBackColor = _isDarkMode ? Color.FromArgb(30, 30, 30) : Color.White;
-        var panelBackColor = _isDarkMode ? Color.FromArgb(45, 45, 45) : Color.FromArgb(245, 245, 245);
-        var displayBackColor = _isDarkMode ? Color.FromArgb(30, 30, 30) : Color.White;
+        var formBackColor = _isDarkMode ? Color.FromArgb(24, 24, 24) : Color.White;
+        var panelBackColor = _isDarkMode ? Color.FromArgb(36, 36, 36) : Color.FromArgb(245, 245, 245);
+        var displayBackColor = _isDarkMode ? Color.FromArgb(24, 24, 24) : Color.White;
         var displayForeColor = _isDarkMode ? Color.White : Color.Black;
 
         BackColor = formBackColor;
@@ -362,7 +362,7 @@ public partial class MainForm : Form
 
         HistoryLabel.ForeColor = _isDarkMode ? Color.White : Color.Black;
         HistoryLabel.BackColor = Color.Transparent;
-        HistoryListBox.BackColor = _isDarkMode ? Color.FromArgb(30, 30, 30) : Color.White;
+        HistoryListBox.BackColor = _isDarkMode ? Color.FromArgb(24, 24, 24) : Color.White;
         HistoryListBox.ForeColor = _isDarkMode ? Color.White : Color.Black;
         HistoryListBox.BorderStyle = BorderStyle.FixedSingle;
 
@@ -380,12 +380,12 @@ public partial class MainForm : Form
 
     private void ApplyButtonTheme(Button button)
     {
-        var generalBackColor = _isDarkMode ? Color.FromArgb(60, 60, 60) : Color.WhiteSmoke;
-        var operatorBackColor = _isDarkMode ? Color.FromArgb(70, 90, 140) : Color.FromArgb(225, 230, 246);
-        var clearBackColor = _isDarkMode ? Color.FromArgb(140, 110, 45) : Color.FromArgb(255, 236, 179);
-        var functionBackColor = _isDarkMode ? Color.FromArgb(60, 100, 70) : Color.FromArgb(232, 245, 233);
-        var equalsBackColor = _isDarkMode ? Color.FromArgb(56, 142, 60) : Color.FromArgb(76, 175, 80);
-        var memoryBackColor = _isDarkMode ? Color.FromArgb(200, 50, 50) : Color.FromArgb(255, 138, 128);
+        var generalBackColor = _isDarkMode ? Color.FromArgb(48, 48, 48) : Color.WhiteSmoke;
+        var operatorBackColor = _isDarkMode ? Color.FromArgb(60, 80, 130) : Color.FromArgb(225, 230, 246);
+        var clearBackColor = _isDarkMode ? Color.FromArgb(120, 90, 35) : Color.FromArgb(255, 236, 179);
+        var functionBackColor = _isDarkMode ? Color.FromArgb(50, 90, 60) : Color.FromArgb(232, 245, 233);
+        var equalsBackColor = _isDarkMode ? Color.FromArgb(46, 132, 50) : Color.FromArgb(76, 175, 80);
+        var memoryBackColor = _isDarkMode ? Color.FromArgb(180, 40, 40) : Color.FromArgb(255, 138, 128);
 
         var background = generalBackColor;
         var foreColor = _isDarkMode ? Color.White : Color.Black;
@@ -417,7 +417,7 @@ public partial class MainForm : Form
         button.BackColor = background;
         button.ForeColor = foreColor;
 
-        button.FlatAppearance.BorderColor = _isDarkMode ? Color.FromArgb(80, 80, 80) : Color.LightGray;
+        button.FlatAppearance.BorderColor = _isDarkMode ? Color.FromArgb(70, 70, 70) : Color.LightGray;
     }
 
 
