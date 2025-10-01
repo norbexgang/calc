@@ -14,6 +14,7 @@ public partial class MainForm
 
     private TextBox DisplayTextBox = null!;
     private TableLayoutPanel LayoutPanel = null!;
+    private CheckBox ThemeToggleCheckBox = null!;
 
     private void InitializeComponent()
     {
@@ -22,7 +23,7 @@ public partial class MainForm
         LayoutPanel = new TableLayoutPanel
         {
             ColumnCount = 4,
-            RowCount = 7,
+            RowCount = 8,
             Dock = DockStyle.Fill,
             Padding = new Padding(8),
             BackColor = Color.FromArgb(245, 245, 245)
@@ -33,11 +34,24 @@ public partial class MainForm
             LayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
         }
 
+        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 22F));
-        for (var i = 1; i < LayoutPanel.RowCount; i++)
+        for (var i = 2; i < LayoutPanel.RowCount; i++)
         {
             LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 13F));
         }
+
+        ThemeToggleCheckBox = new CheckBox
+        {
+            Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            AutoSize = true,
+            Margin = new Padding(0, 0, 4, 4),
+            Text = "Sötét mód",
+            UseVisualStyleBackColor = false
+        };
+        ThemeToggleCheckBox.CheckedChanged += OnThemeToggleCheckedChanged;
+        LayoutPanel.Controls.Add(ThemeToggleCheckBox, 0, 0);
+        LayoutPanel.SetColumnSpan(ThemeToggleCheckBox, 4);
 
         DisplayTextBox = new TextBox
         {
@@ -50,38 +64,38 @@ public partial class MainForm
             Margin = new Padding(0, 0, 0, 8),
             TabStop = false
         };
-        LayoutPanel.Controls.Add(DisplayTextBox, 0, 0);
+        LayoutPanel.Controls.Add(DisplayTextBox, 0, 1);
         LayoutPanel.SetColumnSpan(DisplayTextBox, 4);
 
-        AddButton("sin", OnUnaryOperationClick, 0, 1, tag: "sin");
-        AddButton("cos", OnUnaryOperationClick, 1, 1, tag: "cos");
-        AddButton("√", OnUnaryOperationClick, 2, 1, tag: "sqrt");
-        AddButton("n!", OnUnaryOperationClick, 3, 1, tag: "fact");
+        AddButton("sin", OnUnaryOperationClick, 0, 2, tag: "sin");
+        AddButton("cos", OnUnaryOperationClick, 1, 2, tag: "cos");
+        AddButton("√", OnUnaryOperationClick, 2, 2, tag: "sqrt");
+        AddButton("n!", OnUnaryOperationClick, 3, 2, tag: "fact");
 
-        AddButton("CE", OnClearEntryClick, 0, 2);
-        AddButton("C", OnClearAllClick, 1, 2);
-        AddButton("⌫", OnBackspaceClick, 2, 2, tag: "Backspace");
-        AddButton("÷", OnOperatorClick, 3, 2, tag: "/");
+        AddButton("CE", OnClearEntryClick, 0, 3);
+        AddButton("C", OnClearAllClick, 1, 3);
+        AddButton("⌫", OnBackspaceClick, 2, 3, tag: "Backspace");
+        AddButton("÷", OnOperatorClick, 3, 3, tag: "/");
 
-        AddButton("7", OnDigitClick, 0, 3);
-        AddButton("8", OnDigitClick, 1, 3);
-        AddButton("9", OnDigitClick, 2, 3);
-        AddButton("×", OnOperatorClick, 3, 3, tag: "*");
+        AddButton("7", OnDigitClick, 0, 4);
+        AddButton("8", OnDigitClick, 1, 4);
+        AddButton("9", OnDigitClick, 2, 4);
+        AddButton("×", OnOperatorClick, 3, 4, tag: "*");
 
-        AddButton("4", OnDigitClick, 0, 4);
-        AddButton("5", OnDigitClick, 1, 4);
-        AddButton("6", OnDigitClick, 2, 4);
-        AddButton("-", OnOperatorClick, 3, 4);
+        AddButton("4", OnDigitClick, 0, 5);
+        AddButton("5", OnDigitClick, 1, 5);
+        AddButton("6", OnDigitClick, 2, 5);
+        AddButton("-", OnOperatorClick, 3, 5);
 
-        AddButton("1", OnDigitClick, 0, 5);
-        AddButton("2", OnDigitClick, 1, 5);
-        AddButton("3", OnDigitClick, 2, 5);
-        AddButton("+", OnOperatorClick, 3, 5);
+        AddButton("1", OnDigitClick, 0, 6);
+        AddButton("2", OnDigitClick, 1, 6);
+        AddButton("3", OnDigitClick, 2, 6);
+        AddButton("+", OnOperatorClick, 3, 6);
 
-        AddButton("±", OnToggleSignClick, 0, 6);
-        AddButton("0", OnDigitClick, 1, 6);
-        AddButton(",", OnDecimalClick, 2, 6);
-        AddButton("=", OnEqualsClick, 3, 6);
+        AddButton("±", OnToggleSignClick, 0, 7);
+        AddButton("0", OnDigitClick, 1, 7);
+        AddButton(",", OnDecimalClick, 2, 7);
+        AddButton("=", OnEqualsClick, 3, 7);
 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
@@ -110,33 +124,15 @@ public partial class MainForm
             Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point),
             Margin = new Padding(4),
             Tag = tag ?? text,
-            BackColor = Color.WhiteSmoke,
             FlatStyle = FlatStyle.Flat
         };
 
-        button.FlatAppearance.BorderColor = Color.LightGray;
         button.FlatAppearance.BorderSize = 0;
         button.Click += handler;
         button.Resize += OnButtonResize;
         ApplyRoundedCorners(button);
 
-        if (text is "÷" or "×" or "-" or "+")
-        {
-            button.BackColor = Color.FromArgb(225, 230, 246);
-        }
-        else if (text is "CE" or "C" or "⌫")
-        {
-            button.BackColor = Color.FromArgb(255, 236, 179);
-        }
-        else if (text is "sin" or "cos" or "√" or "n!")
-        {
-            button.BackColor = Color.FromArgb(232, 245, 233);
-        }
-        else if (text == "=")
-        {
-            button.BackColor = Color.FromArgb(76, 175, 80);
-            button.ForeColor = Color.White;
-        }
+        ApplyButtonTheme(button);
 
         return button;
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
 
@@ -11,12 +12,14 @@ public partial class MainForm : Form
     private double? _pendingValue;
     private string? _pendingOperator;
     private bool _shouldResetDisplay;
+    private bool _isDarkMode;
 
     // Magyar komment: az ablak inicializálása és a kijelző alaphelyzetbe állítása
     public MainForm()
     {
         InitializeComponent();
         UpdateDisplay("0");
+        ApplyTheme();
     }
 
     private void OnDigitClick(object? sender, EventArgs e)
@@ -213,7 +216,76 @@ public partial class MainForm : Form
     }
 
 
- 
+    private void OnThemeToggleCheckedChanged(object? sender, EventArgs e)
+    {
+        _isDarkMode = ThemeToggleCheckBox.Checked;
+        ApplyTheme();
+    }
+
+    private void ApplyTheme()
+    {
+        var formBackColor = _isDarkMode ? Color.FromArgb(30, 30, 30) : Color.White;
+        var panelBackColor = _isDarkMode ? Color.FromArgb(45, 45, 45) : Color.FromArgb(245, 245, 245);
+        var displayBackColor = _isDarkMode ? Color.FromArgb(30, 30, 30) : Color.White;
+        var displayForeColor = _isDarkMode ? Color.White : Color.Black;
+
+        BackColor = formBackColor;
+        LayoutPanel.BackColor = panelBackColor;
+        DisplayTextBox.BackColor = displayBackColor;
+        DisplayTextBox.ForeColor = displayForeColor;
+
+        ThemeToggleCheckBox.ForeColor = _isDarkMode ? Color.White : Color.Black;
+        ThemeToggleCheckBox.BackColor = Color.Transparent;
+
+        foreach (Control control in LayoutPanel.Controls)
+        {
+            if (control is Button button)
+            {
+                ApplyButtonTheme(button);
+            }
+        }
+    }
+
+    private void ApplyButtonTheme(Button button)
+    {
+        var generalBackColor = _isDarkMode ? Color.FromArgb(60, 60, 60) : Color.WhiteSmoke;
+        var operatorBackColor = _isDarkMode ? Color.FromArgb(70, 90, 140) : Color.FromArgb(225, 230, 246);
+        var clearBackColor = _isDarkMode ? Color.FromArgb(140, 110, 45) : Color.FromArgb(255, 236, 179);
+        var functionBackColor = _isDarkMode ? Color.FromArgb(60, 100, 70) : Color.FromArgb(232, 245, 233);
+        var equalsBackColor = _isDarkMode ? Color.FromArgb(56, 142, 60) : Color.FromArgb(76, 175, 80);
+
+        var background = generalBackColor;
+
+        if (button.Text is "÷" or "×" or "-" or "+")
+        {
+            background = operatorBackColor;
+        }
+        else if (button.Text is "CE" or "C" or "⌫")
+        {
+            background = clearBackColor;
+        }
+        else if (button.Text is "sin" or "cos" or "√" or "n!")
+        {
+            background = functionBackColor;
+        }
+        else if (button.Text == "=")
+        {
+            background = equalsBackColor;
+        }
+
+        button.BackColor = background;
+        button.ForeColor = _isDarkMode ? Color.White : Color.Black;
+
+        if (button.Text == "=")
+        {
+            button.ForeColor = Color.White;
+        }
+
+        button.FlatAppearance.BorderColor = _isDarkMode ? Color.FromArgb(80, 80, 80) : Color.LightGray;
+    }
+
+
+
     private static double Evaluate(double left, double right, string op) => op switch
     {
         "+" => left + right,
