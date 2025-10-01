@@ -152,6 +152,7 @@ public partial class MainForm : Form
         }
     }
 
+ codex/add-graphical-calculator-in-c#-v29j3l
     private void OnUnaryOperationClick(object? sender, EventArgs e)
     {
         // Magyar komment: egylépéses műveleteket (szinusz, koszinusz, négyzetgyök, faktoriális) számolunk
@@ -212,6 +213,8 @@ public partial class MainForm : Form
         return result;
     }
 
+
+ main
     private static double Evaluate(double left, double right, string op) => op switch
     {
         "+" => left + right,

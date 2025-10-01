@@ -6,7 +6,10 @@ Ez a Windows Forms alapú grafikus számológép net8.0-windows célt használ, 
 - Gombos felület számjegyekkel, alapműveletekkel és kiegészítő funkciókkal (előjelváltás, törlés, visszatörlés).
 - Magyar tizedesvessző kezelés és formázott eredmény megjelenítés.
 - Egyszerű műveletsorok kezelése ideiglenes értékekkel és operátorokkal.
+ codex/add-graphical-calculator-in-c#-v29j3l
 - Beépített szögfüggvények (szinusz, koszinusz), négyzetgyökvonás és faktoriális számítás.
+
+ main
 
 ## Indítás
 A projekt a `GraphCalc/GraphCalc.csproj` fájlban található. A futtatáshoz a .NET 8 Windows Forms környezet szükséges.
