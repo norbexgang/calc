@@ -151,8 +151,7 @@ public partial class MainForm : Form
             UpdateDisplay("-" + DisplayTextBox.Text);
         }
     }
-
- codex/add-graphical-calculator-in-c#-v29j3l
+    
     private void OnUnaryOperationClick(object? sender, EventArgs e)
     {
         // Magyar komment: egylépéses műveleteket (szinusz, koszinusz, négyzetgyök, faktoriális) számolunk
@@ -214,7 +213,7 @@ public partial class MainForm : Form
     }
 
 
- main
+ 
     private static double Evaluate(double left, double right, string op) => op switch
     {
         "+" => left + right,
@@ -230,7 +229,7 @@ public partial class MainForm : Form
     {
         // Magyar komment: a kijelző szövegét számmá alakítjuk a számításokhoz
         var sanitized = DisplayTextBox.Text.Replace(DisplayDecimalSeparator, '.');
-        return double.TryParse(sanitized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+        return double.TryParse((string?)sanitized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
     }
 
     private void UpdateDisplayFromDouble(double value)
