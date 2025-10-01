@@ -385,8 +385,10 @@ public partial class MainForm : Form
         var clearBackColor = _isDarkMode ? Color.FromArgb(140, 110, 45) : Color.FromArgb(255, 236, 179);
         var functionBackColor = _isDarkMode ? Color.FromArgb(60, 100, 70) : Color.FromArgb(232, 245, 233);
         var equalsBackColor = _isDarkMode ? Color.FromArgb(56, 142, 60) : Color.FromArgb(76, 175, 80);
+        var memoryBackColor = _isDarkMode ? Color.FromArgb(200, 50, 50) : Color.FromArgb(255, 138, 128);
 
         var background = generalBackColor;
+        var foreColor = _isDarkMode ? Color.White : Color.Black;
 
         if (button.Text is "÷" or "×" or "-" or "+")
         {
@@ -403,15 +405,17 @@ public partial class MainForm : Form
         else if (button.Text == "=")
         {
             background = equalsBackColor;
+            foreColor = Color.White;
+        }
+
+        if (button.Tag is string tag && tag.StartsWith("memory-", StringComparison.Ordinal))
+        {
+            background = memoryBackColor;
+            foreColor = Color.White;
         }
 
         button.BackColor = background;
-        button.ForeColor = _isDarkMode ? Color.White : Color.Black;
-
-        if (button.Text == "=")
-        {
-            button.ForeColor = Color.White;
-        }
+        button.ForeColor = foreColor;
 
         button.FlatAppearance.BorderColor = _isDarkMode ? Color.FromArgb(80, 80, 80) : Color.LightGray;
     }
