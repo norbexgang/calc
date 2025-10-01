@@ -132,14 +132,23 @@ public partial class MainForm
         memoryButtonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.334F));
         memoryButtonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
-        var memoryAddButton = CreateButton("Memória +", OnMemoryStoreClick, "memory-add");
+        static void ConfigureMemoryButton(Button button)
+        {
+            button.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            button.Margin = new Padding(2);
+        }
+
+        var memoryAddButton = CreateButton("M+", OnMemoryStoreClick, "memory-add");
+        ConfigureMemoryButton(memoryAddButton);
         memoryButtonPanel.Controls.Add(memoryAddButton, 0, 0);
 
-        var memoryShowButton = CreateButton("Memória megj.", OnMemoryRecallClick, "memory-show");
-        memoryButtonPanel.Controls.Add(memoryShowButton, 1, 0);
+        var memoryRemoveButton = CreateButton("M-", OnMemoryDeleteClick, "memory-remove");
+        ConfigureMemoryButton(memoryRemoveButton);
+        memoryButtonPanel.Controls.Add(memoryRemoveButton, 1, 0);
 
-        var memoryDeleteButton = CreateButton("Memória törlés", OnMemoryDeleteClick, "memory-delete");
-        memoryButtonPanel.Controls.Add(memoryDeleteButton, 2, 0);
+        var memoryClearButton = CreateButton("MC", OnMemoryClearClick, "memory-clear");
+        ConfigureMemoryButton(memoryClearButton);
+        memoryButtonPanel.Controls.Add(memoryClearButton, 2, 0);
 
         LayoutPanel.Controls.Add(memoryButtonPanel, 0, 4);
         LayoutPanel.SetColumnSpan(memoryButtonPanel, 4);

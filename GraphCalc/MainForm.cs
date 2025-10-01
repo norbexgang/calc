@@ -283,6 +283,18 @@ public partial class MainForm : Form
         ShowMemoryEntry(_memoryDisplayIndex);
     }
 
+    private void OnMemoryClearClick(object? sender, EventArgs e)
+    {
+        if (_memoryEntries.Count == 0)
+        {
+            return;
+        }
+
+        _memoryEntries.Clear();
+        _memoryDisplayIndex = -1;
+        RefreshMemoryList();
+    }
+
     private void OnHistorySelectedIndexChanged(object? sender, EventArgs e)
     {
         if (HistoryListBox.SelectedIndex >= 0 && HistoryListBox.SelectedIndex < _memoryEntries.Count)
