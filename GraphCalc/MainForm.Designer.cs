@@ -12,9 +12,12 @@ public partial class MainForm
 {
     private const int ButtonCornerRadius = 12;
 
+    private Label OperationLabel = null!;
     private TextBox DisplayTextBox = null!;
     private TableLayoutPanel LayoutPanel = null!;
     private CheckBox ThemeToggleCheckBox = null!;
+    private Label HistoryLabel = null!;
+    private ListBox HistoryListBox = null!;
 
     private void InitializeComponent()
     {
@@ -23,7 +26,7 @@ public partial class MainForm
         LayoutPanel = new TableLayoutPanel
         {
             ColumnCount = 4,
-            RowCount = 8,
+            RowCount = 11,
             Dock = DockStyle.Fill,
             Padding = new Padding(8),
             BackColor = Color.FromArgb(245, 245, 245)
@@ -35,10 +38,13 @@ public partial class MainForm
         }
 
         LayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 22F));
-        for (var i = 2; i < LayoutPanel.RowCount; i++)
+        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 18F));
+        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var i = 5; i < LayoutPanel.RowCount; i++)
         {
-            LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 13F));
+            LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 10.333F));
         }
 
         ThemeToggleCheckBox = new CheckBox
@@ -53,6 +59,27 @@ public partial class MainForm
         LayoutPanel.Controls.Add(ThemeToggleCheckBox, 0, 0);
         LayoutPanel.SetColumnSpan(ThemeToggleCheckBox, 4);
 
+        var displayPanel = new TableLayoutPanel
+        {
+            ColumnCount = 1,
+            RowCount = 2,
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 0, 0, 8),
+            BackColor = Color.Transparent
+        };
+        displayPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        displayPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+        OperationLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point),
+            TextAlign = ContentAlignment.BottomRight,
+            Margin = new Padding(0),
+            AutoSize = false
+        };
+        displayPanel.Controls.Add(OperationLabel, 0, 0);
+
         DisplayTextBox = new TextBox
         {
             Dock = DockStyle.Fill,
@@ -61,45 +88,95 @@ public partial class MainForm
             TextAlign = HorizontalAlignment.Right,
             BorderStyle = BorderStyle.FixedSingle,
             BackColor = Color.White,
-            Margin = new Padding(0, 0, 0, 8),
+            Margin = new Padding(0),
             TabStop = false
         };
-        LayoutPanel.Controls.Add(DisplayTextBox, 0, 1);
-        LayoutPanel.SetColumnSpan(DisplayTextBox, 4);
+        displayPanel.Controls.Add(DisplayTextBox, 0, 1);
 
-        AddButton("sin", OnUnaryOperationClick, 0, 2, tag: "sin");
-        AddButton("cos", OnUnaryOperationClick, 1, 2, tag: "cos");
-        AddButton("√", OnUnaryOperationClick, 2, 2, tag: "sqrt");
-        AddButton("n!", OnUnaryOperationClick, 3, 2, tag: "fact");
+        LayoutPanel.Controls.Add(displayPanel, 0, 1);
+        LayoutPanel.SetColumnSpan(displayPanel, 4);
 
-        AddButton("CE", OnClearEntryClick, 0, 3);
-        AddButton("C", OnClearAllClick, 1, 3);
-        AddButton("⌫", OnBackspaceClick, 2, 3, tag: "Backspace");
-        AddButton("÷", OnOperatorClick, 3, 3, tag: "/");
+        HistoryLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            Text = "Memória",
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point),
+            Margin = new Padding(0, 0, 0, 4),
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        LayoutPanel.Controls.Add(HistoryLabel, 0, 2);
+        LayoutPanel.SetColumnSpan(HistoryLabel, 4);
 
-        AddButton("7", OnDigitClick, 0, 4);
-        AddButton("8", OnDigitClick, 1, 4);
-        AddButton("9", OnDigitClick, 2, 4);
-        AddButton("×", OnOperatorClick, 3, 4, tag: "*");
+        HistoryListBox = new ListBox
+        {
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point),
+            Margin = new Padding(0, 0, 0, 8),
+            IntegralHeight = false,
+            SelectionMode = SelectionMode.One
+        };
+        HistoryListBox.SelectedIndexChanged += OnHistorySelectedIndexChanged;
+        LayoutPanel.Controls.Add(HistoryListBox, 0, 3);
+        LayoutPanel.SetColumnSpan(HistoryListBox, 4);
 
-        AddButton("4", OnDigitClick, 0, 5);
-        AddButton("5", OnDigitClick, 1, 5);
-        AddButton("6", OnDigitClick, 2, 5);
-        AddButton("-", OnOperatorClick, 3, 5);
+        var memoryButtonPanel = new TableLayoutPanel
+        {
+            ColumnCount = 3,
+            RowCount = 1,
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        memoryButtonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F));
+        memoryButtonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F));
+        memoryButtonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.334F));
+        memoryButtonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
-        AddButton("1", OnDigitClick, 0, 6);
-        AddButton("2", OnDigitClick, 1, 6);
-        AddButton("3", OnDigitClick, 2, 6);
-        AddButton("+", OnOperatorClick, 3, 6);
+        var memoryAddButton = CreateButton("Memória +", OnMemoryStoreClick, "memory-add");
+        memoryButtonPanel.Controls.Add(memoryAddButton, 0, 0);
 
-        AddButton("±", OnToggleSignClick, 0, 7);
-        AddButton("0", OnDigitClick, 1, 7);
-        AddButton(",", OnDecimalClick, 2, 7);
-        AddButton("=", OnEqualsClick, 3, 7);
+        var memoryShowButton = CreateButton("Memória megj.", OnMemoryRecallClick, "memory-show");
+        memoryButtonPanel.Controls.Add(memoryShowButton, 1, 0);
+
+        var memoryDeleteButton = CreateButton("Memória törlés", OnMemoryDeleteClick, "memory-delete");
+        memoryButtonPanel.Controls.Add(memoryDeleteButton, 2, 0);
+
+        LayoutPanel.Controls.Add(memoryButtonPanel, 0, 4);
+        LayoutPanel.SetColumnSpan(memoryButtonPanel, 4);
+
+        AddButton("sin", OnUnaryOperationClick, 0, 5, tag: "sin");
+        AddButton("cos", OnUnaryOperationClick, 1, 5, tag: "cos");
+        AddButton("√", OnUnaryOperationClick, 2, 5, tag: "sqrt");
+        AddButton("n!", OnUnaryOperationClick, 3, 5, tag: "fact");
+
+        AddButton("CE", OnClearEntryClick, 0, 6);
+        AddButton("C", OnClearAllClick, 1, 6);
+        AddButton("⌫", OnBackspaceClick, 2, 6, tag: "Backspace");
+        AddButton("÷", OnOperatorClick, 3, 6, tag: "/");
+
+        AddButton("7", OnDigitClick, 0, 7);
+        AddButton("8", OnDigitClick, 1, 7);
+        AddButton("9", OnDigitClick, 2, 7);
+        AddButton("×", OnOperatorClick, 3, 7, tag: "*");
+
+        AddButton("4", OnDigitClick, 0, 8);
+        AddButton("5", OnDigitClick, 1, 8);
+        AddButton("6", OnDigitClick, 2, 8);
+        AddButton("-", OnOperatorClick, 3, 8);
+
+        AddButton("1", OnDigitClick, 0, 9);
+        AddButton("2", OnDigitClick, 1, 9);
+        AddButton("3", OnDigitClick, 2, 9);
+        AddButton("+", OnOperatorClick, 3, 9);
+
+        AddButton("±", OnToggleSignClick, 0, 10);
+        AddButton("0", OnDigitClick, 1, 10);
+        AddButton(",", OnDecimalClick, 2, 10);
+        AddButton("=", OnEqualsClick, 3, 10);
 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(320, 520);
+        ClientSize = new Size(320, 560);
         Controls.Add(LayoutPanel);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
