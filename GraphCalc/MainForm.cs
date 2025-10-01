@@ -152,6 +152,69 @@ public partial class MainForm : Form
         }
     }
 
+ codex/add-graphical-calculator-in-c#-v29j3l
+    private void OnUnaryOperationClick(object? sender, EventArgs e)
+    {
+        // Magyar komment: egylépéses műveleteket (szinusz, koszinusz, négyzetgyök, faktoriális) számolunk
+        if (sender is not Button button)
+        {
+            return;
+        }
+
+        if (!TryGetDisplayValue(out var current))
+        {
+            return;
+        }
+
+        var operation = button.Tag as string ?? button.Text;
+        double result = operation switch
+        {
+            "sin" => Math.Sin(current),
+            "cos" => Math.Cos(current),
+            "sqrt" => current < 0 ? double.NaN : Math.Sqrt(current),
+            "fact" => CalculateFactorial(current),
+            _ => current
+        };
+
+        UpdateDisplayFromDouble(result);
+        _shouldResetDisplay = true;
+    }
+
+    private static double CalculateFactorial(double value)
+    {
+        // Magyar komment: a faktoriálist csak nemnegatív egész számokra értelmezzük
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            return double.NaN;
+        }
+
+        var rounded = Math.Round(value);
+        if (rounded < 0 || Math.Abs(value - rounded) > 1e-9)
+        {
+            return double.NaN;
+        }
+
+        if (rounded > 170)
+        {
+            return double.PositiveInfinity;
+        }
+
+        var integer = (int)rounded;
+        double result = 1d;
+        for (var i = 2; i <= integer; i++)
+        {
+            result *= i;
+            if (double.IsInfinity(result))
+            {
+                return double.PositiveInfinity;
+            }
+        }
+
+        return result;
+    }
+
+
+ main
     private static double Evaluate(double left, double right, string op) => op switch
     {
         "+" => left + right,
