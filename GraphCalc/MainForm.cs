@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
@@ -9,10 +10,17 @@ public partial class MainForm : Form
 {
     private const char DisplayDecimalSeparator = ',';
 
+    private const int HistoryCapacity = 10;
+
     private double? _pendingValue;
     private string? _pendingOperator;
     private bool _shouldResetDisplay;
     private bool _isDarkMode;
+
+    private sealed record MemoryEntry(string Operation, string Result);
+
+    private readonly List<MemoryEntry> _memoryEntries = new();
+    private int _memoryDisplayIndex = -1;
 
     // Magyar komment: az ablak inicializálása és a kijelző alaphelyzetbe állítása
     public MainForm()
@@ -94,6 +102,10 @@ public partial class MainForm : Form
         {
             var result = Evaluate(_pendingValue.Value, current, _pendingOperator);
             UpdateDisplayFromDouble(result);
+            var operationText = $"{FormatDouble(_pendingValue.Value)} {GetDisplayOperator(_pendingOperator)} {FormatDouble(current)} =";
+            var resultText = FormatDouble(result);
+            UpdateOperationLabel(operationText);
+            AddToMemory(new MemoryEntry(operationText, resultText));
             _pendingValue = null;
             _pendingOperator = null;
             _shouldResetDisplay = true;
@@ -105,6 +117,7 @@ public partial class MainForm : Form
         // Magyar komment: csak az aktuális bevitelt töröljük
         UpdateDisplay("0");
         _shouldResetDisplay = true;
+        UpdateOperationLabel(string.Empty);
     }
 
     private void OnClearAllClick(object? sender, EventArgs e)
@@ -114,6 +127,7 @@ public partial class MainForm : Form
         _pendingValue = null;
         _pendingOperator = null;
         _shouldResetDisplay = false;
+        UpdateOperationLabel(string.Empty);
     }
 
     private void OnBackspaceClick(object? sender, EventArgs e)
@@ -179,7 +193,106 @@ public partial class MainForm : Form
         };
 
         UpdateDisplayFromDouble(result);
+        var operationText = operation switch
+        {
+            "sin" => $"sin({FormatDouble(current)}) =",
+            "cos" => $"cos({FormatDouble(current)}) =",
+            "sqrt" => $"√({FormatDouble(current)}) =",
+            "fact" => $"n!({FormatDouble(current)}) =",
+            _ => string.Empty
+        };
+
+        UpdateOperationLabel(operationText);
+
+        if (!string.IsNullOrEmpty(operationText))
+        {
+            AddToMemory(new MemoryEntry(operationText, FormatDouble(result)));
+        }
+
         _shouldResetDisplay = true;
+    }
+
+    private void OnMemoryRecallClick(object? sender, EventArgs e)
+    {
+        if (_memoryEntries.Count == 0)
+        {
+            return;
+        }
+
+        if (_memoryDisplayIndex < 0)
+        {
+            _memoryDisplayIndex = 0;
+        }
+        else if (_memoryDisplayIndex < _memoryEntries.Count - 1)
+        {
+            _memoryDisplayIndex++;
+        }
+
+        ShowMemoryEntry(_memoryDisplayIndex);
+    }
+
+    private void OnMemoryStoreClick(object? sender, EventArgs e)
+    {
+        if (!TryGetDisplayValue(out var value))
+        {
+            return;
+        }
+
+        var operationText = string.IsNullOrWhiteSpace(OperationLabel.Text)
+            ? "Eredmény ="
+            : OperationLabel.Text.Trim();
+        var resultText = FormatDouble(value);
+        AddToMemory(new MemoryEntry(operationText, resultText));
+    }
+
+    private void OnMemoryDeleteClick(object? sender, EventArgs e)
+    {
+        if (_memoryEntries.Count == 0)
+        {
+            return;
+        }
+
+        var wasViewingMemory = _memoryDisplayIndex >= 0;
+        var index = wasViewingMemory && _memoryDisplayIndex < _memoryEntries.Count
+            ? _memoryDisplayIndex
+            : 0;
+
+        _memoryEntries.RemoveAt(index);
+
+        if (_memoryEntries.Count == 0)
+        {
+            _memoryDisplayIndex = -1;
+            RefreshMemoryList();
+            return;
+        }
+
+        if (!wasViewingMemory)
+        {
+            _memoryDisplayIndex = -1;
+            RefreshMemoryList();
+            return;
+        }
+
+        if (index >= _memoryEntries.Count)
+        {
+            index = _memoryEntries.Count - 1;
+        }
+
+        _memoryDisplayIndex = index;
+        RefreshMemoryList();
+        ShowMemoryEntry(_memoryDisplayIndex);
+    }
+
+    private void OnHistorySelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (HistoryListBox.SelectedIndex >= 0 && HistoryListBox.SelectedIndex < _memoryEntries.Count)
+        {
+            _memoryDisplayIndex = HistoryListBox.SelectedIndex;
+        }
+        else
+        {
+            _memoryDisplayIndex = -1;
+        }
     }
 
     private static double CalculateFactorial(double value)
@@ -233,6 +346,13 @@ public partial class MainForm : Form
         LayoutPanel.BackColor = panelBackColor;
         DisplayTextBox.BackColor = displayBackColor;
         DisplayTextBox.ForeColor = displayForeColor;
+        OperationLabel.ForeColor = _isDarkMode ? Color.Gainsboro : Color.DimGray;
+
+        HistoryLabel.ForeColor = _isDarkMode ? Color.White : Color.Black;
+        HistoryLabel.BackColor = Color.Transparent;
+        HistoryListBox.BackColor = _isDarkMode ? Color.FromArgb(30, 30, 30) : Color.White;
+        HistoryListBox.ForeColor = _isDarkMode ? Color.White : Color.Black;
+        HistoryListBox.BorderStyle = BorderStyle.FixedSingle;
 
         ThemeToggleCheckBox.ForeColor = _isDarkMode ? Color.White : Color.Black;
         ThemeToggleCheckBox.BackColor = Color.Transparent;
@@ -307,10 +427,20 @@ public partial class MainForm : Form
     private void UpdateDisplayFromDouble(double value)
     {
         // Magyar komment: a lebegőpontos eredményt rendezett formátumban jelenítjük meg
+        UpdateDisplay(FormatDouble(value));
+    }
+
+    private void UpdateDisplay(string value)
+    {
+        // Magyar komment: a kijelzőt frissítjük, és a pontot vesszőre cseréljük
+        DisplayTextBox.Text = value.Replace('.', DisplayDecimalSeparator);
+    }
+
+    private string FormatDouble(double value)
+    {
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
-            UpdateDisplay(value.ToString(CultureInfo.InvariantCulture));
-            return;
+            return value.ToString(CultureInfo.InvariantCulture);
         }
 
         var formatted = value.ToString("G15", CultureInfo.InvariantCulture);
@@ -320,12 +450,68 @@ public partial class MainForm : Form
             formatted = "0";
         }
 
-        UpdateDisplay(formatted);
+        return formatted.Replace('.', DisplayDecimalSeparator);
     }
 
-    private void UpdateDisplay(string value)
+    private static string GetDisplayOperator(string op) => op switch
     {
-        // Magyar komment: a kijelzőt frissítjük, és a pontot vesszőre cseréljük
-        DisplayTextBox.Text = value.Replace('.', DisplayDecimalSeparator);
+        "*" => "×",
+        "/" => "÷",
+        _ => op
+    };
+
+    private void UpdateOperationLabel(string text)
+    {
+        OperationLabel.Text = text;
+    }
+
+    private void AddToMemory(MemoryEntry entry)
+    {
+        _memoryEntries.Insert(0, entry);
+        if (_memoryEntries.Count > HistoryCapacity)
+        {
+            _memoryEntries.RemoveAt(_memoryEntries.Count - 1);
+        }
+
+        _memoryDisplayIndex = -1;
+        RefreshMemoryList();
+    }
+
+    private void ShowMemoryEntry(int index)
+    {
+        if (index < 0 || index >= _memoryEntries.Count)
+        {
+            return;
+        }
+
+        var entry = _memoryEntries[index];
+        UpdateOperationLabel(entry.Operation);
+        UpdateDisplay(entry.Result);
+        _pendingValue = null;
+        _pendingOperator = null;
+        _shouldResetDisplay = true;
+
+        _memoryDisplayIndex = index;
+        HistoryListBox.SelectedIndex = index;
+    }
+
+    private void RefreshMemoryList()
+    {
+        HistoryListBox.BeginUpdate();
+        HistoryListBox.Items.Clear();
+        foreach (var entry in _memoryEntries)
+        {
+            HistoryListBox.Items.Add($"{entry.Operation} {entry.Result}".Trim());
+        }
+        HistoryListBox.EndUpdate();
+
+        if (_memoryDisplayIndex >= 0 && _memoryDisplayIndex < _memoryEntries.Count)
+        {
+            HistoryListBox.SelectedIndex = _memoryDisplayIndex;
+        }
+        else
+        {
+            HistoryListBox.ClearSelected();
+        }
     }
 }
