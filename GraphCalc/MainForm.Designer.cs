@@ -134,8 +134,9 @@ public partial class MainForm
 
         static void ConfigureMemoryButton(Button button)
         {
-            button.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            button.Margin = new Padding(2);
+            button.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            button.Margin = new Padding(1);
+            button.Padding = new Padding(0);
         }
 
         var memoryAddButton = CreateButton("M+", OnMemoryStoreClick, "memory-add");
