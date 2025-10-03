@@ -326,14 +326,19 @@ public partial class MainForm : Form
 
     private void OnHistorySelectedIndexChanged(object? sender, EventArgs e)
     {
-        if (HistoryListBox.SelectedIndex >= 0 && HistoryListBox.SelectedIndex < _memoryEntries.Count)
+        var selectedIndex = HistoryListBox.SelectedIndex;
+
+        if (selectedIndex >= 0 && selectedIndex < _memoryEntries.Count)
         {
-            _memoryDisplayIndex = HistoryListBox.SelectedIndex;
+            if (_memoryDisplayIndex != selectedIndex)
+            {
+                ShowMemoryEntry(selectedIndex);
+            }
+
+            return;
         }
-        else
-        {
-            _memoryDisplayIndex = -1;
-        }
+
+        _memoryDisplayIndex = -1;
     }
 
     private static double CalculateFactorial(double value)
