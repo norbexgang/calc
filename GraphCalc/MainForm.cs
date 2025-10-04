@@ -22,7 +22,6 @@ public partial class MainForm : Form
     private readonly List<MemoryEntry> _memoryEntries = new();
     private int _memoryDisplayIndex = -1;
 
-    // Magyar komment: az ablak inicializÃ¡lÃ¡sa Ã©s a kijelzÅ‘ alaphelyzetbe Ã¡llÃ­tÃ¡sa
     public MainForm()
     {
         InitializeComponent();
@@ -32,32 +31,30 @@ public partial class MainForm : Form
 
     private void OnDigitClick(object? sender, EventArgs e)
     {
-        // Magyar komment: a gombbÃ³l kiolvassuk a szÃ¡mjegyet Ã©s hozzÃ¡adjuk a kijelzÅ‘hÃ¶z
-        if (sender is not Button button)
+        if (sender is not Button { Text: var digit })
         {
             return;
         }
 
         if (_shouldResetDisplay || DisplayTextBox.Text == "0")
         {
-            UpdateDisplay(button.Text);
+            UpdateDisplay(digit);
             _shouldResetDisplay = false;
+            return;
         }
-        else
-        {
-            UpdateDisplay(DisplayTextBox.Text + button.Text);
-        }
+
+        UpdateDisplay(DisplayTextBox.Text + digit);
     }
 
     private void OnDecimalClick(object? sender, EventArgs e)
     {
-        // Magyar komment: a tizedespont beszÃºrÃ¡sÃ¡t csak egyszer engedjÃ¼k
         if (sender is not Button button)
         {
             return;
         }
 
         var separator = button.Tag as string ?? button.Text;
+        var display = DisplayTextBox.Text;
 
         if (_shouldResetDisplay)
         {
@@ -66,15 +63,14 @@ public partial class MainForm : Form
             return;
         }
 
-        if (!DisplayTextBox.Text.Contains(DisplayDecimalSeparator))
+        if (!display.Contains(DisplayDecimalSeparator))
         {
-            UpdateDisplay(DisplayTextBox.Text + separator);
+            UpdateDisplay(display + separator);
         }
     }
 
     private void OnOperatorClick(object? sender, EventArgs e)
     {
-        // Magyar komment: mÅ±velet kivÃ¡lasztÃ¡sakor eltÃ¡roljuk az elÅ‘zÅ‘ Ã©rtÃ©ket Ã©s az operÃ¡tort
         if (sender is not Button button)
         {
             return;
@@ -96,7 +92,6 @@ public partial class MainForm : Form
 
     private void OnEqualsClick(object? sender, EventArgs e)
     {
-        // Magyar komment: az egyenlÅ‘sÃ©g gomb kiÃ©rtÃ©keli az aktuÃ¡lis kifejezÃ©st
         if (_pendingValue.HasValue && _pendingOperator is not null &&
             TryGetDisplayValue(out var current))
         {
@@ -114,7 +109,6 @@ public partial class MainForm : Form
 
     private void OnClearEntryClick(object? sender, EventArgs e)
     {
-        // Magyar komment: csak az aktuÃ¡lis bevitelt tÃ¶rÃ¶ljÃ¼k
         UpdateDisplay("0");
         _shouldResetDisplay = true;
         UpdateOperationLabel(string.Empty);
@@ -122,7 +116,6 @@ public partial class MainForm : Form
 
     private void OnClearAllClick(object? sender, EventArgs e)
     {
-        // Magyar komment: teljes kalkulÃ¡tor Ã¡llapotot visszaÃ¡llÃ­tjuk
         UpdateDisplay("0");
         _pendingValue = null;
         _pendingOperator = null;
@@ -132,7 +125,6 @@ public partial class MainForm : Form
 
     private void OnBackspaceClick(object? sender, EventArgs e)
     {
-        // Magyar komment: egy karakterrel visszalÃ©pÃ¼nk a beviteli mezÅ‘ben
         if (_shouldResetDisplay)
         {
             UpdateDisplay("0");
@@ -153,25 +145,26 @@ public partial class MainForm : Form
 
     private void OnToggleSignClick(object? sender, EventArgs e)
     {
-        // Magyar komment: elÅ‘jelet vÃ¡ltunk a kijelzett szÃ¡mon
-        if (DisplayTextBox.Text is "0" or "0." or "")
+        var display = DisplayTextBox.Text;
+        var zeroWithSeparator = $"0{DisplayDecimalSeparator}";
+
+        if (display is "0" or "" || display == zeroWithSeparator)
         {
             return;
         }
 
-        if (DisplayTextBox.Text.StartsWith("-", StringComparison.Ordinal))
+        if (display.StartsWith("-", StringComparison.Ordinal))
         {
-            UpdateDisplay(DisplayTextBox.Text[1..]);
+            UpdateDisplay(display[1..]);
         }
         else
         {
-            UpdateDisplay("-" + DisplayTextBox.Text);
+            UpdateDisplay("-" + display);
         }
     }
-    
+
     private void OnUnaryOperationClick(object? sender, EventArgs e)
     {
-        // Magyar komment: egylÃ©pÃ©ses mÅ±veleteket (szinusz, koszinusz, nÃ©gyzetgyÃ¶k, faktoriÃ¡lis) szÃ¡molunk
         if (sender is not Button button)
         {
             return;
@@ -343,7 +336,6 @@ public partial class MainForm : Form
 
     private static double CalculateFactorial(double value)
     {
-        // Magyar komment: a faktoriÃ¡list csak nemnegatÃ­v egÃ©sz szÃ¡mokra Ã©rtelmezzÃ¼k
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
             return double.NaN;
@@ -479,20 +471,17 @@ public partial class MainForm : Form
 
     private bool TryGetDisplayValue(out double value)
     {
-        // Magyar komment: a kijelzÅ‘ szÃ¶vegÃ©t szÃ¡mmÃ¡ alakÃ­tjuk a szÃ¡mÃ­tÃ¡sokhoz
         var sanitized = DisplayTextBox.Text.Replace(DisplayDecimalSeparator, '.');
-        return double.TryParse((string?)sanitized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+        return double.TryParse(sanitized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
     }
 
     private void UpdateDisplayFromDouble(double value)
     {
-        // Magyar komment: a lebegÅ‘pontos eredmÃ©nyt rendezett formÃ¡tumban jelenÃ­tjÃ¼k meg
         UpdateDisplay(FormatDouble(value));
     }
 
     private void UpdateDisplay(string value)
     {
-        // Magyar komment: a kijelzÅ‘t frissÃ­tjÃ¼k, Ã©s a pontot vesszÅ‘re cserÃ©ljÃ¼k
         DisplayTextBox.Text = value.Replace('.', DisplayDecimalSeparator);
     }
 
