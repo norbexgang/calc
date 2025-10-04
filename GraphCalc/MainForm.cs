@@ -133,7 +133,7 @@ public partial class MainForm : Form
         }
 
         var text = DisplayTextBox.Text;
-        if (text.Length > 1)
+        if (text.Length > 1 && text is not "0")
         {
             UpdateDisplay(text[..^1]);
         }
@@ -146,9 +146,8 @@ public partial class MainForm : Form
     private void OnToggleSignClick(object? sender, EventArgs e)
     {
         var display = DisplayTextBox.Text;
-        var zeroWithSeparator = $"0{DisplayDecimalSeparator}";
 
-        if (display is "0" or "" || display == zeroWithSeparator)
+        if (display is "0" or "")
         {
             return;
         }
@@ -214,18 +213,18 @@ public partial class MainForm : Form
             return;
         }
 
-        double result;
+        var result = _pendingValue.HasValue
+            ? _pendingValue.Value * current / 100d
+            : current / 100d;
+
+        UpdateDisplayFromDouble(result);
 
         if (_pendingValue.HasValue && _pendingOperator is not null)
         {
-            result = _pendingValue.Value * current / 100d;
-            UpdateDisplayFromDouble(result);
             UpdateOperationLabel($"{FormatDouble(_pendingValue.Value)} {GetDisplayOperator(_pendingOperator)} {FormatDouble(result)}");
         }
         else
         {
-            result = current / 100d;
-            UpdateDisplayFromDouble(result);
             var operationText = $"{FormatDouble(current)}% =";
             UpdateOperationLabel(operationText);
             AddToMemory(new MemoryEntry(operationText, FormatDouble(result)));
@@ -274,35 +273,27 @@ public partial class MainForm : Form
             return;
         }
 
-        var wasViewingMemory = _memoryDisplayIndex >= 0;
-        var index = wasViewingMemory && _memoryDisplayIndex < _memoryEntries.Count
+        var indexToRemove = _memoryDisplayIndex >= 0 && _memoryDisplayIndex < _memoryEntries.Count
             ? _memoryDisplayIndex
             : 0;
 
-        _memoryEntries.RemoveAt(index);
+        _memoryEntries.RemoveAt(indexToRemove);
 
         if (_memoryEntries.Count == 0)
         {
             _memoryDisplayIndex = -1;
-            RefreshMemoryList();
-            return;
         }
-
-        if (!wasViewingMemory)
+        else if (_memoryDisplayIndex >= _memoryEntries.Count)
         {
-            _memoryDisplayIndex = -1;
-            RefreshMemoryList();
-            return;
+            _memoryDisplayIndex = _memoryEntries.Count - 1;
         }
 
-        if (index >= _memoryEntries.Count)
-        {
-            index = _memoryEntries.Count - 1;
-        }
-
-        _memoryDisplayIndex = index;
         RefreshMemoryList();
-        ShowMemoryEntry(_memoryDisplayIndex);
+
+        if (_memoryDisplayIndex != -1)
+        {
+            ShowMemoryEntry(_memoryDisplayIndex);
+        }
     }
 
     private void OnMemoryClearClick(object? sender, EventArgs e)
@@ -336,31 +327,21 @@ public partial class MainForm : Form
 
     private static double CalculateFactorial(double value)
     {
-        if (double.IsNaN(value) || double.IsInfinity(value))
+        if (double.IsNaN(value) || double.IsInfinity(value) || value < 0 || Math.Abs(value - Math.Round(value)) > 1e-9)
         {
             return double.NaN;
         }
 
-        var rounded = Math.Round(value);
-        if (rounded < 0 || Math.Abs(value - rounded) > 1e-9)
-        {
-            return double.NaN;
-        }
-
-        if (rounded > 170)
+        var integer = (int)Math.Round(value);
+        if (integer > 170)
         {
             return double.PositiveInfinity;
         }
 
-        var integer = (int)rounded;
         double result = 1d;
         for (var i = 2; i <= integer; i++)
         {
             result *= i;
-            if (double.IsInfinity(result))
-            {
-                return double.PositiveInfinity;
-            }
         }
 
         return result;
