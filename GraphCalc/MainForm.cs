@@ -262,7 +262,7 @@ public partial class MainForm : Form
         }
 
         var operationText = string.IsNullOrWhiteSpace(OperationLabel.Text)
-            ? "Eredm\u00E9ny ="
+            ? "Eredmény ="
             : OperationLabel.Text.Trim();
         var resultText = FormatDouble(value);
         AddToMemory(new MemoryEntry(operationText, resultText));
