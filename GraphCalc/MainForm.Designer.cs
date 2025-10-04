@@ -166,8 +166,9 @@ public partial class MainForm
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(320, 560);
         Controls.Add(LayoutPanel);
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MaximizeBox = false;
+        FormBorderStyle = FormBorderStyle.Sizable;
+        MaximizeBox = true;
+        MinimumSize = new Size(360, 600);
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Grafikus Számológép";
 
