@@ -6,6 +6,8 @@ using System.Drawing.Drawing2D;
 
 using System.Windows.Forms;
 
+#nullable enable
+
 namespace GraphCalc;
 
 public partial class MainForm
@@ -41,7 +43,7 @@ public partial class MainForm
         LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
         LayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 18F));
-        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 10.333F));
         for (var i = 5; i < LayoutPanel.RowCount; i++)
         {
             LayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 10.333F));
@@ -52,7 +54,7 @@ public partial class MainForm
             Anchor = AnchorStyles.Top | AnchorStyles.Right,
             AutoSize = true,
             Margin = new Padding(0, 0, 4, 4),
-            Text = "Sötét mód",
+            Text = "S\\u00F6t\\u00E9t m\\u00F3d",
             UseVisualStyleBackColor = false
         };
         ThemeToggleCheckBox.CheckedChanged += OnThemeToggleCheckedChanged;
@@ -99,7 +101,7 @@ public partial class MainForm
         HistoryLabel = new Label
         {
             Dock = DockStyle.Fill,
-            Text = "Memória",
+            Text = "Mem\\u00F3ria",
             Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point),
             Margin = new Padding(0, 0, 0, 4),
             AutoSize = false,
@@ -120,60 +122,30 @@ public partial class MainForm
         LayoutPanel.Controls.Add(HistoryListBox, 0, 3);
         LayoutPanel.SetColumnSpan(HistoryListBox, 4);
 
-        var memoryButtonPanel = new TableLayoutPanel
-        {
-            ColumnCount = 3,
-            RowCount = 1,
-            Dock = DockStyle.Fill,
-            Margin = new Padding(0, 0, 0, 8)
-        };
-        memoryButtonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F));
-        memoryButtonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F));
-        memoryButtonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.334F));
-        memoryButtonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-
-        static void ConfigureMemoryButton(Button button)
-        {
-            button.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
-            button.Margin = new Padding(1);
-            button.Padding = new Padding(0);
-        }
-
-        var memoryAddButton = CreateButton("M+", OnMemoryStoreClick, "memory-add");
-        ConfigureMemoryButton(memoryAddButton);
-        memoryButtonPanel.Controls.Add(memoryAddButton, 0, 0);
-
-        var memoryRemoveButton = CreateButton("M-", OnMemoryDeleteClick, "memory-remove");
-        ConfigureMemoryButton(memoryRemoveButton);
-        memoryButtonPanel.Controls.Add(memoryRemoveButton, 1, 0);
-
-        var memoryClearButton = CreateButton("MC", OnMemoryClearClick, "memory-clear");
-        ConfigureMemoryButton(memoryClearButton);
-        memoryButtonPanel.Controls.Add(memoryClearButton, 2, 0);
-
-        LayoutPanel.Controls.Add(memoryButtonPanel, 0, 4);
-        LayoutPanel.SetColumnSpan(memoryButtonPanel, 4);
-
+        AddButton("M+", OnMemoryStoreClick, 0, 4, tag: "memory-add");
+        AddButton("M-", OnMemoryDeleteClick, 1, 4, tag: "memory-remove");
+        AddButton("MC", OnMemoryClearClick, 2, 4, tag: "memory-clear");
+        AddButton("MR", OnMemoryRecallClick, 3, 4, tag: "memory-recall");
         AddButton("sin", OnUnaryOperationClick, 0, 5, tag: "sin");
         AddButton("cos", OnUnaryOperationClick, 1, 5, tag: "cos");
         AddButton("tan", OnUnaryOperationClick, 2, 5, tag: "tan");
-        AddButton("√", OnUnaryOperationClick, 3, 5, tag: "sqrt");
+        AddButton("\\u221A", OnUnaryOperationClick, 3, 5, tag: "sqrt");
 
         AddButton("n!", OnUnaryOperationClick, 0, 6, tag: "fact");
         AddButton("%", OnPercentClick, 1, 6, tag: "%");
         AddButton("CE", OnClearEntryClick, 2, 6);
         AddButton("C", OnClearAllClick, 3, 6);
 
-        var backspaceButton = CreateButton("⌫", OnBackspaceClick, "Backspace");
+        var backspaceButton = CreateButton("\\u232B", OnBackspaceClick, "Backspace");
         LayoutPanel.Controls.Add(backspaceButton, 0, 7);
         LayoutPanel.SetColumnSpan(backspaceButton, 3);
-        var divideButton = CreateButton("÷", OnOperatorClick, "/");
+        var divideButton = CreateButton("\\u00F7", OnOperatorClick, "/");
         LayoutPanel.Controls.Add(divideButton, 3, 7);
 
         AddButton("7", OnDigitClick, 0, 8);
         AddButton("8", OnDigitClick, 1, 8);
         AddButton("9", OnDigitClick, 2, 8);
-        AddButton("×", OnOperatorClick, 3, 8, tag: "*");
+        AddButton("\\u00D7", OnOperatorClick, 3, 8, tag: "*");
 
         AddButton("4", OnDigitClick, 0, 9);
         AddButton("5", OnDigitClick, 1, 9);
@@ -185,7 +157,7 @@ public partial class MainForm
         AddButton("3", OnDigitClick, 2, 10);
         AddButton("+", OnOperatorClick, 3, 10);
 
-        AddButton("±", OnToggleSignClick, 0, 11);
+        AddButton("\\u00B1", OnToggleSignClick, 0, 11);
         AddButton("0", OnDigitClick, 1, 11);
         AddButton(",", OnDecimalClick, 2, 11);
         AddButton("=", OnEqualsClick, 3, 11);
@@ -197,7 +169,7 @@ public partial class MainForm
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
-        Text = "Grafikus Számológép";
+        Text = "Grafikus Sz\\u00E1mol\\u00F3g\\u00E9p";
 
         ResumeLayout(false);
 

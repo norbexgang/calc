@@ -16,9 +16,19 @@ public partial class MainForm : Form
     private string? _pendingOperator;
     private bool _shouldResetDisplay;
     private bool _isDarkMode;
+    private bool HasPendingOperation => _pendingValue.HasValue && _pendingOperator is not null;
 
     private sealed record MemoryEntry(string Operation, string Result);
+    private sealed record UnaryOperation(Func<double, double> Evaluate, Func<string, string>? OperationLabelFactory);
 
+    private static readonly IReadOnlyDictionary<string, UnaryOperation> UnaryOperations = new Dictionary<string, UnaryOperation>(StringComparer.Ordinal)
+    {
+        ["sin"] = new(Math.Sin, formatted => $"sin({formatted}) ="),
+        ["cos"] = new(Math.Cos, formatted => $"cos({formatted}) ="),
+        ["tan"] = new(Math.Tan, formatted => $"tan({formatted}) ="),
+        ["sqrt"] = new(value => value < 0 ? double.NaN : Math.Sqrt(value), formatted => $"\u221A({formatted}) ="),
+        ["fact"] = new(CalculateFactorial, formatted => $"n!({formatted}) =")
+    };
     private readonly List<MemoryEntry> _memoryEntries = new();
     private int _memoryDisplayIndex = -1;
 
@@ -76,35 +86,40 @@ public partial class MainForm : Form
             return;
         }
 
-        if (TryGetDisplayValue(out var current))
+        if (!TryGetDisplayValue(out var current))
         {
-            if (_pendingValue.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
-            {
-                current = Evaluate(_pendingValue.Value, current, _pendingOperator);
-                UpdateDisplayFromDouble(current);
-            }
-
-            _pendingValue = current;
-            _pendingOperator = button.Tag as string ?? button.Text;
-            _shouldResetDisplay = true;
+            return;
         }
+
+        if (HasPendingOperation && !_shouldResetDisplay)
+        {
+            current = ExecutePendingOperation(current);
+            UpdateDisplayFromDouble(current);
+        }
+
+        _pendingValue = current;
+        _pendingOperator = button.Tag as string ?? button.Text;
+        _shouldResetDisplay = true;
     }
 
     private void OnEqualsClick(object? sender, EventArgs e)
     {
-        if (_pendingValue.HasValue && _pendingOperator is not null &&
-            TryGetDisplayValue(out var current))
+        if (!HasPendingOperation || !TryGetDisplayValue(out var current))
         {
-            var result = Evaluate(_pendingValue.Value, current, _pendingOperator);
-            UpdateDisplayFromDouble(result);
-            var operationText = $"{FormatDouble(_pendingValue.Value)} {GetDisplayOperator(_pendingOperator)} {FormatDouble(current)} =";
-            var resultText = FormatDouble(result);
-            UpdateOperationLabel(operationText);
-            AddToMemory(new MemoryEntry(operationText, resultText));
-            _pendingValue = null;
-            _pendingOperator = null;
-            _shouldResetDisplay = true;
+            return;
         }
+
+        var pendingValue = _pendingValue!.Value;
+        var pendingOperator = _pendingOperator!;
+        var result = Evaluate(pendingValue, current, pendingOperator);
+        UpdateDisplayFromDouble(result);
+
+        var operationText = $"{FormatDouble(pendingValue)} {GetDisplayOperator(pendingOperator)} {FormatDouble(current)} =";
+        UpdateOperationLabel(operationText);
+        StoreInMemory(operationText, result);
+
+        ResetPendingOperation();
+        _shouldResetDisplay = true;
     }
 
     private void OnClearEntryClick(object? sender, EventArgs e)
@@ -174,34 +189,21 @@ public partial class MainForm : Form
             return;
         }
 
-        var operation = button.Tag as string ?? button.Text;
-        double result = operation switch
-        {
-            "sin" => Math.Sin(current),
-            "cos" => Math.Cos(current),
-            "tan" => Math.Tan(current),
-            "sqrt" => current < 0 ? double.NaN : Math.Sqrt(current),
-            "fact" => CalculateFactorial(current),
-            _ => current
-        };
+        var operationKey = button.Tag as string ?? button.Text;
 
+        if (!UnaryOperations.TryGetValue(operationKey, out var unaryOperation))
+        {
+            return;
+        }
+
+        var result = unaryOperation.Evaluate(current);
         UpdateDisplayFromDouble(result);
-        var operationText = operation switch
-        {
-            "sin" => $"sin({FormatDouble(current)}) =",
-            "cos" => $"cos({FormatDouble(current)}) =",
-            "tan" => $"tan({FormatDouble(current)}) =",
-            "sqrt" => $"âˆš({FormatDouble(current)}) =",
-            "fact" => $"n!({FormatDouble(current)}) =",
-            _ => string.Empty
-        };
 
+        var formattedOperand = FormatDouble(current);
+        var operationText = unaryOperation.OperationLabelFactory?.Invoke(formattedOperand) ?? string.Empty;
         UpdateOperationLabel(operationText);
 
-        if (!string.IsNullOrEmpty(operationText))
-        {
-            AddToMemory(new MemoryEntry(operationText, FormatDouble(result)));
-        }
+        StoreInMemory(operationText, result);
 
         _shouldResetDisplay = true;
     }
@@ -213,21 +215,21 @@ public partial class MainForm : Form
             return;
         }
 
-        var result = _pendingValue.HasValue
-            ? _pendingValue.Value * current / 100d
+        var result = HasPendingOperation
+            ? _pendingValue!.Value * current / 100d
             : current / 100d;
 
         UpdateDisplayFromDouble(result);
 
-        if (_pendingValue.HasValue && _pendingOperator is not null)
+        if (HasPendingOperation)
         {
-            UpdateOperationLabel($"{FormatDouble(_pendingValue.Value)} {GetDisplayOperator(_pendingOperator)} {FormatDouble(result)}");
+            UpdateOperationLabel($"{FormatDouble(_pendingValue!.Value)} {GetDisplayOperator(_pendingOperator!)} {FormatDouble(result)}");
         }
         else
         {
             var operationText = $"{FormatDouble(current)}% =";
             UpdateOperationLabel(operationText);
-            AddToMemory(new MemoryEntry(operationText, FormatDouble(result)));
+            StoreInMemory(operationText, result);
         }
 
         _shouldResetDisplay = true;
@@ -260,7 +262,7 @@ public partial class MainForm : Form
         }
 
         var operationText = string.IsNullOrWhiteSpace(OperationLabel.Text)
-            ? "EredmÃ©ny ="
+            ? "Eredm\u00E9ny ="
             : OperationLabel.Text.Trim();
         var resultText = FormatDouble(value);
         AddToMemory(new MemoryEntry(operationText, resultText));
@@ -395,6 +397,11 @@ public partial class MainForm : Form
         }
     }
 
+    private static bool IsOperatorTag(string tag) => tag is "+" or "-" or "*" or "/";
+    private static bool IsClearTag(string tag) => tag is "CE" or "C" or "Backspace";
+    private static bool IsFunctionTag(string tag) => tag is "sin" or "cos" or "tan" or "sqrt" or "fact" or "%";
+    private static bool IsMemoryTag(string tag) => tag.StartsWith("memory-", StringComparison.Ordinal);
+
     private void ApplyButtonTheme(Button button)
     {
         var generalBackColor = _isDarkMode ? Color.FromArgb(48, 48, 48) : Color.WhiteSmoke;
@@ -406,50 +413,51 @@ public partial class MainForm : Form
 
         var background = generalBackColor;
         var foreColor = _isDarkMode ? Color.White : Color.Black;
+        var tag = button.Tag as string ?? button.Text;
 
-        if (button.Text is "Ã·" or "Ã—" or "-" or "+")
-        {
-            background = operatorBackColor;
-        }
-        else if (button.Text is "CE" or "C" or "âŒ«")
-        {
-            background = clearBackColor;
-        }
-        else if (button.Text is "sin" or "cos" or "tan" or "âˆš" or "n!" or "%")
-        {
-            background = functionBackColor;
-        }
-        else if (button.Text == "=")
-        {
-            background = equalsBackColor;
-            foreColor = Color.White;
-        }
-
-        if (button.Tag is string tag && tag.StartsWith("memory-", StringComparison.Ordinal))
+        if (IsMemoryTag(tag))
         {
             background = memoryBackColor;
             foreColor = Color.White;
         }
+        else if (tag == "=")
+        {
+            background = equalsBackColor;
+            foreColor = Color.White;
+        }
+        else if (IsOperatorTag(tag))
+        {
+            background = operatorBackColor;
+        }
+        else if (IsClearTag(tag))
+        {
+            background = clearBackColor;
+        }
+        else if (IsFunctionTag(tag))
+        {
+            background = functionBackColor;
+        }
 
         button.BackColor = background;
         button.ForeColor = foreColor;
-
         button.FlatAppearance.BorderColor = _isDarkMode ? Color.FromArgb(70, 70, 70) : Color.LightGray;
     }
-
-
-
     private static double Evaluate(double left, double right, string op) => op switch
     {
         "+" => left + right,
         "-" => left - right,
-        "Ã—" => left * right,
-        "*" => left * right,
-        "Ã·" => right == 0 ? double.NaN : left / right,
-        "/" => right == 0 ? double.NaN : left / right,
+        "*" or "\u00D7" => left * right,
+        "/" or "\u00F7" => right == 0 ? double.NaN : left / right,
         _ => right
     };
 
+    private double ExecutePendingOperation(double current) => Evaluate(_pendingValue!.Value, current, _pendingOperator!);
+
+    private void ResetPendingOperation()
+    {
+        _pendingValue = null;
+        _pendingOperator = null;
+    }
     private bool TryGetDisplayValue(out double value)
     {
         var sanitized = DisplayTextBox.Text.Replace(DisplayDecimalSeparator, '.');
@@ -485,8 +493,8 @@ public partial class MainForm : Form
 
     private static string GetDisplayOperator(string op) => op switch
     {
-        "*" => "Ã—",
-        "/" => "Ã·",
+        "*" => "\u00D7",
+        "/" => "\u00F7",
         _ => op
     };
 
@@ -495,6 +503,15 @@ public partial class MainForm : Form
         OperationLabel.Text = text;
     }
 
+    private void StoreInMemory(string operationText, double result)
+    {
+        if (string.IsNullOrWhiteSpace(operationText))
+        {
+            return;
+        }
+
+        AddToMemory(new MemoryEntry(operationText, FormatDouble(result)));
+    }
     private void AddToMemory(MemoryEntry entry)
     {
         _memoryEntries.Insert(0, entry);
