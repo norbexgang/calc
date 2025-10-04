@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -22,7 +22,7 @@ public partial class MainForm : Form
     private readonly List<MemoryEntry> _memoryEntries = new();
     private int _memoryDisplayIndex = -1;
 
-    // Magyar komment: az ablak inicializálása és a kijelző alaphelyzetbe állítása
+    // Magyar komment: az ablak inicializÃ¡lÃ¡sa Ã©s a kijelzÅ‘ alaphelyzetbe Ã¡llÃ­tÃ¡sa
     public MainForm()
     {
         InitializeComponent();
@@ -32,7 +32,7 @@ public partial class MainForm : Form
 
     private void OnDigitClick(object? sender, EventArgs e)
     {
-        // Magyar komment: a gombból kiolvassuk a számjegyet és hozzáadjuk a kijelzőhöz
+        // Magyar komment: a gombbÃ³l kiolvassuk a szÃ¡mjegyet Ã©s hozzÃ¡adjuk a kijelzÅ‘hÃ¶z
         if (sender is not Button button)
         {
             return;
@@ -51,7 +51,7 @@ public partial class MainForm : Form
 
     private void OnDecimalClick(object? sender, EventArgs e)
     {
-        // Magyar komment: a tizedespont beszúrását csak egyszer engedjük
+        // Magyar komment: a tizedespont beszÃºrÃ¡sÃ¡t csak egyszer engedjÃ¼k
         if (sender is not Button button)
         {
             return;
@@ -74,7 +74,7 @@ public partial class MainForm : Form
 
     private void OnOperatorClick(object? sender, EventArgs e)
     {
-        // Magyar komment: művelet kiválasztásakor eltároljuk az előző értéket és az operátort
+        // Magyar komment: mÅ±velet kivÃ¡lasztÃ¡sakor eltÃ¡roljuk az elÅ‘zÅ‘ Ã©rtÃ©ket Ã©s az operÃ¡tort
         if (sender is not Button button)
         {
             return;
@@ -96,7 +96,7 @@ public partial class MainForm : Form
 
     private void OnEqualsClick(object? sender, EventArgs e)
     {
-        // Magyar komment: az egyenlőség gomb kiértékeli az aktuális kifejezést
+        // Magyar komment: az egyenlÅ‘sÃ©g gomb kiÃ©rtÃ©keli az aktuÃ¡lis kifejezÃ©st
         if (_pendingValue.HasValue && _pendingOperator is not null &&
             TryGetDisplayValue(out var current))
         {
@@ -114,7 +114,7 @@ public partial class MainForm : Form
 
     private void OnClearEntryClick(object? sender, EventArgs e)
     {
-        // Magyar komment: csak az aktuális bevitelt töröljük
+        // Magyar komment: csak az aktuÃ¡lis bevitelt tÃ¶rÃ¶ljÃ¼k
         UpdateDisplay("0");
         _shouldResetDisplay = true;
         UpdateOperationLabel(string.Empty);
@@ -122,7 +122,7 @@ public partial class MainForm : Form
 
     private void OnClearAllClick(object? sender, EventArgs e)
     {
-        // Magyar komment: teljes kalkulátor állapotot visszaállítjuk
+        // Magyar komment: teljes kalkulÃ¡tor Ã¡llapotot visszaÃ¡llÃ­tjuk
         UpdateDisplay("0");
         _pendingValue = null;
         _pendingOperator = null;
@@ -132,7 +132,7 @@ public partial class MainForm : Form
 
     private void OnBackspaceClick(object? sender, EventArgs e)
     {
-        // Magyar komment: egy karakterrel visszalépünk a beviteli mezőben
+        // Magyar komment: egy karakterrel visszalÃ©pÃ¼nk a beviteli mezÅ‘ben
         if (_shouldResetDisplay)
         {
             UpdateDisplay("0");
@@ -153,7 +153,7 @@ public partial class MainForm : Form
 
     private void OnToggleSignClick(object? sender, EventArgs e)
     {
-        // Magyar komment: előjelet váltunk a kijelzett számon
+        // Magyar komment: elÅ‘jelet vÃ¡ltunk a kijelzett szÃ¡mon
         if (DisplayTextBox.Text is "0" or "0." or "")
         {
             return;
@@ -171,7 +171,7 @@ public partial class MainForm : Form
     
     private void OnUnaryOperationClick(object? sender, EventArgs e)
     {
-        // Magyar komment: egylépéses műveleteket (szinusz, koszinusz, négyzetgyök, faktoriális) számolunk
+        // Magyar komment: egylÃ©pÃ©ses mÅ±veleteket (szinusz, koszinusz, nÃ©gyzetgyÃ¶k, faktoriÃ¡lis) szÃ¡molunk
         if (sender is not Button button)
         {
             return;
@@ -199,7 +199,7 @@ public partial class MainForm : Form
             "sin" => $"sin({FormatDouble(current)}) =",
             "cos" => $"cos({FormatDouble(current)}) =",
             "tan" => $"tan({FormatDouble(current)}) =",
-            "sqrt" => $"√({FormatDouble(current)}) =",
+            "sqrt" => $"âˆš({FormatDouble(current)}) =",
             "fact" => $"n!({FormatDouble(current)}) =",
             _ => string.Empty
         };
@@ -268,7 +268,7 @@ public partial class MainForm : Form
         }
 
         var operationText = string.IsNullOrWhiteSpace(OperationLabel.Text)
-            ? "Eredmény ="
+            ? "EredmÃ©ny ="
             : OperationLabel.Text.Trim();
         var resultText = FormatDouble(value);
         AddToMemory(new MemoryEntry(operationText, resultText));
@@ -343,7 +343,7 @@ public partial class MainForm : Form
 
     private static double CalculateFactorial(double value)
     {
-        // Magyar komment: a faktoriálist csak nemnegatív egész számokra értelmezzük
+        // Magyar komment: a faktoriÃ¡list csak nemnegatÃ­v egÃ©sz szÃ¡mokra Ã©rtelmezzÃ¼k
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
             return double.NaN;
@@ -403,11 +403,21 @@ public partial class MainForm : Form
         ThemeToggleCheckBox.ForeColor = _isDarkMode ? Color.White : Color.Black;
         ThemeToggleCheckBox.BackColor = Color.Transparent;
 
-        foreach (Control control in LayoutPanel.Controls)
+        ApplyButtonThemeRecursive(LayoutPanel);
+    }
+
+    private void ApplyButtonThemeRecursive(Control parent)
+    {
+        foreach (Control control in parent.Controls)
         {
             if (control is Button button)
             {
                 ApplyButtonTheme(button);
+            }
+
+            if (control.HasChildren)
+            {
+                ApplyButtonThemeRecursive(control);
             }
         }
     }
@@ -424,15 +434,15 @@ public partial class MainForm : Form
         var background = generalBackColor;
         var foreColor = _isDarkMode ? Color.White : Color.Black;
 
-        if (button.Text is "÷" or "×" or "-" or "+")
+        if (button.Text is "Ã·" or "Ã—" or "-" or "+")
         {
             background = operatorBackColor;
         }
-        else if (button.Text is "CE" or "C" or "⌫")
+        else if (button.Text is "CE" or "C" or "âŒ«")
         {
             background = clearBackColor;
         }
-        else if (button.Text is "sin" or "cos" or "tan" or "√" or "n!" or "%")
+        else if (button.Text is "sin" or "cos" or "tan" or "âˆš" or "n!" or "%")
         {
             background = functionBackColor;
         }
@@ -460,29 +470,29 @@ public partial class MainForm : Form
     {
         "+" => left + right,
         "-" => left - right,
-        "×" => left * right,
+        "Ã—" => left * right,
         "*" => left * right,
-        "÷" => right == 0 ? double.NaN : left / right,
+        "Ã·" => right == 0 ? double.NaN : left / right,
         "/" => right == 0 ? double.NaN : left / right,
         _ => right
     };
 
     private bool TryGetDisplayValue(out double value)
     {
-        // Magyar komment: a kijelző szövegét számmá alakítjuk a számításokhoz
+        // Magyar komment: a kijelzÅ‘ szÃ¶vegÃ©t szÃ¡mmÃ¡ alakÃ­tjuk a szÃ¡mÃ­tÃ¡sokhoz
         var sanitized = DisplayTextBox.Text.Replace(DisplayDecimalSeparator, '.');
         return double.TryParse((string?)sanitized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
     }
 
     private void UpdateDisplayFromDouble(double value)
     {
-        // Magyar komment: a lebegőpontos eredményt rendezett formátumban jelenítjük meg
+        // Magyar komment: a lebegÅ‘pontos eredmÃ©nyt rendezett formÃ¡tumban jelenÃ­tjÃ¼k meg
         UpdateDisplay(FormatDouble(value));
     }
 
     private void UpdateDisplay(string value)
     {
-        // Magyar komment: a kijelzőt frissítjük, és a pontot vesszőre cseréljük
+        // Magyar komment: a kijelzÅ‘t frissÃ­tjÃ¼k, Ã©s a pontot vesszÅ‘re cserÃ©ljÃ¼k
         DisplayTextBox.Text = value.Replace('.', DisplayDecimalSeparator);
     }
 
@@ -505,8 +515,8 @@ public partial class MainForm : Form
 
     private static string GetDisplayOperator(string op) => op switch
     {
-        "*" => "×",
-        "/" => "÷",
+        "*" => "Ã—",
+        "/" => "Ã·",
         _ => op
     };
 
@@ -565,3 +575,4 @@ public partial class MainForm : Form
         }
     }
 }
+
