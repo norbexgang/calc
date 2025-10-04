@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj": {}
+    "c:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj": {
+    "c:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj",
+        "projectUniqueName": "c:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj",
         "projectName": "GraphCalc",
-        "projectPath": "C:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj",
+        "projectPath": "c:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\GraphCalc.csproj",
         "packagesPath": "C:\\Users\\Norbex\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\obj\\",
+        "outputPath": "c:\\Users\\Norbex\\Documents\\calc in vsc\\calc\\GraphCalc\\obj\\",
         "projectStyle": "PackageReference",
         "crossTargeting": true,
         "configFilePaths": [
