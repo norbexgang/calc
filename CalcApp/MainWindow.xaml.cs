@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,8 +13,10 @@ namespace CalcApp
         private double? _leftOperand;
         private string? _pendingOperator;
         private bool _shouldResetDisplay;
-        private readonly double[] _memorySlots = new double[10];
+        private readonly double[] _memoryValues = new double[10];
+        private readonly List<string>[] _memoryOperations = new List<string>[10];
         private bool _useMaterialYou;
+        private string? _lastOperationDescription;
 
         private TextBox? _display;
         private ToggleButton? _materialThemeToggle;
@@ -26,7 +29,17 @@ namespace CalcApp
         {
             LoadComponentFromXaml();
             ApplyTheme();
+            InitializeMemoryOperations();
             InitializeMemory();
+        }
+
+        private void InitializeMemoryOperations()
+        {
+            for (var i = 0; i < _memoryOperations.Length; i++)
+            {
+                _memoryOperations[i] = new List<string>();
+                _memoryValues[i] = 0;
+            }
         }
 
         private void LoadComponentFromXaml()
@@ -63,6 +76,8 @@ namespace CalcApp
 
             var digit = button.Content?.ToString() ?? string.Empty;
 
+            _lastOperationDescription = null;
+
             if (_shouldResetDisplay || DisplayBox.Text == "0" || DisplayBox.Text == "Error")
             {
                 DisplayBox.Text = digit;
@@ -81,12 +96,14 @@ namespace CalcApp
             {
                 DisplayBox.Text = "0.";
                 _shouldResetDisplay = false;
+                _lastOperationDescription = null;
                 return;
             }
 
             if (!DisplayBox.Text.Contains('.', StringComparison.Ordinal))
             {
                 DisplayBox.Text += ".";
+                _lastOperationDescription = null;
             }
         }
 
@@ -104,6 +121,7 @@ namespace CalcApp
 
             value *= -1;
             SetDisplayValue(value);
+            _lastOperationDescription = null;
         }
 
         private void Percent_Click(object sender, RoutedEventArgs e)
@@ -113,9 +131,11 @@ namespace CalcApp
                 return;
             }
 
+            var originalValue = value;
             value /= 100;
             SetDisplayValue(value);
             _shouldResetDisplay = true;
+            RecordOperation($"{FormatNumber(originalValue)}%", value);
         }
 
         private void Delete_Click(object sender, RoutedEventArgs e)
@@ -124,16 +144,19 @@ namespace CalcApp
             {
                 DisplayBox.Text = "0";
                 _shouldResetDisplay = false;
+                _lastOperationDescription = null;
                 return;
             }
 
             if (DisplayBox.Text.Length <= 1)
             {
                 DisplayBox.Text = "0";
+                _lastOperationDescription = null;
                 return;
             }
 
             DisplayBox.Text = DisplayBox.Text[..^1];
+            _lastOperationDescription = null;
         }
 
         private void Operator_Click(object sender, RoutedEventArgs e)
@@ -156,8 +179,12 @@ namespace CalcApp
 
             if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
             {
-                _leftOperand = Evaluate(_leftOperand.Value, currentValue, _pendingOperator);
-                SetDisplayValue(_leftOperand.Value);
+                var leftOperand = _leftOperand.Value;
+                var operatorSymbol = _pendingOperator;
+                var result = Evaluate(leftOperand, currentValue, operatorSymbol);
+                _leftOperand = result;
+                SetDisplayValue(result);
+                RecordOperation($"{FormatNumber(leftOperand)}{operatorSymbol}{FormatNumber(currentValue)}", result);
             }
             else
             {
@@ -182,8 +209,11 @@ namespace CalcApp
 
             try
             {
-                var result = Evaluate(_leftOperand.Value, rightOperand, _pendingOperator);
+                var leftOperand = _leftOperand.Value;
+                var operatorSymbol = _pendingOperator;
+                var result = Evaluate(leftOperand, rightOperand, operatorSymbol);
                 SetDisplayValue(result);
+                RecordOperation($"{FormatNumber(leftOperand)}{operatorSymbol}{FormatNumber(rightOperand)}", result);
                 _leftOperand = null;
                 _pendingOperator = null;
                 _shouldResetDisplay = true;
@@ -200,17 +230,17 @@ namespace CalcApp
 
         private void Sin_Click(object sender, RoutedEventArgs e)
         {
-            ApplyUnaryFunction(Math.Sin, degrees: true);
+            ApplyUnaryFunction(Math.Sin, "sin", degrees: true);
         }
 
         private void Cos_Click(object sender, RoutedEventArgs e)
         {
-            ApplyUnaryFunction(Math.Cos, degrees: true);
+            ApplyUnaryFunction(Math.Cos, "cos", degrees: true);
         }
 
         private void Tan_Click(object sender, RoutedEventArgs e)
         {
-            ApplyUnaryFunction(Math.Tan, degrees: true, validateTan: true);
+            ApplyUnaryFunction(Math.Tan, "tan", degrees: true, validateTan: true);
         }
 
         private void Sqrt_Click(object sender, RoutedEventArgs e)
@@ -226,8 +256,10 @@ namespace CalcApp
                 return;
             }
 
-            SetDisplayValue(Math.Sqrt(value));
+            var result = Math.Sqrt(value);
+            SetDisplayValue(result);
             _shouldResetDisplay = true;
+            RecordOperation($"√({FormatNumber(value)})", result);
         }
 
         private void Factorial_Click(object sender, RoutedEventArgs e)
@@ -245,9 +277,11 @@ namespace CalcApp
 
             try
             {
-                var result = Factorial((int)Math.Round(value));
+                var roundedValue = (int)Math.Round(value);
+                var result = Factorial(roundedValue);
                 SetDisplayValue(result);
                 _shouldResetDisplay = true;
+                RecordOperation($"{FormatNumber(roundedValue)}!", result);
             }
             catch (OverflowException)
             {
@@ -263,8 +297,8 @@ namespace CalcApp
             }
 
             var index = SelectedMemoryIndex;
-            _memorySlots[index] += value;
-            UpdateMemoryDisplay(index);
+            _memoryValues[index] += value;
+            TrackMemoryOperation(index, value, true);
             _shouldResetDisplay = true;
         }
 
@@ -276,22 +310,24 @@ namespace CalcApp
             }
 
             var index = SelectedMemoryIndex;
-            _memorySlots[index] -= value;
-            UpdateMemoryDisplay(index);
+            _memoryValues[index] -= value;
+            TrackMemoryOperation(index, value, false);
             _shouldResetDisplay = true;
         }
 
         private void MemoryRecall_Click(object sender, RoutedEventArgs e)
         {
             var index = SelectedMemoryIndex;
-            SetDisplayValue(_memorySlots[index]);
+            SetDisplayValue(_memoryValues[index]);
             _shouldResetDisplay = true;
+            _lastOperationDescription = null;
         }
 
         private void MemoryClear_Click(object sender, RoutedEventArgs e)
         {
             var index = SelectedMemoryIndex;
-            _memorySlots[index] = 0;
+            _memoryValues[index] = 0;
+            _memoryOperations[index].Clear();
             UpdateMemoryDisplay(index);
         }
 
@@ -317,12 +353,14 @@ namespace CalcApp
             ApplyTheme();
         }
 
-        private void ApplyUnaryFunction(Func<double, double> func, bool degrees = false, bool validateTan = false)
+        private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
         {
             if (!TryGetDisplayValue(out var value))
             {
                 return;
             }
+
+            var originalValue = value;
 
             if (degrees)
             {
@@ -342,6 +380,7 @@ namespace CalcApp
             var result = func(value);
             SetDisplayValue(result);
             _shouldResetDisplay = true;
+            RecordOperation($"{operationName}({FormatNumber(originalValue)})", result);
         }
 
         private static double Factorial(int value)
@@ -380,7 +419,7 @@ namespace CalcApp
                 Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
             }
 
-            MaterialThemeToggleControl.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
+            MaterialThemeToggleControl.Content = _useMaterialYou ? "Dark Mode" : "Klasszikus nézet";
         }
 
         private void ResetCalculatorState()
@@ -389,6 +428,7 @@ namespace CalcApp
             _leftOperand = null;
             _pendingOperator = null;
             _shouldResetDisplay = false;
+            _lastOperationDescription = null;
         }
 
         private bool TryGetDisplayValue(out double value)
@@ -413,6 +453,7 @@ namespace CalcApp
             _leftOperand = null;
             _pendingOperator = null;
             _shouldResetDisplay = true;
+            _lastOperationDescription = null;
         }
 
         private void InitializeMemory()
@@ -428,13 +469,21 @@ namespace CalcApp
             var selectedIndex = selectedIndexOverride ?? SelectedMemoryIndex;
 
             MemoryListBox.Items.Clear();
-            for (var i = 0; i < _memorySlots.Length; i++)
+            for (var i = 0; i < _memoryValues.Length; i++)
             {
-                var value = FormatNumber(_memorySlots[i]);
-                MemoryListBox.Items.Add($"M{i + 1}: {value}");
+                var value = FormatNumber(_memoryValues[i]);
+                var operations = _memoryOperations[i];
+                if (operations.Count == 0)
+                {
+                    MemoryListBox.Items.Add($"M{i + 1}: {value}");
+                    continue;
+                }
+
+                var operationsText = string.Join("; ", operations);
+                MemoryListBox.Items.Add($"M{i + 1}: {operationsText} (összesen: {value})");
             }
 
-            if (selectedIndex < 0 || selectedIndex >= _memorySlots.Length)
+            if (selectedIndex < 0 || selectedIndex >= _memoryValues.Length)
             {
                 selectedIndex = 0;
             }
@@ -445,13 +494,13 @@ namespace CalcApp
 
         private void UpdateMemoryText(int selectedIndex)
         {
-            if (selectedIndex < 0 || selectedIndex >= _memorySlots.Length)
+            if (selectedIndex < 0 || selectedIndex >= _memoryValues.Length)
             {
                 MemoryTextBlock.Text = string.Empty;
                 return;
             }
 
-            var value = _memorySlots[selectedIndex];
+            var value = _memoryValues[selectedIndex];
 
             if (Math.Abs(value) < double.Epsilon)
             {
@@ -461,6 +510,29 @@ namespace CalcApp
 
             var formattedValue = FormatNumber(value);
             MemoryTextBlock.Text = $"Aktív memória: M{selectedIndex + 1} = {formattedValue}";
+        }
+
+        private void TrackMemoryOperation(int index, double value, bool isAddition)
+        {
+            var description = _lastOperationDescription ?? FormatNumber(value);
+
+            if (_memoryOperations[index].Count == 0 && isAddition)
+            {
+                _memoryOperations[index].Add(description);
+            }
+            else
+            {
+                var sign = isAddition ? "+" : "-";
+                _memoryOperations[index].Add($"{sign} {description}");
+            }
+
+            UpdateMemoryDisplay(index);
+        }
+
+        private void RecordOperation(string description, double result)
+        {
+            var formattedResult = FormatNumber(result);
+            _lastOperationDescription = $"{description}={formattedResult}";
         }
 
         private string FormatNumber(double value)
