@@ -4,12 +4,12 @@
         Title="Calculator" Width="380" MinWidth="360" Height="560" MinHeight="520" ResizeMode="CanResize"
         Background="{DynamicResource WindowBackgroundBrush}">
     <Window.Resources>
-        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFF5F5F5" />
-        <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#FFFFFFFF" />
-        <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FF1F1F1F" />
-        <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FFE0E0E0" />
-        <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FF1F1F1F" />
-        <SolidColorBrush x:Key="AccentButtonBrush" Color="#FF7FB4FF" />
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FF121212" />
+        <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#FF1F1F1F" />
+        <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FFF2F2F2" />
+        <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FF2A2A2A" />
+        <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FFF2F2F2" />
+        <SolidColorBrush x:Key="AccentButtonBrush" Color="#FF3D7DFF" />
         <Style TargetType="Button">
             <Setter Property="Margin" Value="4" />
             <Setter Property="FontSize" Value="18" />
@@ -64,10 +64,18 @@
                          Background="Transparent" Foreground="{DynamicResource BorderForegroundBrush}" />
             </Border>
 
+
+            <ToggleButton x:Name="MaterialThemeToggle" Content="Klasszikus nézet" Grid.Column="1" Margin="12,0,0,0"
+                          VerticalAlignment="Center" Padding="12,8" Checked="MaterialThemeToggle_OnChecked"
+                          Unchecked="MaterialThemeToggle_OnUnchecked"
+                          Foreground="{DynamicResource BorderForegroundBrush}"
+                          Background="{DynamicResource ButtonBackgroundBrush}" />
+
             <ToggleButton x:Name="MaterialThemeToggle" Content="Material You" Grid.Column="1" Margin="12,0,0,0"
                           VerticalAlignment="Center" Padding="12,8" Checked="MaterialThemeToggle_OnChecked"
                           Unchecked="MaterialThemeToggle_OnUnchecked"
                           Foreground="{DynamicResource BorderForegroundBrush}" />
+         
         </Grid>
 
         <TextBlock x:Name="MemoryText" Grid.Row="1" Text="" FontSize="14" Margin="4,8,4,12"

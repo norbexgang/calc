@@ -317,6 +317,26 @@ public partial class MainWindow : Window
     {
         if (_useMaterialYou)
         {
+
+            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 17, 23));
+            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(33, 31, 42));
+            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
+            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(55, 51, 64));
+            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
+            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(154, 139, 255));
+        }
+        else
+        {
+            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 18, 18));
+            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
+            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(242, 242, 242));
+            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(42, 42, 42));
+            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(242, 242, 242));
+            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(61, 125, 255));
+        }
+
+        MaterialThemeToggle.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
+
             Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 18, 18));
             Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(28, 27, 31));
             Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(232, 224, 255));
@@ -333,6 +353,7 @@ public partial class MainWindow : Window
             Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
             Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
         }
+
     }
 
     private void ResetCalculatorState()
