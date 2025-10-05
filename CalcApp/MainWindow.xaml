@@ -70,11 +70,6 @@
                           Unchecked="MaterialThemeToggle_OnUnchecked"
                           Foreground="{DynamicResource BorderForegroundBrush}"
                           Background="{DynamicResource ButtonBackgroundBrush}" />
-
-            <ToggleButton x:Name="MaterialThemeToggle" Content="Material You" Grid.Column="1" Margin="12,0,0,0"
-                          VerticalAlignment="Center" Padding="12,8" Checked="MaterialThemeToggle_OnChecked"
-                          Unchecked="MaterialThemeToggle_OnUnchecked"
-                          Foreground="{DynamicResource BorderForegroundBrush}" />
          
         </Grid>
 
