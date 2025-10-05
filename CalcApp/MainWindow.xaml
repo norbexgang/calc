@@ -82,7 +82,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Margin="0,0,12,0" Padding="12" Width="160"
+            <Border Grid.Column="0" Margin="0,0,12,0" Padding="12" Width="220"
                     Background="{DynamicResource BorderBackgroundBrush}" CornerRadius="12"
                     BorderBrush="#FFB0B0B0" BorderThickness="1">
                 <StackPanel>
@@ -90,7 +90,7 @@
                                Margin="0,0,0,8" Foreground="{DynamicResource BorderForegroundBrush}" />
                     <ListBox x:Name="MemoryList" SelectionChanged="MemoryList_SelectionChanged"
                              Foreground="{DynamicResource BorderForegroundBrush}"
-                             Background="Transparent" BorderThickness="0" Height="360"
+                             Background="Transparent" BorderThickness="0" Height="420"
                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                     </ListBox>
                 </StackPanel>
