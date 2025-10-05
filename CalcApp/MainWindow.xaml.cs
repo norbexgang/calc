@@ -180,11 +180,11 @@ namespace CalcApp
             if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
             {
                 var leftOperand = _leftOperand.Value;
-                var operatorSymbol = _pendingOperator;
-                var result = Evaluate(leftOperand, currentValue, operatorSymbol);
+                var pendingOperator = _pendingOperator!;
+                var result = Evaluate(leftOperand, currentValue, pendingOperator);
                 _leftOperand = result;
                 SetDisplayValue(result);
-                RecordOperation($"{FormatNumber(leftOperand)}{operatorSymbol}{FormatNumber(currentValue)}", result);
+                RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(currentValue)}", result);
             }
             else
             {
@@ -210,10 +210,10 @@ namespace CalcApp
             try
             {
                 var leftOperand = _leftOperand.Value;
-                var operatorSymbol = _pendingOperator;
-                var result = Evaluate(leftOperand, rightOperand, operatorSymbol);
+                var pendingOperator = _pendingOperator!;
+                var result = Evaluate(leftOperand, rightOperand, pendingOperator);
                 SetDisplayValue(result);
-                RecordOperation($"{FormatNumber(leftOperand)}{operatorSymbol}{FormatNumber(rightOperand)}", result);
+                RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(rightOperand)}", result);
                 _leftOperand = null;
                 _pendingOperator = null;
                 _shouldResetDisplay = true;
