@@ -5,425 +5,426 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
-namespace CalcApp;
-
-public partial class MainWindow : Window
+namespace CalcApp
 {
-    private double? _leftOperand;
-    private string? _pendingOperator;
-    private bool _shouldResetDisplay;
-    private double _memory;
-    private bool _useMaterialYou;
-
-    private TextBox? _display;
-    private ToggleButton? _materialThemeToggle;
-    private TextBlock? _memoryText;
-
-    private readonly CultureInfo _culture = CultureInfo.InvariantCulture;
-
-    public MainWindow()
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
-        ApplyTheme();
-    }
+        private double? _leftOperand;
+        private string? _pendingOperator;
+        private bool _shouldResetDisplay;
+        private double _memory;
+        private bool _useMaterialYou;
 
-    private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
+        private TextBox? _display;
+        private ToggleButton? _materialThemeToggle;
+        private TextBlock? _memoryText;
 
-    private ToggleButton MaterialThemeToggleControl =>
-        _materialThemeToggle ??= FindRequiredControl<ToggleButton>("MaterialThemeToggle");
+        private readonly CultureInfo _culture = CultureInfo.InvariantCulture;
 
-    private TextBlock MemoryTextBlock => _memoryText ??= FindRequiredControl<TextBlock>("MemoryText");
-
-    private T FindRequiredControl<T>(string name) where T : class
-    {
-        if (FindName(name) is T control)
+        public MainWindow()
         {
-            return control;
+            this.InitializeComponent();
+            ApplyTheme();
         }
 
-        throw new InvalidOperationException($"Could not find control '{name}'.");
-    }
+        private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
 
-    private void Digit_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button button)
+        private ToggleButton MaterialThemeToggleControl =>
+            _materialThemeToggle ??= FindRequiredControl<ToggleButton>("MaterialThemeToggle");
+
+        private TextBlock MemoryTextBlock => _memoryText ??= FindRequiredControl<TextBlock>("MemoryText");
+
+        private T FindRequiredControl<T>(string name) where T : class
         {
-            return;
+            if (FindName(name) is T control)
+            {
+                return control;
+            }
+
+            throw new InvalidOperationException($"Could not find control '{name}'.");
         }
 
-        var digit = button.Content?.ToString() ?? string.Empty;
-
-        if (_shouldResetDisplay || DisplayBox.Text == "0" || DisplayBox.Text == "Error")
+        private void Digit_Click(object sender, RoutedEventArgs e)
         {
-            DisplayBox.Text = digit;
-        }
-        else
-        {
-            DisplayBox.Text += digit;
-        }
+            if (sender is not Button button)
+            {
+                return;
+            }
 
-        _shouldResetDisplay = false;
-    }
+            var digit = button.Content?.ToString() ?? string.Empty;
 
-    private void Decimal_Click(object sender, RoutedEventArgs e)
-    {
-        if (_shouldResetDisplay || DisplayBox.Text == "Error")
-        {
-            DisplayBox.Text = "0.";
+            if (_shouldResetDisplay || DisplayBox.Text == "0" || DisplayBox.Text == "Error")
+            {
+                DisplayBox.Text = digit;
+            }
+            else
+            {
+                DisplayBox.Text += digit;
+            }
+
             _shouldResetDisplay = false;
-            return;
         }
 
-        if (!DisplayBox.Text.Contains('.', StringComparison.Ordinal))
+        private void Decimal_Click(object sender, RoutedEventArgs e)
         {
-            DisplayBox.Text += ".";
-        }
-    }
+            if (_shouldResetDisplay || DisplayBox.Text == "Error")
+            {
+                DisplayBox.Text = "0.";
+                _shouldResetDisplay = false;
+                return;
+            }
 
-    private void Clear_Click(object sender, RoutedEventArgs e)
-    {
-        ResetCalculatorState();
-    }
-
-    private void Sign_Click(object sender, RoutedEventArgs e)
-    {
-        if (!TryGetDisplayValue(out var value))
-        {
-            return;
+            if (!DisplayBox.Text.Contains('.', StringComparison.Ordinal))
+            {
+                DisplayBox.Text += ".";
+            }
         }
 
-        value *= -1;
-        SetDisplayValue(value);
-    }
-
-    private void Percent_Click(object sender, RoutedEventArgs e)
-    {
-        if (!TryGetDisplayValue(out var value))
+        private void Clear_Click(object sender, RoutedEventArgs e)
         {
-            return;
+            ResetCalculatorState();
         }
 
-        value /= 100;
-        SetDisplayValue(value);
-        _shouldResetDisplay = true;
-    }
-
-    private void Delete_Click(object sender, RoutedEventArgs e)
-    {
-        if (_shouldResetDisplay || DisplayBox.Text == "Error")
+        private void Sign_Click(object sender, RoutedEventArgs e)
         {
-            DisplayBox.Text = "0";
-            _shouldResetDisplay = false;
-            return;
+            if (!TryGetDisplayValue(out var value))
+            {
+                return;
+            }
+
+            value *= -1;
+            SetDisplayValue(value);
         }
 
-        if (DisplayBox.Text.Length <= 1)
+        private void Percent_Click(object sender, RoutedEventArgs e)
         {
-            DisplayBox.Text = "0";
-            return;
-        }
+            if (!TryGetDisplayValue(out var value))
+            {
+                return;
+            }
 
-        DisplayBox.Text = DisplayBox.Text[..^1];
-    }
-
-    private void Operator_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button button)
-        {
-            return;
-        }
-
-        var operatorSymbol = button.Tag?.ToString() ?? button.Content?.ToString();
-        if (string.IsNullOrWhiteSpace(operatorSymbol))
-        {
-            return;
-        }
-
-        if (!TryGetDisplayValue(out var currentValue))
-        {
-            return;
-        }
-
-        if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
-        {
-            _leftOperand = Evaluate(_leftOperand.Value, currentValue, _pendingOperator);
-            SetDisplayValue(_leftOperand.Value);
-        }
-        else
-        {
-            _leftOperand = currentValue;
-        }
-
-        _pendingOperator = operatorSymbol;
-        _shouldResetDisplay = true;
-    }
-
-    private void Equals_Click(object sender, RoutedEventArgs e)
-    {
-        if (!_leftOperand.HasValue || _pendingOperator is null)
-        {
-            return;
-        }
-
-        if (!TryGetDisplayValue(out var rightOperand))
-        {
-            return;
-        }
-
-        try
-        {
-            var result = Evaluate(_leftOperand.Value, rightOperand, _pendingOperator);
-            SetDisplayValue(result);
-            _leftOperand = null;
-            _pendingOperator = null;
+            value /= 100;
+            SetDisplayValue(value);
             _shouldResetDisplay = true;
         }
-        catch (DivideByZeroException)
+
+        private void Delete_Click(object sender, RoutedEventArgs e)
         {
-            ShowError();
-        }
-        catch (InvalidOperationException)
-        {
-            ShowError();
-        }
-    }
+            if (_shouldResetDisplay || DisplayBox.Text == "Error")
+            {
+                DisplayBox.Text = "0";
+                _shouldResetDisplay = false;
+                return;
+            }
 
-    private void Sin_Click(object sender, RoutedEventArgs e)
-    {
-        ApplyUnaryFunction(Math.Sin, degrees: true);
-    }
+            if (DisplayBox.Text.Length <= 1)
+            {
+                DisplayBox.Text = "0";
+                return;
+            }
 
-    private void Cos_Click(object sender, RoutedEventArgs e)
-    {
-        ApplyUnaryFunction(Math.Cos, degrees: true);
-    }
-
-    private void Tan_Click(object sender, RoutedEventArgs e)
-    {
-        ApplyUnaryFunction(Math.Tan, degrees: true, validateTan: true);
-    }
-
-    private void Sqrt_Click(object sender, RoutedEventArgs e)
-    {
-        if (!TryGetDisplayValue(out var value))
-        {
-            return;
+            DisplayBox.Text = DisplayBox.Text[..^1];
         }
 
-        if (value < 0)
+        private void Operator_Click(object sender, RoutedEventArgs e)
         {
-            ShowError();
-            return;
-        }
+            if (sender is not Button button)
+            {
+                return;
+            }
 
-        SetDisplayValue(Math.Sqrt(value));
-        _shouldResetDisplay = true;
-    }
+            var operatorSymbol = button.Tag?.ToString() ?? button.Content?.ToString();
+            if (string.IsNullOrWhiteSpace(operatorSymbol))
+            {
+                return;
+            }
 
-    private void Factorial_Click(object sender, RoutedEventArgs e)
-    {
-        if (!TryGetDisplayValue(out var value))
-        {
-            return;
-        }
+            if (!TryGetDisplayValue(out var currentValue))
+            {
+                return;
+            }
 
-        if (value < 0 || Math.Abs(value - Math.Round(value)) > double.Epsilon)
-        {
-            ShowError();
-            return;
-        }
+            if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
+            {
+                _leftOperand = Evaluate(_leftOperand.Value, currentValue, _pendingOperator);
+                SetDisplayValue(_leftOperand.Value);
+            }
+            else
+            {
+                _leftOperand = currentValue;
+            }
 
-        try
-        {
-            var result = Factorial((int)Math.Round(value));
-            SetDisplayValue(result);
+            _pendingOperator = operatorSymbol;
             _shouldResetDisplay = true;
         }
-        catch (OverflowException)
+
+        private void Equals_Click(object sender, RoutedEventArgs e)
         {
-            ShowError();
-        }
-    }
+            if (!_leftOperand.HasValue || _pendingOperator is null)
+            {
+                return;
+            }
 
-    private void MemoryAdd_Click(object sender, RoutedEventArgs e)
-    {
-        if (!TryGetDisplayValue(out var value))
-        {
-            return;
-        }
+            if (!TryGetDisplayValue(out var rightOperand))
+            {
+                return;
+            }
 
-        _memory += value;
-        UpdateMemoryDisplay();
-        _shouldResetDisplay = true;
-    }
-
-    private void MemorySubtract_Click(object sender, RoutedEventArgs e)
-    {
-        if (!TryGetDisplayValue(out var value))
-        {
-            return;
-        }
-
-        _memory -= value;
-        UpdateMemoryDisplay();
-        _shouldResetDisplay = true;
-    }
-
-    private void MemoryRecall_Click(object sender, RoutedEventArgs e)
-    {
-        SetDisplayValue(_memory);
-        _shouldResetDisplay = true;
-    }
-
-    private void MemoryClear_Click(object sender, RoutedEventArgs e)
-    {
-        _memory = 0;
-        UpdateMemoryDisplay();
-    }
-
-    private void MaterialThemeToggle_OnChecked(object sender, RoutedEventArgs e)
-    {
-        _useMaterialYou = true;
-        ApplyTheme();
-    }
-
-    private void MaterialThemeToggle_OnUnchecked(object sender, RoutedEventArgs e)
-    {
-        _useMaterialYou = false;
-        ApplyTheme();
-    }
-
-    private void ApplyUnaryFunction(Func<double, double> func, bool degrees = false, bool validateTan = false)
-    {
-        if (!TryGetDisplayValue(out var value))
-        {
-            return;
+            try
+            {
+                var result = Evaluate(_leftOperand.Value, rightOperand, _pendingOperator);
+                SetDisplayValue(result);
+                _leftOperand = null;
+                _pendingOperator = null;
+                _shouldResetDisplay = true;
+            }
+            catch (DivideByZeroException)
+            {
+                ShowError();
+            }
+            catch (InvalidOperationException)
+            {
+                ShowError();
+            }
         }
 
-        if (degrees)
+        private void Sin_Click(object sender, RoutedEventArgs e)
         {
-            value = value * Math.PI / 180.0;
+            ApplyUnaryFunction(Math.Sin, degrees: true);
         }
 
-        if (validateTan)
+        private void Cos_Click(object sender, RoutedEventArgs e)
         {
-            var cosValue = Math.Cos(value);
-            if (Math.Abs(cosValue) < 1e-12)
+            ApplyUnaryFunction(Math.Cos, degrees: true);
+        }
+
+        private void Tan_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyUnaryFunction(Math.Tan, degrees: true, validateTan: true);
+        }
+
+        private void Sqrt_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryGetDisplayValue(out var value))
+            {
+                return;
+            }
+
+            if (value < 0)
             {
                 ShowError();
                 return;
             }
+
+            SetDisplayValue(Math.Sqrt(value));
+            _shouldResetDisplay = true;
         }
 
-        var result = func(value);
-        SetDisplayValue(result);
-        _shouldResetDisplay = true;
-    }
-
-    private static double Factorial(int value)
-    {
-        double result = 1;
-        for (var i = 2; i <= value; i++)
+        private void Factorial_Click(object sender, RoutedEventArgs e)
         {
-            result *= i;
-            if (double.IsInfinity(result) || double.IsNaN(result))
+            if (!TryGetDisplayValue(out var value))
             {
-                throw new OverflowException();
+                return;
+            }
+
+            if (value < 0 || Math.Abs(value - Math.Round(value)) > double.Epsilon)
+            {
+                ShowError();
+                return;
+            }
+
+            try
+            {
+                var result = Factorial((int)Math.Round(value));
+                SetDisplayValue(result);
+                _shouldResetDisplay = true;
+            }
+            catch (OverflowException)
+            {
+                ShowError();
             }
         }
 
-        return result;
-    }
+        private void MemoryAdd_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryGetDisplayValue(out var value))
+            {
+                return;
+            }
 
-    private void ApplyTheme()
-    {
-        if (_useMaterialYou)
-        {
-            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 17, 23));
-            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(33, 31, 42));
-            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
-            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(55, 51, 64));
-            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
-            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(154, 139, 255));
-        }
-        else
-        {
-            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(245, 245, 245));
-            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Colors.White);
-            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
-            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(224, 224, 224));
-            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
-            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
+            _memory += value;
+            UpdateMemoryDisplay();
+            _shouldResetDisplay = true;
         }
 
-        MaterialThemeToggleControl.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
-    }
-
-    private void ResetCalculatorState()
-    {
-        DisplayBox.Text = "0";
-        _leftOperand = null;
-        _pendingOperator = null;
-        _shouldResetDisplay = false;
-    }
-
-    private bool TryGetDisplayValue(out double value)
-    {
-        if (DisplayBox.Text == "Error")
+        private void MemorySubtract_Click(object sender, RoutedEventArgs e)
         {
-            value = 0;
-            return false;
+            if (!TryGetDisplayValue(out var value))
+            {
+                return;
+            }
+
+            _memory -= value;
+            UpdateMemoryDisplay();
+            _shouldResetDisplay = true;
         }
 
-        return double.TryParse(DisplayBox.Text, NumberStyles.Float, _culture, out value);
-    }
-
-    private void SetDisplayValue(double value)
-    {
-        var formatted = value.ToString("G12", _culture);
-        if (formatted.Contains('E', StringComparison.Ordinal))
+        private void MemoryRecall_Click(object sender, RoutedEventArgs e)
         {
-            DisplayBox.Text = formatted;
-            return;
+            SetDisplayValue(_memory);
+            _shouldResetDisplay = true;
         }
 
-        formatted = formatted.TrimEnd('0').TrimEnd('.');
-        if (formatted == "-0")
+        private void MemoryClear_Click(object sender, RoutedEventArgs e)
         {
-            formatted = "0";
+            _memory = 0;
+            UpdateMemoryDisplay();
         }
 
-        DisplayBox.Text = string.IsNullOrEmpty(formatted) ? "0" : formatted;
-    }
-
-    private void ShowError()
-    {
-        DisplayBox.Text = "Error";
-        _leftOperand = null;
-        _pendingOperator = null;
-        _shouldResetDisplay = true;
-    }
-
-    private void UpdateMemoryDisplay()
-    {
-        if (Math.Abs(_memory) < double.Epsilon)
+        private void MaterialThemeToggle_OnChecked(object sender, RoutedEventArgs e)
         {
-            MemoryTextBlock.Text = string.Empty;
-            return;
+            _useMaterialYou = true;
+            ApplyTheme();
         }
 
-        MemoryTextBlock.Text = $"Memory: {_memory.ToString("G12", _culture)}";
-    }
-
-    private static double Evaluate(double left, double right, string operatorSymbol)
-    {
-        return operatorSymbol switch
+        private void MaterialThemeToggle_OnUnchecked(object sender, RoutedEventArgs e)
         {
-            "+" => left + right,
-            "-" => left - right,
-            "*" => left * right,
-            "/" => right == 0 ? throw new DivideByZeroException() : left / right,
-            _ => throw new InvalidOperationException($"Unknown operator: {operatorSymbol}")
-        };
+            _useMaterialYou = false;
+            ApplyTheme();
+        }
+
+        private void ApplyUnaryFunction(Func<double, double> func, bool degrees = false, bool validateTan = false)
+        {
+            if (!TryGetDisplayValue(out var value))
+            {
+                return;
+            }
+
+            if (degrees)
+            {
+                value = value * Math.PI / 180.0;
+            }
+
+            if (validateTan)
+            {
+                var cosValue = Math.Cos(value);
+                if (Math.Abs(cosValue) < 1e-12)
+                {
+                    ShowError();
+                    return;
+                }
+            }
+
+            var result = func(value);
+            SetDisplayValue(result);
+            _shouldResetDisplay = true;
+        }
+
+        private static double Factorial(int value)
+        {
+            double result = 1;
+            for (var i = 2; i <= value; i++)
+            {
+                result *= i;
+                if (double.IsInfinity(result) || double.IsNaN(result))
+                {
+                    throw new OverflowException();
+                }
+            }
+
+            return result;
+        }
+
+        private void ApplyTheme()
+        {
+            if (_useMaterialYou)
+            {
+                Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 17, 23));
+                Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(33, 31, 42));
+                Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
+                Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(55, 51, 64));
+                Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
+                Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(154, 139, 255));
+            }
+            else
+            {
+                Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(245, 245, 245));
+                Resources["BorderBackgroundBrush"] = new SolidColorBrush(Colors.White);
+                Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
+                Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(224, 224, 224));
+                Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
+                Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
+            }
+
+            MaterialThemeToggleControl.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
+        }
+
+        private void ResetCalculatorState()
+        {
+            DisplayBox.Text = "0";
+            _leftOperand = null;
+            _pendingOperator = null;
+            _shouldResetDisplay = false;
+        }
+
+        private bool TryGetDisplayValue(out double value)
+        {
+            if (DisplayBox.Text == "Error")
+            {
+                value = 0;
+                return false;
+            }
+
+            return double.TryParse(DisplayBox.Text, NumberStyles.Float, _culture, out value);
+        }
+
+        private void SetDisplayValue(double value)
+        {
+            var formatted = value.ToString("G12", _culture);
+            if (formatted.Contains('E', StringComparison.Ordinal))
+            {
+                DisplayBox.Text = formatted;
+                return;
+            }
+
+            formatted = formatted.TrimEnd('0').TrimEnd('.');
+            if (formatted == "-0")
+            {
+                formatted = "0";
+            }
+
+            DisplayBox.Text = string.IsNullOrEmpty(formatted) ? "0" : formatted;
+        }
+
+        private void ShowError()
+        {
+            DisplayBox.Text = "Error";
+            _leftOperand = null;
+            _pendingOperator = null;
+            _shouldResetDisplay = true;
+        }
+
+        private void UpdateMemoryDisplay()
+        {
+            if (Math.Abs(_memory) < double.Epsilon)
+            {
+                MemoryTextBlock.Text = string.Empty;
+                return;
+            }
+
+            MemoryTextBlock.Text = $"Memory: {_memory.ToString("G12", _culture)}";
+        }
+
+        private static double Evaluate(double left, double right, string operatorSymbol)
+        {
+            return operatorSymbol switch
+            {
+                "+" => left + right,
+                "-" => left - right,
+                "*" => left * right,
+                "/" => right == 0 ? throw new DivideByZeroException() : left / right,
+                _ => throw new InvalidOperationException($"Unknown operator: {operatorSymbol}")
+            };
+        }
     }
 }
