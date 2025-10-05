@@ -12,12 +12,13 @@ namespace CalcApp
         private double? _leftOperand;
         private string? _pendingOperator;
         private bool _shouldResetDisplay;
-        private double _memory;
+        private readonly double[] _memorySlots = new double[10];
         private bool _useMaterialYou;
 
         private TextBox? _display;
         private ToggleButton? _materialThemeToggle;
         private TextBlock? _memoryText;
+        private ListBox? _memoryList;
 
         private readonly CultureInfo _culture = CultureInfo.InvariantCulture;
 
@@ -25,6 +26,7 @@ namespace CalcApp
         {
             this.InitializeComponent();
             ApplyTheme();
+            InitializeMemory();
         }
 
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
@@ -33,6 +35,8 @@ namespace CalcApp
             _materialThemeToggle ??= FindRequiredControl<ToggleButton>("MaterialThemeToggle");
 
         private TextBlock MemoryTextBlock => _memoryText ??= FindRequiredControl<TextBlock>("MemoryText");
+
+        private ListBox MemoryListBox => _memoryList ??= FindRequiredControl<ListBox>("MemoryList");
 
         private T FindRequiredControl<T>(string name) where T : class
         {
@@ -252,8 +256,9 @@ namespace CalcApp
                 return;
             }
 
-            _memory += value;
-            UpdateMemoryDisplay();
+            var index = SelectedMemoryIndex;
+            _memorySlots[index] += value;
+            UpdateMemoryDisplay(index);
             _shouldResetDisplay = true;
         }
 
@@ -264,21 +269,34 @@ namespace CalcApp
                 return;
             }
 
-            _memory -= value;
-            UpdateMemoryDisplay();
+            var index = SelectedMemoryIndex;
+            _memorySlots[index] -= value;
+            UpdateMemoryDisplay(index);
             _shouldResetDisplay = true;
         }
 
         private void MemoryRecall_Click(object sender, RoutedEventArgs e)
         {
-            SetDisplayValue(_memory);
+            var index = SelectedMemoryIndex;
+            SetDisplayValue(_memorySlots[index]);
             _shouldResetDisplay = true;
         }
 
         private void MemoryClear_Click(object sender, RoutedEventArgs e)
         {
-            _memory = 0;
-            UpdateMemoryDisplay();
+            var index = SelectedMemoryIndex;
+            _memorySlots[index] = 0;
+            UpdateMemoryDisplay(index);
+        }
+
+        private void MemoryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MemoryListBox.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            UpdateMemoryText(MemoryListBox.SelectedIndex);
         }
 
         private void MaterialThemeToggle_OnChecked(object sender, RoutedEventArgs e)
@@ -380,20 +398,7 @@ namespace CalcApp
 
         private void SetDisplayValue(double value)
         {
-            var formatted = value.ToString("G12", _culture);
-            if (formatted.Contains('E', StringComparison.Ordinal))
-            {
-                DisplayBox.Text = formatted;
-                return;
-            }
-
-            formatted = formatted.TrimEnd('0').TrimEnd('.');
-            if (formatted == "-0")
-            {
-                formatted = "0";
-            }
-
-            DisplayBox.Text = string.IsNullOrEmpty(formatted) ? "0" : formatted;
+            DisplayBox.Text = FormatNumber(value);
         }
 
         private void ShowError()
@@ -404,15 +409,69 @@ namespace CalcApp
             _shouldResetDisplay = true;
         }
 
-        private void UpdateMemoryDisplay()
+        private void InitializeMemory()
         {
-            if (Math.Abs(_memory) < double.Epsilon)
+            UpdateMemoryDisplay(0);
+        }
+
+        private int SelectedMemoryIndex =>
+            MemoryListBox.SelectedIndex >= 0 ? MemoryListBox.SelectedIndex : 0;
+
+        private void UpdateMemoryDisplay(int? selectedIndexOverride = null)
+        {
+            var selectedIndex = selectedIndexOverride ?? SelectedMemoryIndex;
+
+            MemoryListBox.Items.Clear();
+            for (var i = 0; i < _memorySlots.Length; i++)
+            {
+                var value = FormatNumber(_memorySlots[i]);
+                MemoryListBox.Items.Add($"M{i + 1}: {value}");
+            }
+
+            if (selectedIndex < 0 || selectedIndex >= _memorySlots.Length)
+            {
+                selectedIndex = 0;
+            }
+
+            MemoryListBox.SelectedIndex = selectedIndex;
+            UpdateMemoryText(selectedIndex);
+        }
+
+        private void UpdateMemoryText(int selectedIndex)
+        {
+            if (selectedIndex < 0 || selectedIndex >= _memorySlots.Length)
             {
                 MemoryTextBlock.Text = string.Empty;
                 return;
             }
 
-            MemoryTextBlock.Text = $"Memory: {_memory.ToString("G12", _culture)}";
+            var value = _memorySlots[selectedIndex];
+
+            if (Math.Abs(value) < double.Epsilon)
+            {
+                MemoryTextBlock.Text = $"Aktív memória: M{selectedIndex + 1} üres";
+                return;
+            }
+
+            var formattedValue = FormatNumber(value);
+            MemoryTextBlock.Text = $"Aktív memória: M{selectedIndex + 1} = {formattedValue}";
+        }
+
+        private string FormatNumber(double value)
+        {
+            var formatted = value.ToString("G12", _culture);
+            if (formatted.Contains('E', StringComparison.Ordinal))
+            {
+                return formatted;
+            }
+
+            formatted = formatted.TrimEnd('0').TrimEnd('.');
+            if (formatted == "-0")
+            {
+                formatted = "0";
+            }
+
+            return string.IsNullOrEmpty(formatted) ? "0" : formatted;
         }
 
         private static double Evaluate(double left, double right, string operatorSymbol)
