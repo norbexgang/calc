@@ -18,6 +18,29 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="8" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -34,16 +57,16 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Border CornerRadius="8" BorderBrush="#FFB0B0B0" BorderThickness="1" Padding="8"
+            <Border CornerRadius="12" BorderBrush="#FFB0B0B0" BorderThickness="1" Padding="8"
                     Background="{DynamicResource BorderBackgroundBrush}">
                 <TextBox x:Name="Display" FontSize="36" HorizontalAlignment="Stretch" VerticalAlignment="Center"
                          Text="0" TextAlignment="Right" IsReadOnly="True" BorderThickness="0"
                          Background="Transparent" Foreground="{DynamicResource BorderForegroundBrush}" />
             </Border>
 
-            <ToggleButton x:Name="DarkModeToggle" Content="Dark mode" Grid.Column="1" Margin="12,0,0,0"
-                          VerticalAlignment="Center" Padding="12,8" Checked="DarkModeToggle_OnChecked"
-                          Unchecked="DarkModeToggle_OnUnchecked"
+            <ToggleButton x:Name="MaterialThemeToggle" Content="Material You" Grid.Column="1" Margin="12,0,0,0"
+                          VerticalAlignment="Center" Padding="12,8" Checked="MaterialThemeToggle_OnChecked"
+                          Unchecked="MaterialThemeToggle_OnUnchecked"
                           Foreground="{DynamicResource BorderForegroundBrush}" />
         </Grid>
 
