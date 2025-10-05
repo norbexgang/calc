@@ -419,7 +419,7 @@ namespace CalcApp
                 Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
             }
 
-            MaterialThemeToggleControl.Content = _useMaterialYou ? "Sötét mód" : "Klasszikus nézet";
+            MaterialThemeToggleControl.Content = _useMaterialYou ? "Dark Mode" : "Klasszikus nézet";
         }
 
         private void ResetCalculatorState()
