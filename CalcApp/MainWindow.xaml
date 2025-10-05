@@ -1,0 +1,55 @@
+<Window x:Class="CalcApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Számológép" Height="450" Width="350" ResizeMode="CanMinimize">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border CornerRadius="8" BorderBrush="#FFB0B0B0" BorderThickness="1" Padding="8" Background="#FFF3F3F3">
+            <TextBox x:Name="Display" FontSize="32" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                     Text="0" TextAlignment="Right" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+        </Border>
+
+        <Grid Grid.Row="1" Margin="0,12,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button Content="C" Click="Clear_Click" FontSize="20" Grid.Row="0" Grid.Column="0" />
+            <Button Content="±" Click="Sign_Click" FontSize="20" Grid.Row="0" Grid.Column="1" />
+            <Button Content="%" Click="Percent_Click" FontSize="20" Grid.Row="0" Grid.Column="2" />
+            <Button Content="÷" Click="Operator_Click" FontSize="20" Grid.Row="0" Grid.Column="3" Tag="/" />
+
+            <Button Content="7" Click="Digit_Click" FontSize="20" Grid.Row="1" Grid.Column="0" />
+            <Button Content="8" Click="Digit_Click" FontSize="20" Grid.Row="1" Grid.Column="1" />
+            <Button Content="9" Click="Digit_Click" FontSize="20" Grid.Row="1" Grid.Column="2" />
+            <Button Content="×" Click="Operator_Click" FontSize="20" Grid.Row="1" Grid.Column="3" Tag="*" />
+
+            <Button Content="4" Click="Digit_Click" FontSize="20" Grid.Row="2" Grid.Column="0" />
+            <Button Content="5" Click="Digit_Click" FontSize="20" Grid.Row="2" Grid.Column="1" />
+            <Button Content="6" Click="Digit_Click" FontSize="20" Grid.Row="2" Grid.Column="2" />
+            <Button Content="−" Click="Operator_Click" FontSize="20" Grid.Row="2" Grid.Column="3" Tag="-" />
+
+            <Button Content="1" Click="Digit_Click" FontSize="20" Grid.Row="3" Grid.Column="0" />
+            <Button Content="2" Click="Digit_Click" FontSize="20" Grid.Row="3" Grid.Column="1" />
+            <Button Content="3" Click="Digit_Click" FontSize="20" Grid.Row="3" Grid.Column="2" />
+            <Button Content="+" Click="Operator_Click" FontSize="20" Grid.Row="3" Grid.Column="3" Tag="+" />
+
+            <Button Content="0" Click="Digit_Click" FontSize="20" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" />
+            <Button Content="," Click="Decimal_Click" FontSize="20" Grid.Row="4" Grid.Column="2" />
+            <Button Content="=" Click="Equals_Click" FontSize="20" Grid.Row="4" Grid.Column="3" />
+        </Grid>
+    </Grid>
+</Window>
