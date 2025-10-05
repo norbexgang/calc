@@ -12,7 +12,7 @@ public partial class MainWindow : Window
     private string? _pendingOperator;
     private bool _shouldResetDisplay;
     private double _memory;
-    private bool _isDarkMode;
+    private bool _useMaterialYou;
 
     private readonly CultureInfo _culture = CultureInfo.InvariantCulture;
 
@@ -259,15 +259,15 @@ public partial class MainWindow : Window
         UpdateMemoryDisplay();
     }
 
-    private void DarkModeToggle_OnChecked(object sender, RoutedEventArgs e)
+    private void MaterialThemeToggle_OnChecked(object sender, RoutedEventArgs e)
     {
-        _isDarkMode = true;
+        _useMaterialYou = true;
         ApplyTheme();
     }
 
-    private void DarkModeToggle_OnUnchecked(object sender, RoutedEventArgs e)
+    private void MaterialThemeToggle_OnUnchecked(object sender, RoutedEventArgs e)
     {
-        _isDarkMode = false;
+        _useMaterialYou = false;
         ApplyTheme();
     }
 
@@ -315,18 +315,26 @@ public partial class MainWindow : Window
 
     private void ApplyTheme()
     {
-        var windowBackground = _isDarkMode ? Color.FromRgb(18, 18, 18) : Color.FromRgb(245, 245, 245);
-        var borderBackground = _isDarkMode ? Color.FromRgb(33, 33, 33) : Colors.White;
-        var foreground = _isDarkMode ? Colors.White : Color.FromRgb(31, 31, 31);
-        var buttonBackground = _isDarkMode ? Color.FromRgb(56, 56, 56) : Color.FromRgb(224, 224, 224);
-        var accent = _isDarkMode ? Color.FromRgb(98, 0, 238) : Color.FromRgb(127, 180, 255);
+        if (_useMaterialYou)
+        {
+            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 17, 23));
+            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(33, 31, 42));
+            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
+            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(55, 51, 64));
+            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
+            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(154, 139, 255));
+        }
+        else
+        {
+            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 18, 18));
+            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
+            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(242, 242, 242));
+            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(42, 42, 42));
+            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(242, 242, 242));
+            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(61, 125, 255));
+        }
 
-        Resources["WindowBackgroundBrush"] = new SolidColorBrush(windowBackground);
-        Resources["BorderBackgroundBrush"] = new SolidColorBrush(borderBackground);
-        Resources["BorderForegroundBrush"] = new SolidColorBrush(foreground);
-        Resources["ButtonBackgroundBrush"] = new SolidColorBrush(buttonBackground);
-        Resources["ButtonForegroundBrush"] = new SolidColorBrush(foreground);
-        Resources["AccentButtonBrush"] = new SolidColorBrush(accent);
+        MaterialThemeToggle.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
     }
 
     private void ResetCalculatorState()
