@@ -27,12 +27,6 @@ public partial class MainWindow : Window
         ApplyTheme();
     }
 
-    public void InitializeComponent()
-    {
-        var resourceLocator = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
-        Application.LoadComponent(this, resourceLocator);
-    }
-
     private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
 
     private ToggleButton MaterialThemeToggleControl =>
