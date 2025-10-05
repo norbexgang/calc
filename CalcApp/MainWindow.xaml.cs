@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
 namespace CalcApp;
@@ -14,12 +15,39 @@ public partial class MainWindow : Window
     private double _memory;
     private bool _useMaterialYou;
 
+    private TextBox? _display;
+    private ToggleButton? _materialThemeToggle;
+    private TextBlock? _memoryText;
+
     private readonly CultureInfo _culture = CultureInfo.InvariantCulture;
 
     public MainWindow()
     {
         InitializeComponent();
         ApplyTheme();
+    }
+
+    public void InitializeComponent()
+    {
+        var resourceLocator = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
+        Application.LoadComponent(this, resourceLocator);
+    }
+
+    private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
+
+    private ToggleButton MaterialThemeToggleControl =>
+        _materialThemeToggle ??= FindRequiredControl<ToggleButton>("MaterialThemeToggle");
+
+    private TextBlock MemoryTextBlock => _memoryText ??= FindRequiredControl<TextBlock>("MemoryText");
+
+    private T FindRequiredControl<T>(string name) where T : class
+    {
+        if (FindName(name) is T control)
+        {
+            return control;
+        }
+
+        throw new InvalidOperationException($"Could not find control '{name}'.");
     }
 
     private void Digit_Click(object sender, RoutedEventArgs e)
@@ -31,13 +59,13 @@ public partial class MainWindow : Window
 
         var digit = button.Content?.ToString() ?? string.Empty;
 
-        if (_shouldResetDisplay || Display.Text == "0" || Display.Text == "Error")
+        if (_shouldResetDisplay || DisplayBox.Text == "0" || DisplayBox.Text == "Error")
         {
-            Display.Text = digit;
+            DisplayBox.Text = digit;
         }
         else
         {
-            Display.Text += digit;
+            DisplayBox.Text += digit;
         }
 
         _shouldResetDisplay = false;
@@ -45,16 +73,16 @@ public partial class MainWindow : Window
 
     private void Decimal_Click(object sender, RoutedEventArgs e)
     {
-        if (_shouldResetDisplay || Display.Text == "Error")
+        if (_shouldResetDisplay || DisplayBox.Text == "Error")
         {
-            Display.Text = "0.";
+            DisplayBox.Text = "0.";
             _shouldResetDisplay = false;
             return;
         }
 
-        if (!Display.Text.Contains('.', StringComparison.Ordinal))
+        if (!DisplayBox.Text.Contains('.', StringComparison.Ordinal))
         {
-            Display.Text += ".";
+            DisplayBox.Text += ".";
         }
     }
 
@@ -88,20 +116,20 @@ public partial class MainWindow : Window
 
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (_shouldResetDisplay || Display.Text == "Error")
+        if (_shouldResetDisplay || DisplayBox.Text == "Error")
         {
-            Display.Text = "0";
+            DisplayBox.Text = "0";
             _shouldResetDisplay = false;
             return;
         }
 
-        if (Display.Text.Length <= 1)
+        if (DisplayBox.Text.Length <= 1)
         {
-            Display.Text = "0";
+            DisplayBox.Text = "0";
             return;
         }
 
-        Display.Text = Display.Text[..^1];
+        DisplayBox.Text = DisplayBox.Text[..^1];
     }
 
     private void Operator_Click(object sender, RoutedEventArgs e)
@@ -334,12 +362,12 @@ public partial class MainWindow : Window
             Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
         }
 
-        MaterialThemeToggle.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
+        MaterialThemeToggleControl.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
     }
 
     private void ResetCalculatorState()
     {
-        Display.Text = "0";
+        DisplayBox.Text = "0";
         _leftOperand = null;
         _pendingOperator = null;
         _shouldResetDisplay = false;
@@ -347,13 +375,13 @@ public partial class MainWindow : Window
 
     private bool TryGetDisplayValue(out double value)
     {
-        if (Display.Text == "Error")
+        if (DisplayBox.Text == "Error")
         {
             value = 0;
             return false;
         }
 
-        return double.TryParse(Display.Text, NumberStyles.Float, _culture, out value);
+        return double.TryParse(DisplayBox.Text, NumberStyles.Float, _culture, out value);
     }
 
     private void SetDisplayValue(double value)
@@ -361,7 +389,7 @@ public partial class MainWindow : Window
         var formatted = value.ToString("G12", _culture);
         if (formatted.Contains('E', StringComparison.Ordinal))
         {
-            Display.Text = formatted;
+            DisplayBox.Text = formatted;
             return;
         }
 
@@ -371,12 +399,12 @@ public partial class MainWindow : Window
             formatted = "0";
         }
 
-        Display.Text = string.IsNullOrEmpty(formatted) ? "0" : formatted;
+        DisplayBox.Text = string.IsNullOrEmpty(formatted) ? "0" : formatted;
     }
 
     private void ShowError()
     {
-        Display.Text = "Error";
+        DisplayBox.Text = "Error";
         _leftOperand = null;
         _pendingOperator = null;
         _shouldResetDisplay = true;
@@ -386,11 +414,11 @@ public partial class MainWindow : Window
     {
         if (Math.Abs(_memory) < double.Epsilon)
         {
-            MemoryText.Text = string.Empty;
+            MemoryTextBlock.Text = string.Empty;
             return;
         }
 
-        MemoryText.Text = $"Memory: {_memory.ToString("G12", _culture)}";
+        MemoryTextBlock.Text = $"Memory: {_memory.ToString("G12", _culture)}";
     }
 
     private static double Evaluate(double left, double right, string operatorSymbol)
