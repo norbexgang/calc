@@ -317,6 +317,7 @@ public partial class MainWindow : Window
     {
         if (_useMaterialYou)
         {
+
             Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 17, 23));
             Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(33, 31, 42));
             Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
@@ -335,6 +336,24 @@ public partial class MainWindow : Window
         }
 
         MaterialThemeToggle.Content = _useMaterialYou ? "Material You nézet" : "Klasszikus nézet";
+
+            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 18, 18));
+            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(28, 27, 31));
+            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(232, 224, 255));
+            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(49, 48, 56));
+            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(232, 224, 255));
+            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(147, 118, 255));
+        }
+        else
+        {
+            Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(245, 245, 245));
+            Resources["BorderBackgroundBrush"] = new SolidColorBrush(Colors.White);
+            Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
+            Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(224, 224, 224));
+            Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
+            Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
+        }
+
     }
 
     private void ResetCalculatorState()
