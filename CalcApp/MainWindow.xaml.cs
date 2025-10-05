@@ -24,9 +24,15 @@ namespace CalcApp
 
         public MainWindow()
         {
-            this.InitializeComponent();
+            LoadComponentFromXaml();
             ApplyTheme();
             InitializeMemory();
+        }
+
+        private void LoadComponentFromXaml()
+        {
+            // Manually load the XAML to work around designer not seeing InitializeComponent.
+            Application.LoadComponent(this, new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative));
         }
 
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
