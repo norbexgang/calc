@@ -4,44 +4,43 @@
         Title="Calculator" Width="380" MinWidth="360" Height="560" MinHeight="520" ResizeMode="CanResize"
         Background="{DynamicResource WindowBackgroundBrush}">
     <Window.Resources>
-        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FF121212" />
-        <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#FF1F1F1F" />
-        <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FFF2F2F2" />
-        <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FF2A2A2A" />
-        <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FFF2F2F2" />
-        <SolidColorBrush x:Key="AccentButtonBrush" Color="#FF3D7DFF" />
-        <Style TargetType="Button">
-            <Setter Property="Margin" Value="4" />
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="8" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="14"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              RecognizesAccessKey="True" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/ClassicTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Button">
+                <Setter Property="Margin" Value="4" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="8" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="ButtonBorder"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="14"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="12">
