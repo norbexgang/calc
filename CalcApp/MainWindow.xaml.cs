@@ -180,11 +180,11 @@ namespace CalcApp
             if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
             {
                 var leftOperand = _leftOperand.Value;
-                var pendingOperator = _pendingOperator!;
-                var result = Evaluate(leftOperand, currentValue, pendingOperator);
+                var pendingOp = _pendingOperator;
+                var result = Evaluate(leftOperand, currentValue, pendingOp);
                 _leftOperand = result;
                 SetDisplayValue(result);
-                RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(currentValue)}", result);
+                RecordOperation($"{FormatNumber(leftOperand)}{pendingOp}{FormatNumber(currentValue)}", result);
             }
             else
             {
