@@ -15,4 +15,9 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="Themes\ClassicTheme.xaml" />
+    <Page Include="Themes\MaterialTheme.xaml" />
+  </ItemGroup>
 </Project>

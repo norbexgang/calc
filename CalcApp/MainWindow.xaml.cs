@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Media;
 
 namespace CalcApp
 {
@@ -14,9 +14,16 @@ namespace CalcApp
         private string? _pendingOperator;
         private bool _shouldResetDisplay;
         private double _memoryValue;
-        private readonly List<string> _memoryOperations = new();
+        private readonly StringBuilder _memoryHistoryBuilder = new();
         private bool _useMaterialYou;
         private string? _lastOperationDescription;
+
+        private ResourceDictionary? _currentThemeDictionary;
+
+        private static readonly Uri ClassicThemeUri = new("/CalcApp;component/Themes/ClassicTheme.xaml", UriKind.Relative);
+        private static readonly Uri MaterialThemeUri = new("/CalcApp;component/Themes/MaterialTheme.xaml", UriKind.Relative);
+        private static ResourceDictionary? s_classicTheme;
+        private static ResourceDictionary? s_materialTheme;
 
         private TextBox? _display;
         private ToggleButton? _materialThemeToggle;
@@ -28,6 +35,7 @@ namespace CalcApp
         public MainWindow()
         {
             LoadComponentFromXaml();
+            InitializeThemeTracking();
             ApplyTheme();
             InitializeMemory();
         }
@@ -36,6 +44,21 @@ namespace CalcApp
         {
             // Manually load the XAML to work around designer not seeing InitializeComponent.
             Application.LoadComponent(this, new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative));
+        }
+
+        private void InitializeThemeTracking()
+        {
+            if (_currentThemeDictionary is not null)
+            {
+                return;
+            }
+
+            var existingTheme = Resources.MergedDictionaries.FirstOrDefault();
+            if (existingTheme is not null)
+            {
+                _currentThemeDictionary = existingTheme;
+                s_classicTheme ??= existingTheme;
+            }
         }
 
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
@@ -313,7 +336,7 @@ namespace CalcApp
         private void MemoryClear_Click(object sender, RoutedEventArgs e)
         {
             _memoryValue = 0;
-            _memoryOperations.Clear();
+            _memoryHistoryBuilder.Clear();
             UpdateMemoryDisplay();
         }
 
@@ -376,25 +399,42 @@ namespace CalcApp
 
         private void ApplyTheme()
         {
-            if (_useMaterialYou)
+            var themeDictionary = GetThemeDictionary(_useMaterialYou);
+            if (ReferenceEquals(_currentThemeDictionary, themeDictionary))
             {
-                Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(18, 17, 23));
-                Resources["BorderBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(33, 31, 42));
-                Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
-                Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(55, 51, 64));
-                Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(238, 233, 255));
-                Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(154, 139, 255));
-            }
-            else
-            {
-                Resources["WindowBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(245, 245, 245));
-                Resources["BorderBackgroundBrush"] = new SolidColorBrush(Colors.White);
-                Resources["BorderForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
-                Resources["ButtonBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(224, 224, 224));
-                Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(31, 31, 31));
-                Resources["AccentButtonBrush"] = new SolidColorBrush(Color.FromRgb(127, 180, 255));
+                UpdateThemeToggleContent();
+                return;
             }
 
+            var mergedDictionaries = Resources.MergedDictionaries;
+            if (_currentThemeDictionary is not null)
+            {
+                mergedDictionaries.Remove(_currentThemeDictionary);
+            }
+
+            if (!mergedDictionaries.Contains(themeDictionary))
+            {
+                mergedDictionaries.Add(themeDictionary);
+            }
+
+            _currentThemeDictionary = themeDictionary;
+            UpdateThemeToggleContent();
+        }
+
+        private ResourceDictionary GetThemeDictionary(bool useMaterialYou)
+        {
+            return useMaterialYou
+                ? s_materialTheme ??= LoadThemeDictionary(MaterialThemeUri)
+                : s_classicTheme ??= LoadThemeDictionary(ClassicThemeUri);
+        }
+
+        private static ResourceDictionary LoadThemeDictionary(Uri source)
+        {
+            return (ResourceDictionary)Application.LoadComponent(source);
+        }
+
+        private void UpdateThemeToggleContent()
+        {
             MaterialThemeToggleControl.Content = _useMaterialYou ? "Dark Mode" : "Klasszikus nézet";
         }
 
@@ -441,14 +481,13 @@ namespace CalcApp
         {
             MemoryListBox.Items.Clear();
             var value = FormatNumber(_memoryValue);
-            if (_memoryOperations.Count == 0)
+            if (_memoryHistoryBuilder.Length == 0)
             {
                 MemoryListBox.Items.Add($"Memória: {value}");
             }
             else
             {
-                var operationsText = string.Join("; ", _memoryOperations);
-                MemoryListBox.Items.Add($"Memória: {operationsText} (összesen: {value})");
+                MemoryListBox.Items.Add($"Memória: {_memoryHistoryBuilder} (összesen: {value})");
             }
 
             UpdateMemoryText();
@@ -470,14 +509,23 @@ namespace CalcApp
         {
             var description = _lastOperationDescription ?? FormatNumber(value);
 
-            if (_memoryOperations.Count == 0 && isAddition)
+            if (_memoryHistoryBuilder.Length == 0)
             {
-                _memoryOperations.Add(description);
+                if (isAddition)
+                {
+                    _memoryHistoryBuilder.Append(description);
+                }
+                else
+                {
+                    _memoryHistoryBuilder.Append("- ");
+                    _memoryHistoryBuilder.Append(description);
+                }
             }
             else
             {
-                var sign = isAddition ? "+" : "-";
-                _memoryOperations.Add($"{sign} {description}");
+                _memoryHistoryBuilder.Append("; ");
+                _memoryHistoryBuilder.Append(isAddition ? "+ " : "- ");
+                _memoryHistoryBuilder.Append(description);
             }
 
             UpdateMemoryDisplay();
