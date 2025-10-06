@@ -152,9 +152,9 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Text="Memória helyek" FontSize="16" FontWeight="SemiBold"
+                    <TextBlock Text="Memória" FontSize="16" FontWeight="SemiBold"
                                Margin="0,0,0,8" Foreground="{DynamicResource BorderForegroundBrush}" />
-                    <ListBox x:Name="MemoryList" Grid.Row="1" SelectionChanged="MemoryList_SelectionChanged"
+                    <ListBox x:Name="MemoryList" Grid.Row="1"
                              Foreground="{DynamicResource BorderForegroundBrush}"
                              Background="Transparent" BorderThickness="0"
                              ScrollViewer.VerticalScrollBarVisibility="Auto" />

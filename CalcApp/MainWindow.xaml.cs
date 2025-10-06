@@ -13,8 +13,8 @@ namespace CalcApp
         private double? _leftOperand;
         private string? _pendingOperator;
         private bool _shouldResetDisplay;
-        private readonly double[] _memoryValues = new double[10];
-        private readonly List<string>[] _memoryOperations = new List<string>[10];
+        private double _memoryValue;
+        private readonly List<string> _memoryOperations = new();
         private bool _useMaterialYou;
         private string? _lastOperationDescription;
 
@@ -29,17 +29,7 @@ namespace CalcApp
         {
             LoadComponentFromXaml();
             ApplyTheme();
-            InitializeMemoryOperations();
             InitializeMemory();
-        }
-
-        private void InitializeMemoryOperations()
-        {
-            for (var i = 0; i < _memoryOperations.Length; i++)
-            {
-                _memoryOperations[i] = new List<string>();
-                _memoryValues[i] = 0;
-            }
         }
 
         private void LoadComponentFromXaml()
@@ -296,9 +286,8 @@ namespace CalcApp
                 return;
             }
 
-            var index = SelectedMemoryIndex;
-            _memoryValues[index] += value;
-            TrackMemoryOperation(index, value, true);
+            _memoryValue += value;
+            TrackMemoryOperation(value, true);
             _shouldResetDisplay = true;
         }
 
@@ -309,36 +298,23 @@ namespace CalcApp
                 return;
             }
 
-            var index = SelectedMemoryIndex;
-            _memoryValues[index] -= value;
-            TrackMemoryOperation(index, value, false);
+            _memoryValue -= value;
+            TrackMemoryOperation(value, false);
             _shouldResetDisplay = true;
         }
 
         private void MemoryRecall_Click(object sender, RoutedEventArgs e)
         {
-            var index = SelectedMemoryIndex;
-            SetDisplayValue(_memoryValues[index]);
+            SetDisplayValue(_memoryValue);
             _shouldResetDisplay = true;
             _lastOperationDescription = null;
         }
 
         private void MemoryClear_Click(object sender, RoutedEventArgs e)
         {
-            var index = SelectedMemoryIndex;
-            _memoryValues[index] = 0;
-            _memoryOperations[index].Clear();
-            UpdateMemoryDisplay(index);
-        }
-
-        private void MemoryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (MemoryListBox.SelectedIndex < 0)
-            {
-                return;
-            }
-
-            UpdateMemoryText(MemoryListBox.SelectedIndex);
+            _memoryValue = 0;
+            _memoryOperations.Clear();
+            UpdateMemoryDisplay();
         }
 
         private void MaterialThemeToggle_OnChecked(object sender, RoutedEventArgs e)
@@ -458,75 +434,53 @@ namespace CalcApp
 
         private void InitializeMemory()
         {
-            UpdateMemoryDisplay(0);
+            UpdateMemoryDisplay();
         }
 
-        private int SelectedMemoryIndex =>
-            MemoryListBox.SelectedIndex >= 0 ? MemoryListBox.SelectedIndex : 0;
-
-        private void UpdateMemoryDisplay(int? selectedIndexOverride = null)
+        private void UpdateMemoryDisplay()
         {
-            var selectedIndex = selectedIndexOverride ?? SelectedMemoryIndex;
-
             MemoryListBox.Items.Clear();
-            for (var i = 0; i < _memoryValues.Length; i++)
+            var value = FormatNumber(_memoryValue);
+            if (_memoryOperations.Count == 0)
             {
-                var value = FormatNumber(_memoryValues[i]);
-                var operations = _memoryOperations[i];
-                if (operations.Count == 0)
-                {
-                    MemoryListBox.Items.Add($"M{i + 1}: {value}");
-                    continue;
-                }
-
-                var operationsText = string.Join("; ", operations);
-                MemoryListBox.Items.Add($"M{i + 1}: {operationsText} (összesen: {value})");
+                MemoryListBox.Items.Add($"Memória: {value}");
+            }
+            else
+            {
+                var operationsText = string.Join("; ", _memoryOperations);
+                MemoryListBox.Items.Add($"Memória: {operationsText} (összesen: {value})");
             }
 
-            if (selectedIndex < 0 || selectedIndex >= _memoryValues.Length)
-            {
-                selectedIndex = 0;
-            }
-
-            MemoryListBox.SelectedIndex = selectedIndex;
-            UpdateMemoryText(selectedIndex);
+            UpdateMemoryText();
         }
 
-        private void UpdateMemoryText(int selectedIndex)
+        private void UpdateMemoryText()
         {
-            if (selectedIndex < 0 || selectedIndex >= _memoryValues.Length)
+            if (Math.Abs(_memoryValue) < double.Epsilon)
             {
-                MemoryTextBlock.Text = string.Empty;
+                MemoryTextBlock.Text = "Aktív memória: üres";
                 return;
             }
 
-            var value = _memoryValues[selectedIndex];
-
-            if (Math.Abs(value) < double.Epsilon)
-            {
-                MemoryTextBlock.Text = $"Aktív memória: M{selectedIndex + 1} üres";
-                return;
-            }
-
-            var formattedValue = FormatNumber(value);
-            MemoryTextBlock.Text = $"Aktív memória: M{selectedIndex + 1} = {formattedValue}";
+            var formattedValue = FormatNumber(_memoryValue);
+            MemoryTextBlock.Text = $"Aktív memória: {formattedValue}";
         }
 
-        private void TrackMemoryOperation(int index, double value, bool isAddition)
+        private void TrackMemoryOperation(double value, bool isAddition)
         {
             var description = _lastOperationDescription ?? FormatNumber(value);
 
-            if (_memoryOperations[index].Count == 0 && isAddition)
+            if (_memoryOperations.Count == 0 && isAddition)
             {
-                _memoryOperations[index].Add(description);
+                _memoryOperations.Add(description);
             }
             else
             {
                 var sign = isAddition ? "+" : "-";
-                _memoryOperations[index].Add($"{sign} {description}");
+                _memoryOperations.Add($"{sign} {description}");
             }
 
-            UpdateMemoryDisplay(index);
+            UpdateMemoryDisplay();
         }
 
         private void RecordOperation(string description, double result)
