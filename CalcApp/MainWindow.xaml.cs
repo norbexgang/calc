@@ -1,10 +1,8 @@
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 
 namespace CalcApp
 {
@@ -15,18 +13,9 @@ namespace CalcApp
         private bool _shouldResetDisplay;
         private double _memoryValue;
         private readonly StringBuilder _memoryHistoryBuilder = new();
-        private bool _useMaterialYou;
         private string? _lastOperationDescription;
 
-        private ResourceDictionary? _currentThemeDictionary;
-
-        private static readonly Uri ClassicThemeUri = new("/CalcApp;component/Themes/ClassicTheme.xaml", UriKind.Relative);
-        private static readonly Uri MaterialThemeUri = new("/CalcApp;component/Themes/MaterialTheme.xaml", UriKind.Relative);
-        private static ResourceDictionary? s_classicTheme;
-        private static ResourceDictionary? s_materialTheme;
-
         private TextBox? _display;
-        private ToggleButton? _materialThemeToggle;
         private TextBlock? _memoryText;
         private ListBox? _memoryList;
 
@@ -35,8 +24,6 @@ namespace CalcApp
         public MainWindow()
         {
             LoadComponentFromXaml();
-            InitializeThemeTracking();
-            ApplyTheme();
             InitializeMemory();
         }
 
@@ -46,25 +33,7 @@ namespace CalcApp
             Application.LoadComponent(this, new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative));
         }
 
-        private void InitializeThemeTracking()
-        {
-            if (_currentThemeDictionary is not null)
-            {
-                return;
-            }
-
-            var existingTheme = Resources.MergedDictionaries.FirstOrDefault();
-            if (existingTheme is not null)
-            {
-                _currentThemeDictionary = existingTheme;
-                s_classicTheme ??= existingTheme;
-            }
-        }
-
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
-
-        private ToggleButton MaterialThemeToggleControl =>
-            _materialThemeToggle ??= FindRequiredControl<ToggleButton>("MaterialThemeToggle");
 
         private TextBlock MemoryTextBlock => _memoryText ??= FindRequiredControl<TextBlock>("MemoryText");
 
@@ -340,18 +309,6 @@ namespace CalcApp
             UpdateMemoryDisplay();
         }
 
-        private void MaterialThemeToggle_OnChecked(object sender, RoutedEventArgs e)
-        {
-            _useMaterialYou = true;
-            ApplyTheme();
-        }
-
-        private void MaterialThemeToggle_OnUnchecked(object sender, RoutedEventArgs e)
-        {
-            _useMaterialYou = false;
-            ApplyTheme();
-        }
-
         private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
         {
             if (!TryGetDisplayValue(out var value))
@@ -395,47 +352,6 @@ namespace CalcApp
             }
 
             return result;
-        }
-
-        private void ApplyTheme()
-        {
-            var themeDictionary = GetThemeDictionary(_useMaterialYou);
-            if (ReferenceEquals(_currentThemeDictionary, themeDictionary))
-            {
-                UpdateThemeToggleContent();
-                return;
-            }
-
-            var mergedDictionaries = Resources.MergedDictionaries;
-            if (_currentThemeDictionary is not null)
-            {
-                mergedDictionaries.Remove(_currentThemeDictionary);
-            }
-
-            if (!mergedDictionaries.Contains(themeDictionary))
-            {
-                mergedDictionaries.Add(themeDictionary);
-            }
-
-            _currentThemeDictionary = themeDictionary;
-            UpdateThemeToggleContent();
-        }
-
-        private ResourceDictionary GetThemeDictionary(bool useMaterialYou)
-        {
-            return useMaterialYou
-                ? s_materialTheme ??= LoadThemeDictionary(MaterialThemeUri)
-                : s_classicTheme ??= LoadThemeDictionary(ClassicThemeUri);
-        }
-
-        private static ResourceDictionary LoadThemeDictionary(Uri source)
-        {
-            return (ResourceDictionary)Application.LoadComponent(source);
-        }
-
-        private void UpdateThemeToggleContent()
-        {
-            MaterialThemeToggleControl.Content = _useMaterialYou ? "Dark Mode" : "Klasszikus nézet";
         }
 
         private void ResetCalculatorState()
