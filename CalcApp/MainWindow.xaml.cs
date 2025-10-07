@@ -16,7 +16,6 @@ namespace CalcApp
         private string? _lastOperationDescription;
 
         private TextBox? _display;
-        private TextBlock? _memoryText;
         private ListBox? _memoryList;
 
         private readonly CultureInfo _culture = CultureInfo.InvariantCulture;
@@ -34,8 +33,6 @@ namespace CalcApp
         }
 
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
-
-        private TextBlock MemoryTextBlock => _memoryText ??= FindRequiredControl<TextBlock>("MemoryText");
 
         private ListBox MemoryListBox => _memoryList ??= FindRequiredControl<ListBox>("MemoryList");
 
@@ -406,19 +403,6 @@ namespace CalcApp
                 MemoryListBox.Items.Add($"Memória: {_memoryHistoryBuilder} (összesen: {value})");
             }
 
-            UpdateMemoryText();
-        }
-
-        private void UpdateMemoryText()
-        {
-            if (Math.Abs(_memoryValue) < double.Epsilon)
-            {
-                MemoryTextBlock.Text = "Aktív memória: üres";
-                return;
-            }
-
-            var formattedValue = FormatNumber(_memoryValue);
-            MemoryTextBlock.Text = $"Aktív memória: {formattedValue}";
         }
 
         private void TrackMemoryOperation(double value, bool isAddition)
