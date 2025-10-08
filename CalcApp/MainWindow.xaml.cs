@@ -27,7 +27,7 @@ namespace CalcApp
         private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
         private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
         private int _themeDictionaryIndex = -1;
-        private readonly Stack<(double? LeftOperand, string? PendingOperator)> _operationStack = new();
+        // Removed: _operationStack - parenthesis support removed for simplification
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
         private static readonly double DegreesToRadians = Math.PI / 180.0;
@@ -155,15 +155,7 @@ namespace CalcApp
             ProcessDecimal();
         }
 
-        private void OpenParenthesis_Click(object sender, RoutedEventArgs e)
-        {
-            ProcessOpenParenthesis();
-        }
-
-        private void CloseParenthesis_Click(object sender, RoutedEventArgs e)
-        {
-            ProcessCloseParenthesis();
-        }
+        // Removed: OpenParenthesis_Click and CloseParenthesis_Click - parenthesis support removed
 
         private void Clear_Click(object sender, RoutedEventArgs e)
         {
@@ -515,7 +507,7 @@ namespace CalcApp
             _pendingOperator = null;
             _shouldResetDisplay = false;
             _lastOperationDescription = null;
-            _operationStack.Clear();
+            // Removed: _operationStack.Clear() - no longer needed
         }
 
         private bool TryGetDisplayValue(out double value)
@@ -563,7 +555,7 @@ namespace CalcApp
             _pendingOperator = null;
             _shouldResetDisplay = true;
             _lastOperationDescription = null;
-            _operationStack.Clear();
+            // Removed: _operationStack.Clear() - no longer needed
         }
 
         private void InitializeMemory()
@@ -881,45 +873,7 @@ namespace CalcApp
             }
         }
 
-        private void ProcessOpenParenthesis()
-        {
-            if (DisplayBox.Text == "Error")
-            {
-                DisplayBox.Text = "0";
-            }
-
-            _operationStack.Push((_leftOperand, _pendingOperator));
-            _leftOperand = null;
-            _pendingOperator = null;
-            DisplayBox.Text = "0";
-            _shouldResetDisplay = true;
-            _lastOperationDescription = null;
-        }
-
-        private void ProcessCloseParenthesis()
-        {
-            if (_operationStack.Count == 0)
-            {
-                return;
-            }
-
-            if (!TryResolvePendingOperation())
-            {
-                _operationStack.Clear();
-                return;
-            }
-
-            if (!TryGetDisplayValue(out _))
-            {
-                return;
-            }
-
-            var context = _operationStack.Pop();
-            _leftOperand = context.LeftOperand;
-            _pendingOperator = context.PendingOperator;
-            _shouldResetDisplay = _pendingOperator is null;
-            _lastOperationDescription = null;
-        }
+        // Removed: ProcessOpenParenthesis() and ProcessCloseParenthesis() - parenthesis support removed for simplification and optimization
 
         private void ProcessDelete()
         {
@@ -993,28 +947,7 @@ namespace CalcApp
 
         private void ProcessEquals()
         {
-            // Security: prevent infinite loops with stack depth limit
-            const int maxStackDepth = 100;
-            var iterations = 0;
-            
-            while (_operationStack.Count > 0)
-            {
-                // Security: prevent stack overflow from malformed expressions
-                if (++iterations > maxStackDepth)
-                {
-                    System.Diagnostics.Debug.WriteLine("Maximum parenthesis depth exceeded");
-                    ShowError();
-                    _operationStack.Clear();
-                    return;
-                }
-                
-                ProcessCloseParenthesis();
-                if (DisplayBox.Text == "Error")
-                {
-                    return;
-                }
-            }
-
+            // Performance: Simplified without parenthesis support - direct calculation
             if (!_leftOperand.HasValue || _pendingOperator is null) return;
             if (!TryGetDisplayValue(out var rightOperand)) return;
 
@@ -1053,45 +986,7 @@ namespace CalcApp
             }
         }
 
-        private bool TryResolvePendingOperation()
-        {
-            if (_pendingOperator is null || !_leftOperand.HasValue)
-            {
-                return TryGetDisplayValue(out _);
-            }
-
-            if (!TryGetDisplayValue(out var rightOperand)) return false;
-
-            try
-            {
-                var leftOperand = _leftOperand.Value;
-                var pendingOperator = _pendingOperator!;
-                var result = Evaluate(leftOperand, rightOperand, pendingOperator);
-                if (!IsFinite(result))
-                {
-                    ShowError();
-                    return false;
-                }
-
-                SetDisplayValue(result);
-                if (DisplayBox.Text == "Error") return false;
-                RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(rightOperand)}", result);
-                _leftOperand = null;
-                _pendingOperator = null;
-                _shouldResetDisplay = false;
-                return true;
-            }
-            catch (DivideByZeroException)
-            {
-                ShowError();
-                return false;
-            }
-            catch (InvalidOperationException)
-            {
-                ShowError();
-                return false;
-            }
-        }
+        // Removed: TryResolvePendingOperation() - no longer needed without parenthesis support
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
@@ -1140,16 +1035,7 @@ namespace CalcApp
                     ProcessOperator("/");
                     e.Handled = true;
                 }
-                else if ((key == Key.D9 || key == Key.OemOpenBrackets) && Keyboard.Modifiers == ModifierKeys.Shift)
-                {
-                    ProcessOpenParenthesis();
-                    e.Handled = true;
-                }
-                else if (key == Key.D0 && Keyboard.Modifiers == ModifierKeys.Shift)
-                {
-                    ProcessCloseParenthesis();
-                    e.Handled = true;
-                }
+                // Removed: Parenthesis keyboard shortcuts - no longer supported
                 else if (key == Key.Decimal || key == Key.OemPeriod)
                 {
                     ProcessDecimal();

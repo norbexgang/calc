@@ -149,15 +149,12 @@
                 <Button Content="3" Grid.Row="5" Grid.Column="2" Click="Digit_Click" />
                 <Button Content="−" Grid.Row="5" Grid.Column="3" Click="Operator_Click" Tag="-" />
 
-                <Button Content="(" Grid.Row="6" Grid.Column="0" Click="OpenParenthesis_Click" />
-                <Button Content=")" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Click="CloseParenthesis_Click" />
+                <Button Content="0" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Click="Digit_Click" />
+                <Button Content="." Grid.Row="6" Grid.Column="2" Click="Decimal_Click" />
                 <Button Content="+" Grid.Row="6" Grid.Column="3" Click="Operator_Click" Tag="+" />
 
-                <Button Content="0" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Click="Digit_Click" />
-                <Button Content="." Grid.Row="7" Grid.Column="2" Click="Decimal_Click" />
-
-                <Button Content="±" Grid.Row="8" Grid.Column="0" Click="Sign_Click" />
-                <Button Content="=" Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" Click="Equals_Click"
+                <Button Content="±" Grid.Row="7" Grid.Column="0" Click="Sign_Click" />
+                <Button Content="=" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Click="Equals_Click"
                         Background="{DynamicResource AccentButtonBrush}" />
             </Grid>
 
