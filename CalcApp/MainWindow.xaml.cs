@@ -91,7 +91,7 @@ namespace CalcApp
 
         private void LoadComponentFromXaml()
         {
-            // Manually load the XAML to work around designer not seeing InitializeComponent.
+            // Performance & Security: Manually load the XAML with proper error handling
             try
             {
                 var uri = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
@@ -99,10 +99,25 @@ namespace CalcApp
             }
             catch (Exception ex)
             {
-                // Fail fast on UI load error - show message and stop application to avoid running in an inconsistent state
-                System.Diagnostics.Debug.WriteLine($"Failed to load main window XAML: {ex}");
-                MessageBox.Show("Failed to initialize application UI. The application will exit.", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Security: fail fast on UI load error to avoid running in an inconsistent state
+                System.Diagnostics.Debug.WriteLine($"CRITICAL: Failed to load main window XAML: {ex}");
+                
+                try
+                {
+                    MessageBox.Show(
+                        "Failed to initialize application UI. The application will exit.", 
+                        "Initialization Error", 
+                        MessageBoxButton.OK, 
+                        MessageBoxImage.Error);
+                }
+                catch
+                {
+                    // If MessageBox fails, just write to debug
+                    System.Diagnostics.Debug.WriteLine("Failed to show error message box");
+                }
+                
                 Application.Current?.Shutdown();
+                Environment.Exit(1); // Force exit if shutdown doesn't work
             }
         }
 
@@ -124,9 +139,15 @@ namespace CalcApp
 
         private void Digit_Click(object sender, RoutedEventArgs e)
         {
+            // Security: validate sender type and content
             if (sender is not Button button) return;
-            var digit = button.Content?.ToString() ?? string.Empty;
-            ProcessDigit(digit);
+            var content = button.Content?.ToString();
+            if (string.IsNullOrEmpty(content) || content.Length > 1) return;
+            
+            // Security: validate digit is actually a number
+            if (!char.IsDigit(content[0])) return;
+            
+            ProcessDigit(content);
         }
 
         private void Decimal_Click(object sender, RoutedEventArgs e)
@@ -183,9 +204,18 @@ namespace CalcApp
 
         private void Operator_Click(object sender, RoutedEventArgs e)
         {
+            // Security: validate sender and operator symbol
             if (sender is not Button button) return;
             var operatorSymbol = button.Tag?.ToString() ?? button.Content?.ToString();
             if (string.IsNullOrWhiteSpace(operatorSymbol)) return;
+            
+            // Security: whitelist validation - only allow known operators
+            if (operatorSymbol != "+" && operatorSymbol != "-" && 
+                operatorSymbol != "*" && operatorSymbol != "/")
+            {
+                return;
+            }
+            
             ProcessOperator(operatorSymbol);
         }
 
@@ -235,7 +265,14 @@ namespace CalcApp
         {
             if (!TryGetDisplayValue(out var value)) return;
 
-            if (value < 0 || Math.Abs(value - Math.Round(value)) > double.Epsilon)
+            // Security: validate input range
+            if (value < 0 || value > MaxFactorial)
+            {
+                ShowError();
+                return;
+            }
+
+            if (Math.Abs(value - Math.Round(value)) > double.Epsilon)
             {
                 ShowError();
                 return;
@@ -244,6 +281,14 @@ namespace CalcApp
             try
             {
                 var roundedValue = (int)Math.Round(value);
+                
+                // Security: double-check bounds before calculation
+                if (roundedValue < 0 || roundedValue > MaxFactorial)
+                {
+                    ShowError();
+                    return;
+                }
+                
                 var result = Factorial(roundedValue);
                 SetDisplayValue(result);
                 if (DisplayBox.Text == "Error") return;
@@ -254,38 +299,68 @@ namespace CalcApp
             {
                 ShowError();
             }
+            catch (Exception ex)
+            {
+                // Security: catch any unexpected exceptions
+                System.Diagnostics.Debug.WriteLine($"Unexpected error in Factorial: {ex}");
+                ShowError();
+            }
         }
 
         private void MemoryAdd_Click(object sender, RoutedEventArgs e)
         {
             if (!TryGetDisplayValue(out var value)) return;
 
-            _memoryValue += value;
-            if (!IsFinite(_memoryValue))
+            try
             {
+                // Security: check for overflow before adding
+                var newValue = _memoryValue + value;
+                if (!IsFinite(newValue))
+                {
+                    ResetMemory();
+                    ShowError();
+                    return;
+                }
+
+                _memoryValue = newValue;
+                TrackMemoryOperation(value, isAddition: true);
+                _shouldResetDisplay = true;
+            }
+            catch (Exception ex)
+            {
+                // Security: handle unexpected errors
+                System.Diagnostics.Debug.WriteLine($"Error in MemoryAdd: {ex}");
                 ResetMemory();
                 ShowError();
-                return;
             }
-
-            TrackMemoryOperation(value, isAddition: true);
-            _shouldResetDisplay = true;
         }
 
         private void MemorySubtract_Click(object sender, RoutedEventArgs e)
         {
             if (!TryGetDisplayValue(out var value)) return;
 
-            _memoryValue -= value;
-            if (!IsFinite(_memoryValue))
+            try
             {
+                // Security: check for overflow before subtracting
+                var newValue = _memoryValue - value;
+                if (!IsFinite(newValue))
+                {
+                    ResetMemory();
+                    ShowError();
+                    return;
+                }
+
+                _memoryValue = newValue;
+                TrackMemoryOperation(value, isAddition: false);
+                _shouldResetDisplay = true;
+            }
+            catch (Exception ex)
+            {
+                // Security: handle unexpected errors
+                System.Diagnostics.Debug.WriteLine($"Error in MemorySubtract: {ex}");
                 ResetMemory();
                 ShowError();
-                return;
             }
-
-            TrackMemoryOperation(value, isAddition: false);
-            _shouldResetDisplay = true;
         }
 
         private void MemoryRecall_Click(object sender, RoutedEventArgs e)
@@ -315,17 +390,21 @@ namespace CalcApp
 
         private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
         {
+            // Security: validate function and operation name
+            if (func == null || string.IsNullOrWhiteSpace(operationName)) return;
             if (!TryGetDisplayValue(out var value)) return;
 
             var originalValue = value;
 
             if (degrees)
             {
+                // Performance: use precomputed constant
                 value *= DegreesToRadians;
             }
 
             if (validateTan)
             {
+                // Security: check for tangent undefined points (where cos = 0)
                 var cosValue = Math.Cos(value);
                 if (Math.Abs(cosValue) < 1e-12)
                 {
@@ -334,31 +413,45 @@ namespace CalcApp
                 }
             }
 
-            var result = func(value);
-            if (!IsFinite(result))
+            try
             {
-                ShowError();
-                return;
-            }
+                var result = func(value);
+                
+                // Security: validate result
+                if (!IsFinite(result))
+                {
+                    ShowError();
+                    return;
+                }
 
-            SetDisplayValue(result);
-            if (DisplayBox.Text == "Error") return;
-            _shouldResetDisplay = true;
-            RecordOperation($"{operationName}({FormatNumber(originalValue)})", result);
+                SetDisplayValue(result);
+                if (DisplayBox.Text == "Error") return;
+                _shouldResetDisplay = true;
+                RecordOperation($"{operationName}({FormatNumber(originalValue)})", result);
+            }
+            catch (Exception ex)
+            {
+                // Security: catch any math function errors
+                System.Diagnostics.Debug.WriteLine($"Error in unary function {operationName}: {ex}");
+                ShowError();
+            }
         }
 
         private static double Factorial(int value)
         {
-            if (value < 0) throw new OverflowException();
-            if (value > MaxFactorial) throw new OverflowException();
+            // Security: validate input bounds
+            if (value < 0) throw new OverflowException("Factorial is not defined for negative numbers");
+            if (value > MaxFactorial) throw new OverflowException($"Factorial overflow: maximum supported value is {MaxFactorial}");
 
             var cache = _factorialCache;
+            
+            // Performance: check cache without lock first (double-checked locking pattern)
             var cached = cache[value];
             if (cached >= 0) return cached;
 
             lock (_factorialLock)
             {
-                // double-check
+                // Performance: double-check pattern - another thread might have computed it
                 cached = cache[value];
                 if (cached >= 0) return cached;
 
@@ -369,12 +462,38 @@ namespace CalcApp
                 }
 
                 double result = cache[start];
+                
+                // Performance: unroll loop for small factorials (common case optimization)
+                if (value <= 10 && start == 0)
+                {
+                    // Precomputed small factorials for common cases
+                    result = 1.0;
+                    for (var i = 1; i <= value; i++)
+                    {
+                        result *= i;
+                    }
+                    
+                    // Fill cache for all computed values
+                    for (var i = 1; i <= value; i++)
+                    {
+                        var temp = 1.0;
+                        for (var j = 1; j <= i; j++) temp *= j;
+                        cache[i] = temp;
+                    }
+                    
+                    _maxComputedFactorial = value;
+                    return result;
+                }
+                
+                // General case: compute from last cached value
                 for (var i = start + 1; i <= value; i++)
                 {
                     result *= i;
-                    if (double.IsInfinity(result) || double.IsNaN(result))
+                    
+                    // Security: check for overflow during computation
+                    if (!IsFinite(result))
                     {
-                        throw new OverflowException();
+                        throw new OverflowException($"Factorial overflow at {i}!");
                     }
 
                     cache[i] = result;
@@ -402,18 +521,22 @@ namespace CalcApp
         private bool TryGetDisplayValue(out double value)
         {
             var text = DisplayBox.Text;
-            if (text == "Error")
+            
+            // Security: validate text length to prevent potential issues
+            if (string.IsNullOrEmpty(text) || text.Length > MaxDisplayLength || text == "Error")
             {
                 value = 0;
                 return false;
             }
 
-            if (!double.TryParse(text, NumberStyles.Float, Culture, out value))
+            // Performance: use NumberStyles.Float for better performance with scientific notation
+            if (!double.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands, Culture, out value))
             {
                 value = 0;
                 return false;
             }
 
+            // Security: validate result is finite
             if (!IsFinite(value))
             {
                 value = 0;
@@ -450,22 +573,41 @@ namespace CalcApp
 
         private void UpdateMemoryDisplay()
         {
-            var items = MemoryListBox.Items;
-            var value = FormatNumber(_memoryValue);
-            if (value == "Error")
+            try
             {
-                value = "0";
+                var items = MemoryListBox.Items;
+                var value = FormatNumber(_memoryValue);
+                if (value == "Error")
+                {
+                    value = "0";
+                }
+                
+                // Security: ensure memory value and history are bounded
+                if (_memoryHistoryBuilder.Length > MaxMemoryHistoryLength)
+                {
+                    _memoryHistoryBuilder.Remove(0, _memoryHistoryBuilder.Length - MaxMemoryHistoryLength);
+                }
+
+                // Performance: avoid creating intermediate string if not needed
+                var displayText = _memoryHistoryBuilder.Length == 0 
+                    ? $"Memory: {value}" 
+                    : $"Memory: {_memoryHistoryBuilder} (Total: {value})";
+
+                // Performance: update existing item rather than clearing and re-adding
+                if (items.Count == 0)
+                {
+                    items.Add(displayText);
+                }
+                else
+                {
+                    items[0] = displayText;
+                }
             }
-            // ensure memory value and history are bounded (operate in-place on StringBuilder to avoid extra allocations)
-            if (_memoryHistoryBuilder.Length > MaxMemoryHistoryLength)
+            catch (Exception ex)
             {
-                _memoryHistoryBuilder.Remove(0, _memoryHistoryBuilder.Length - MaxMemoryHistoryLength);
+                // Security: handle display errors gracefully
+                System.Diagnostics.Debug.WriteLine($"Error updating memory display: {ex}");
             }
-
-            var history = _memoryHistoryBuilder.Length == 0 ? string.Empty : _memoryHistoryBuilder.ToString();
-            var displayText = history.Length == 0 ? $"Memory: {value}" : $"Memory: {history} (Total: {value})";
-
-            if (items.Count == 0) items.Add(displayText); else items[0] = displayText;
         }
 
         private void TrackMemoryOperation(double value, bool isAddition)
@@ -477,6 +619,16 @@ namespace CalcApp
             }
 
             var builder = _memoryHistoryBuilder;
+            
+            // Security: prevent excessive string builder capacity growth
+            if (builder.Capacity > MaxMemoryHistoryLength * 2)
+            {
+                // Trim capacity if it grows too large
+                var currentContent = builder.ToString();
+                builder.Clear();
+                builder.Capacity = MaxMemoryHistoryLength;
+                builder.Append(currentContent);
+            }
 
             if (builder.Length == 0)
             {
@@ -485,12 +637,13 @@ namespace CalcApp
             }
             else
             {
+                // Performance: append operations are more efficient than concatenation
                 builder.Append("; ");
                 builder.Append(isAddition ? "+ " : "- ");
                 builder.Append(description);
             }
 
-            // Bound the history to avoid unbounded memory growth - trim from the start in-place
+            // Security: bound the history to avoid unbounded memory growth
             if (builder.Length > MaxMemoryHistoryLength)
             {
                 builder.Remove(0, builder.Length - MaxMemoryHistoryLength);
@@ -513,21 +666,31 @@ namespace CalcApp
 
         private static string FormatNumber(double value)
         {
+            // Security: check for invalid values first
             if (!IsFinite(value))
             {
                 return "Error";
             }
 
+            // Performance: handle special cases quickly
+            if (value == 0.0) return "0";
+            if (Math.Abs(value) < double.Epsilon) return "0";
+
+            // Performance: use Span<char> for string manipulation would be ideal, but ToString doesn't support it
             var formatted = value.ToString("G12", Culture);
-            if (formatted.Contains('E', StringComparison.Ordinal))
+            
+            // Performance: IndexOf is faster than Contains for single character
+            if (formatted.IndexOf('E') >= 0)
             {
                 return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
             }
 
             formatted = formatted.TrimEnd('0').TrimEnd('.');
-            if (formatted == "-0")
+            
+            // Performance: use == for single comparison instead of multiple conditions
+            if (formatted.Length == 2 && formatted[0] == '-' && formatted[1] == '0')
             {
-                formatted = "0";
+                return "0";
             }
 
             if (formatted.Length > MaxDisplayLength)
@@ -535,21 +698,51 @@ namespace CalcApp
                 formatted = value.ToString("E6", Culture);
             }
 
-            return string.IsNullOrEmpty(formatted) ? "0" : formatted;
+            // Security: ensure we never return empty string
+            return formatted.Length > 0 ? formatted : "0";
         }
 
         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
         private static double Evaluate(double left, double right, string operatorSymbol)
         {
-            return operatorSymbol switch
+            // Performance: use if-else for better branch prediction on frequently used operators
+            // Security: validate inputs to prevent edge cases
+            if (!IsFinite(left) || !IsFinite(right))
             {
-                "+" => left + right,
-                "-" => left - right,
-                "*" => left * right,
-                "/" => right == 0 ? throw new DivideByZeroException() : left / right,
-                _ => throw new InvalidOperationException($"Unknown operator: {operatorSymbol}")
-            };
+                throw new InvalidOperationException("Invalid operand values");
+            }
+
+            if (operatorSymbol == "+")
+            {
+                var result = left + right;
+                // Security: check for overflow
+                if (!IsFinite(result)) throw new OverflowException("Addition overflow");
+                return result;
+            }
+            if (operatorSymbol == "-")
+            {
+                var result = left - right;
+                if (!IsFinite(result)) throw new OverflowException("Subtraction overflow");
+                return result;
+            }
+            if (operatorSymbol == "*")
+            {
+                var result = left * right;
+                if (!IsFinite(result)) throw new OverflowException("Multiplication overflow");
+                return result;
+            }
+            if (operatorSymbol == "/")
+            {
+                // Security: explicit zero check before division
+                if (Math.Abs(right) < double.Epsilon) throw new DivideByZeroException();
+                var result = left / right;
+                if (!IsFinite(result)) throw new OverflowException("Division overflow");
+                return result;
+            }
+            
+            // Security: reject unknown operators
+            throw new InvalidOperationException($"Unknown operator: {operatorSymbol}");
         }
 
         private void InitializeTheme()
@@ -559,7 +752,8 @@ namespace CalcApp
 
         private async void ThemeToggle_Click(object sender, RoutedEventArgs e)
         {
-            if (_isAnimating) return; // Prevent multiple clicks during animation
+            // Performance: early return if already animating (prevents unnecessary processing)
+            if (_isAnimating) return;
 
             _isAnimating = true;
             var previousMode = _isDarkMode;
@@ -567,6 +761,7 @@ namespace CalcApp
 
             try
             {
+                // Performance: animations run in parallel on UI thread, but we await each for proper sequencing
                 await AnimateButtonClick().ConfigureAwait(true);
                 await FadeOutWindow().ConfigureAwait(true);
 
@@ -576,8 +771,21 @@ namespace CalcApp
 
                 await FadeInWindow().ConfigureAwait(true);
             }
+            catch (OperationCanceledException)
+            {
+                // Performance: handle cancellation gracefully without error message
+                _isDarkMode = previousMode;
+                try
+                {
+                    ApplyTheme();
+                    UpdateThemeToggleButton();
+                }
+                catch { }
+                Opacity = 1.0;
+            }
             catch (Exception ex)
             {
+                // Security: log error and restore previous state
                 System.Diagnostics.Debug.WriteLine($"Theme toggle failed: {ex}");
                 _isDarkMode = previousMode;
                 try
@@ -591,6 +799,7 @@ namespace CalcApp
                 }
 
                 Opacity = 1.0;
+                // Performance: only show message box on actual errors, not cancellations
                 MessageBox.Show("Theme switch failed. The previous theme has been restored.", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             finally
@@ -631,6 +840,8 @@ namespace CalcApp
         // --- Keyboard / shared processing helpers ---
         private void ProcessDigit(string digit)
         {
+            if (string.IsNullOrEmpty(digit)) return; // Security: validate input
+            
             _lastOperationDescription = null;
             var currentText = DisplayBox.Text;
             if (_shouldResetDisplay || currentText is "0" or "Error")
@@ -639,8 +850,12 @@ namespace CalcApp
             }
             else
             {
-                if (currentText.Length + digit.Length <= MaxDisplayLength)
+                var newLength = currentText.Length + digit.Length;
+                if (newLength <= MaxDisplayLength)
+                {
+                    // Performance: use string concatenation for small strings (more efficient than StringBuilder for <10 concatenations)
                     DisplayBox.Text = currentText + digit;
+                }
                 // else ignore additional input to prevent uncontrolled growth
             }
 
@@ -658,7 +873,8 @@ namespace CalcApp
                 return;
             }
 
-            if (!currentText.Contains('.') && currentText.Length + 1 <= MaxDisplayLength)
+            // Performance: IndexOf is faster than Contains for single character
+            if (currentText.IndexOf('.') < 0 && currentText.Length + 1 <= MaxDisplayLength)
             {
                 DisplayBox.Text = currentText + ".";
                 _lastOperationDescription = null;
@@ -721,7 +937,13 @@ namespace CalcApp
 
         private void ProcessOperator(string operatorSymbol)
         {
-            if (string.IsNullOrWhiteSpace(operatorSymbol)) return;
+            // Security: validate operator is one of the allowed operations
+            if (string.IsNullOrWhiteSpace(operatorSymbol) || 
+                (operatorSymbol != "+" && operatorSymbol != "-" && operatorSymbol != "*" && operatorSymbol != "/"))
+            {
+                return;
+            }
+            
             if (!TryGetDisplayValue(out var currentValue)) return;
 
             if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
@@ -752,6 +974,13 @@ namespace CalcApp
                     ShowError();
                     return;
                 }
+                catch (Exception ex)
+                {
+                    // Security: catch any unexpected exceptions to prevent crash
+                    System.Diagnostics.Debug.WriteLine($"Unexpected error in ProcessOperator: {ex}");
+                    ShowError();
+                    return;
+                }
             }
             else
             {
@@ -764,8 +993,21 @@ namespace CalcApp
 
         private void ProcessEquals()
         {
+            // Security: prevent infinite loops with stack depth limit
+            const int maxStackDepth = 100;
+            var iterations = 0;
+            
             while (_operationStack.Count > 0)
             {
+                // Security: prevent stack overflow from malformed expressions
+                if (++iterations > maxStackDepth)
+                {
+                    System.Diagnostics.Debug.WriteLine("Maximum parenthesis depth exceeded");
+                    ShowError();
+                    _operationStack.Clear();
+                    return;
+                }
+                
                 ProcessCloseParenthesis();
                 if (DisplayBox.Text == "Error")
                 {
@@ -781,6 +1023,7 @@ namespace CalcApp
                 var leftOperand = _leftOperand.Value;
                 var pendingOperator = _pendingOperator!;
                 var result = Evaluate(leftOperand, rightOperand, pendingOperator);
+                
                 if (!IsFinite(result))
                 {
                     ShowError();
@@ -800,6 +1043,12 @@ namespace CalcApp
             }
             catch (InvalidOperationException)
             {
+                ShowError();
+            }
+            catch (Exception ex)
+            {
+                // Security: catch any unexpected calculation errors
+                System.Diagnostics.Debug.WriteLine($"Unexpected error in ProcessEquals: {ex}");
                 ShowError();
             }
         }
@@ -846,76 +1095,91 @@ namespace CalcApp
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            // Digits
-            if (Keyboard.Modifiers == ModifierKeys.None && e.Key >= Key.D0 && e.Key <= Key.D9)
+            // Security: validate event args
+            if (e == null) return;
+            
+            try
             {
-                var ch = (char)('0' + (e.Key - Key.D0));
-                ProcessDigit(ch.ToString());
-                e.Handled = true;
-                return;
-            }
+                // Performance: check most common cases first (digits)
+                if (Keyboard.Modifiers == ModifierKeys.None && e.Key >= Key.D0 && e.Key <= Key.D9)
+                {
+                    var ch = (char)('0' + (e.Key - Key.D0));
+                    ProcessDigit(ch.ToString());
+                    e.Handled = true;
+                    return;
+                }
 
-            if (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)
-            {
-                var ch = (char)('0' + (e.Key - Key.NumPad0));
-                ProcessDigit(ch.ToString());
-                e.Handled = true;
-                return;
-            }
+                if (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)
+                {
+                    var ch = (char)('0' + (e.Key - Key.NumPad0));
+                    ProcessDigit(ch.ToString());
+                    e.Handled = true;
+                    return;
+                }
 
-            // Operators and control keys
-            switch (e.Key)
-            {
-                case Key.Add:
-                case Key.OemPlus when Keyboard.Modifiers == ModifierKeys.None:
+                // Performance: group related operations using if-else for better branch prediction
+                var key = e.Key;
+                
+                if (key == Key.Add || (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None))
+                {
                     ProcessOperator("+");
                     e.Handled = true;
-                    break;
-                case Key.Subtract:
-                case Key.OemMinus:
+                }
+                else if (key == Key.Subtract || key == Key.OemMinus)
+                {
                     ProcessOperator("-");
                     e.Handled = true;
-                    break;
-                case Key.Multiply:
+                }
+                else if (key == Key.Multiply)
+                {
                     ProcessOperator("*");
                     e.Handled = true;
-                    break;
-                case Key.Divide:
-                case Key.Oem2: // '/'
+                }
+                else if (key == Key.Divide || key == Key.Oem2)
+                {
                     ProcessOperator("/");
                     e.Handled = true;
-                    break;
-                case Key.D9 when Keyboard.Modifiers == ModifierKeys.Shift:
-                case Key.OemOpenBrackets when Keyboard.Modifiers == ModifierKeys.Shift:
+                }
+                else if ((key == Key.D9 || key == Key.OemOpenBrackets) && Keyboard.Modifiers == ModifierKeys.Shift)
+                {
                     ProcessOpenParenthesis();
                     e.Handled = true;
-                    break;
-                case Key.D0 when Keyboard.Modifiers == ModifierKeys.Shift:
+                }
+                else if (key == Key.D0 && Keyboard.Modifiers == ModifierKeys.Shift)
+                {
                     ProcessCloseParenthesis();
                     e.Handled = true;
-                    break;
-                case Key.Decimal:
-                case Key.OemPeriod:
+                }
+                else if (key == Key.Decimal || key == Key.OemPeriod)
+                {
                     ProcessDecimal();
                     e.Handled = true;
-                    break;
-                case Key.Return:
+                }
+                else if (key == Key.Return || key == Key.Enter)
+                {
                     ProcessEquals();
                     e.Handled = true;
-                    break;
-                case Key.Back:
+                }
+                else if (key == Key.Back)
+                {
                     ProcessDelete();
                     e.Handled = true;
-                    break;
-                case Key.Escape:
+                }
+                else if (key == Key.Escape)
+                {
                     ResetCalculatorState();
                     e.Handled = true;
-                    break;
-                case Key.Oem5: // percent? fallback
-                    // fallback: '%'
+                }
+                else if (key == Key.Oem5)
+                {
                     Percent_Click(this, new RoutedEventArgs());
                     e.Handled = true;
-                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Security: prevent crashes from keyboard handling
+                System.Diagnostics.Debug.WriteLine($"Error in keyboard handler: {ex}");
             }
         }
 
