@@ -24,6 +24,18 @@ namespace CalcApp
         private bool _isAnimating = false;
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
+        private static readonly double DegreesToRadians = Math.PI / 180.0;
+        private const int MaxFactorial = 170; // 170! fits in double, 171! overflows
+        private static readonly double[] _factorialCache = new double[MaxFactorial + 1];
+        private static readonly object _factorialLock = new();
+
+        static MainWindow()
+        {
+            // initialize factorial cache with sentinel (-1)
+            for (var i = 0; i <= MaxFactorial; i++) _factorialCache[i] = -1.0;
+            _factorialCache[0] = 1.0;
+            _factorialCache[1] = 1.0;
+        }
 
         public MainWindow()
         {
@@ -289,7 +301,7 @@ namespace CalcApp
 
             if (degrees)
             {
-                value *= Math.PI / 180.0;
+                value *= DegreesToRadians;
             }
 
             if (validateTan)
@@ -310,17 +322,43 @@ namespace CalcApp
 
         private static double Factorial(int value)
         {
-            double result = 1;
-            for (var i = 2; i <= value; i++)
-            {
-                result *= i;
-                if (double.IsInfinity(result) || double.IsNaN(result))
-                {
-                    throw new OverflowException();
-                }
-            }
+            if (value < 0) throw new OverflowException();
+            if (value > MaxFactorial) throw new OverflowException();
 
-            return result;
+            var cache = _factorialCache;
+            var cached = cache[value];
+            if (cached >= 0) return cached;
+
+            lock (_factorialLock)
+            {
+                // double-check
+                cached = cache[value];
+                if (cached >= 0) return cached;
+
+                // find highest precomputed index
+                var start = 1;
+                for (var i = value - 1; i >= 0; i--)
+                {
+                    if (cache[i] >= 0)
+                    {
+                        start = i;
+                        break;
+                    }
+                }
+
+                double result = cache[start];
+                for (var i = start + 1; i <= value; i++)
+                {
+                    result *= i;
+                    if (double.IsInfinity(result) || double.IsNaN(result))
+                    {
+                        throw new OverflowException();
+                    }
+                    cache[i] = result;
+                }
+
+                return cache[value];
+            }
         }
 
         private void ResetCalculatorState()
