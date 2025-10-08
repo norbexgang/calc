@@ -27,6 +27,7 @@ namespace CalcApp
         private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
         private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
         private int _themeDictionaryIndex = -1;
+        private readonly Stack<(double? LeftOperand, string? PendingOperator)> _operationStack = new();
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
         private static readonly double DegreesToRadians = Math.PI / 180.0;
@@ -131,6 +132,16 @@ namespace CalcApp
         private void Decimal_Click(object sender, RoutedEventArgs e)
         {
             ProcessDecimal();
+        }
+
+        private void OpenParenthesis_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessOpenParenthesis();
+        }
+
+        private void CloseParenthesis_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessCloseParenthesis();
         }
 
         private void Clear_Click(object sender, RoutedEventArgs e)
@@ -385,6 +396,7 @@ namespace CalcApp
             _pendingOperator = null;
             _shouldResetDisplay = false;
             _lastOperationDescription = null;
+            _operationStack.Clear();
         }
 
         private bool TryGetDisplayValue(out double value)
@@ -435,6 +447,7 @@ namespace CalcApp
             _pendingOperator = null;
             _shouldResetDisplay = true;
             _lastOperationDescription = null;
+            _operationStack.Clear();
         }
 
         private void InitializeMemory()
@@ -662,6 +675,46 @@ namespace CalcApp
             }
         }
 
+        private void ProcessOpenParenthesis()
+        {
+            if (DisplayBox.Text == "Error")
+            {
+                DisplayBox.Text = "0";
+            }
+
+            _operationStack.Push((_leftOperand, _pendingOperator));
+            _leftOperand = null;
+            _pendingOperator = null;
+            DisplayBox.Text = "0";
+            _shouldResetDisplay = true;
+            _lastOperationDescription = null;
+        }
+
+        private void ProcessCloseParenthesis()
+        {
+            if (_operationStack.Count == 0)
+            {
+                return;
+            }
+
+            if (!TryResolvePendingOperation())
+            {
+                _operationStack.Clear();
+                return;
+            }
+
+            if (!TryGetDisplayValue(out _))
+            {
+                return;
+            }
+
+            var context = _operationStack.Pop();
+            _leftOperand = context.LeftOperand;
+            _pendingOperator = context.PendingOperator;
+            _shouldResetDisplay = _pendingOperator is null;
+            _lastOperationDescription = null;
+        }
+
         private void ProcessDelete()
         {
             var currentText = DisplayBox.Text;
@@ -721,6 +774,15 @@ namespace CalcApp
 
         private void ProcessEquals()
         {
+            while (_operationStack.Count > 0)
+            {
+                ProcessCloseParenthesis();
+                if (DisplayBox.Text == "Error")
+                {
+                    return;
+                }
+            }
+
             if (!_leftOperand.HasValue || _pendingOperator is null) return;
             if (!TryGetDisplayValue(out var rightOperand)) return;
 
@@ -752,10 +814,50 @@ namespace CalcApp
             }
         }
 
+        private bool TryResolvePendingOperation()
+        {
+            if (_pendingOperator is null || !_leftOperand.HasValue)
+            {
+                return TryGetDisplayValue(out _);
+            }
+
+            if (!TryGetDisplayValue(out var rightOperand)) return false;
+
+            try
+            {
+                var leftOperand = _leftOperand.Value;
+                var pendingOperator = _pendingOperator!;
+                var result = Evaluate(leftOperand, rightOperand, pendingOperator);
+                if (!IsFinite(result))
+                {
+                    ShowError();
+                    return false;
+                }
+
+                SetDisplayValue(result);
+                if (DisplayBox.Text == "Error") return false;
+                RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(rightOperand)}", result);
+                _leftOperand = null;
+                _pendingOperator = null;
+                _shouldResetDisplay = false;
+                return true;
+            }
+            catch (DivideByZeroException)
+            {
+                ShowError();
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                ShowError();
+                return false;
+            }
+        }
+
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             // Digits
-            if (e.Key >= Key.D0 && e.Key <= Key.D9)
+            if (Keyboard.Modifiers == ModifierKeys.None && e.Key >= Key.D0 && e.Key <= Key.D9)
             {
                 var ch = (char)('0' + (e.Key - Key.D0));
                 ProcessDigit(ch.ToString());
@@ -791,6 +893,15 @@ namespace CalcApp
                 case Key.Divide:
                 case Key.Oem2: // '/'
                     ProcessOperator("/");
+                    e.Handled = true;
+                    break;
+                case Key.D9 when Keyboard.Modifiers == ModifierKeys.Shift:
+                case Key.OemOpenBrackets when Keyboard.Modifiers == ModifierKeys.Shift:
+                    ProcessOpenParenthesis();
+                    e.Handled = true;
+                    break;
+                case Key.D0 when Keyboard.Modifiers == ModifierKeys.Shift:
+                    ProcessCloseParenthesis();
                     e.Handled = true;
                     break;
                 case Key.Decimal:
