@@ -30,7 +30,9 @@ namespace CalcApp
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
         private static readonly double DegreesToRadians = Math.PI / 180.0;
-        private const int MaxFactorial = 170; // 170! fits in double, 171! overflows
+    private const int MaxFactorial = 170; // 170! fits in double, 171! overflows
+    private const int MaxDisplayLength = 64; // protect against extremely long input/overflow UI
+    private const int MaxMemoryHistoryLength = 1024; // bound memory history to avoid unbounded growth
         private const string DarkThemePath = "Themes/MaterialTheme.xaml";
         private const string LightThemePath = "Themes/ClassicTheme.xaml";
         private static int _maxComputedFactorial;
@@ -89,8 +91,18 @@ namespace CalcApp
         private void LoadComponentFromXaml()
         {
             // Manually load the XAML to work around designer not seeing InitializeComponent.
-            var uri = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
-            Application.LoadComponent(this, uri);
+            try
+            {
+                var uri = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
+                Application.LoadComponent(this, uri);
+            }
+            catch (Exception ex)
+            {
+                // Fail fast on UI load error - show message and stop application to avoid running in an inconsistent state
+                System.Diagnostics.Debug.WriteLine($"Failed to load main window XAML: {ex}");
+                MessageBox.Show("Failed to initialize application UI. The application will exit.", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Application.Current?.Shutdown();
+            }
         }
 
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
@@ -362,18 +374,16 @@ namespace CalcApp
         {
             var items = MemoryListBox.Items;
             var value = FormatNumber(_memoryValue);
-            var displayText = _memoryHistoryBuilder.Length == 0
-                ? $"Memory: {value}"
-                : $"Memory: {_memoryHistoryBuilder} (Total: {value})";
+            // ensure memory value and history are bounded
+            var history = _memoryHistoryBuilder.Length == 0 ? string.Empty : _memoryHistoryBuilder.ToString();
+            if (history.Length > MaxMemoryHistoryLength)
+            {
+                history = history.Substring(history.Length - MaxMemoryHistoryLength);
+            }
 
-            if (items.Count == 0)
-            {
-                items.Add(displayText);
-            }
-            else
-            {
-                items[0] = displayText;
-            }
+            var displayText = history.Length == 0 ? $"Memory: {value}" : $"Memory: {history} (Total: {value})";
+
+            if (items.Count == 0) items.Add(displayText); else items[0] = displayText;
         }
 
         private void TrackMemoryOperation(double value, bool isAddition)
@@ -391,6 +401,15 @@ namespace CalcApp
                 builder.Append("; ");
                 builder.Append(isAddition ? "+ " : "- ");
                 builder.Append(description);
+            }
+
+            // Bound the history to avoid unbounded memory growth
+            if (builder.Length > MaxMemoryHistoryLength)
+            {
+                // keep the tail of the history
+                var keep = builder.ToString(builder.Length - MaxMemoryHistoryLength, MaxMemoryHistoryLength);
+                builder.Clear();
+                builder.Append(keep);
             }
 
             UpdateMemoryDisplay();
@@ -494,11 +513,13 @@ namespace CalcApp
             var currentText = DisplayBox.Text;
             if (_shouldResetDisplay || currentText is "0" or "Error")
             {
-                DisplayBox.Text = digit;
+                DisplayBox.Text = digit.Length <= MaxDisplayLength ? digit : digit[..MaxDisplayLength];
             }
             else
             {
-                DisplayBox.Text = currentText + digit;
+                if (currentText.Length + digit.Length <= MaxDisplayLength)
+                    DisplayBox.Text = currentText + digit;
+                // else ignore additional input to prevent uncontrolled growth
             }
 
             _shouldResetDisplay = false;
@@ -515,7 +536,7 @@ namespace CalcApp
                 return;
             }
 
-            if (!currentText.Contains('.'))
+            if (!currentText.Contains('.') && currentText.Length + 1 <= MaxDisplayLength)
             {
                 DisplayBox.Text = currentText + ".";
                 _lastOperationDescription = null;
@@ -532,7 +553,6 @@ namespace CalcApp
                 _lastOperationDescription = null;
                 return;
             }
-
             DisplayBox.Text = currentText.Length <= 1 ? "0" : currentText[..^1];
             _lastOperationDescription = null;
         }
