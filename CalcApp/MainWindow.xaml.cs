@@ -153,7 +153,14 @@ namespace CalcApp
 
             var originalValue = value;
             value /= 100.0;
+            if (!IsFinite(value))
+            {
+                ShowError();
+                return;
+            }
+
             SetDisplayValue(value);
+            if (DisplayBox.Text == "Error") return;
             _shouldResetDisplay = true;
             RecordOperation($"{FormatNumber(originalValue)}%", value);
         }
@@ -201,7 +208,14 @@ namespace CalcApp
             }
 
             var result = Math.Sqrt(value);
+            if (!IsFinite(result))
+            {
+                ShowError();
+                return;
+            }
+
             SetDisplayValue(result);
+            if (DisplayBox.Text == "Error") return;
             _shouldResetDisplay = true;
             RecordOperation($"sqrt({FormatNumber(value)})", result);
         }
@@ -221,6 +235,7 @@ namespace CalcApp
                 var roundedValue = (int)Math.Round(value);
                 var result = Factorial(roundedValue);
                 SetDisplayValue(result);
+                if (DisplayBox.Text == "Error") return;
                 _shouldResetDisplay = true;
                 RecordOperation($"{FormatNumber(roundedValue)}!", result);
             }
@@ -235,6 +250,13 @@ namespace CalcApp
             if (!TryGetDisplayValue(out var value)) return;
 
             _memoryValue += value;
+            if (!IsFinite(_memoryValue))
+            {
+                ResetMemory();
+                ShowError();
+                return;
+            }
+
             TrackMemoryOperation(value, isAddition: true);
             _shouldResetDisplay = true;
         }
@@ -244,6 +266,13 @@ namespace CalcApp
             if (!TryGetDisplayValue(out var value)) return;
 
             _memoryValue -= value;
+            if (!IsFinite(_memoryValue))
+            {
+                ResetMemory();
+                ShowError();
+                return;
+            }
+
             TrackMemoryOperation(value, isAddition: false);
             _shouldResetDisplay = true;
         }
@@ -251,11 +280,22 @@ namespace CalcApp
         private void MemoryRecall_Click(object sender, RoutedEventArgs e)
         {
             SetDisplayValue(_memoryValue);
+            if (DisplayBox.Text == "Error")
+            {
+                ResetMemory();
+                return;
+            }
+
             _shouldResetDisplay = true;
             _lastOperationDescription = null;
         }
 
         private void MemoryClear_Click(object sender, RoutedEventArgs e)
+        {
+            ResetMemory();
+        }
+
+        private void ResetMemory()
         {
             _memoryValue = 0;
             _memoryHistoryBuilder.Clear();
@@ -284,7 +324,14 @@ namespace CalcApp
             }
 
             var result = func(value);
+            if (!IsFinite(result))
+            {
+                ShowError();
+                return;
+            }
+
             SetDisplayValue(result);
+            if (DisplayBox.Text == "Error") return;
             _shouldResetDisplay = true;
             RecordOperation($"{operationName}({FormatNumber(originalValue)})", result);
         }
@@ -348,12 +395,37 @@ namespace CalcApp
                 return false;
             }
 
-            return double.TryParse(DisplayBox.Text, NumberStyles.Float, Culture, out value);
+            if (!double.TryParse(DisplayBox.Text, NumberStyles.Float, Culture, out value))
+            {
+                value = 0;
+                return false;
+            }
+
+            if (!IsFinite(value))
+            {
+                value = 0;
+                return false;
+            }
+
+            return true;
         }
 
         private void SetDisplayValue(double value)
         {
-            DisplayBox.Text = FormatNumber(value);
+            if (!IsFinite(value))
+            {
+                ShowError();
+                return;
+            }
+
+            var formatted = FormatNumber(value);
+            if (formatted == "Error")
+            {
+                ShowError();
+                return;
+            }
+
+            DisplayBox.Text = formatted;
         }
 
         private void ShowError()
@@ -374,6 +446,10 @@ namespace CalcApp
         {
             var items = MemoryListBox.Items;
             var value = FormatNumber(_memoryValue);
+            if (value == "Error")
+            {
+                value = "0";
+            }
             // ensure memory value and history are bounded
             var history = _memoryHistoryBuilder.Length == 0 ? string.Empty : _memoryHistoryBuilder.ToString();
             if (history.Length > MaxMemoryHistoryLength)
@@ -389,6 +465,11 @@ namespace CalcApp
         private void TrackMemoryOperation(double value, bool isAddition)
         {
             var description = _lastOperationDescription ?? FormatNumber(value);
+            if (description == "Error")
+            {
+                description = "0";
+            }
+
             var builder = _memoryHistoryBuilder;
 
             if (builder.Length == 0)
@@ -418,15 +499,26 @@ namespace CalcApp
         private void RecordOperation(string description, double result)
         {
             var formattedResult = FormatNumber(result);
+            if (formattedResult == "Error")
+            {
+                _lastOperationDescription = null;
+                return;
+            }
+
             _lastOperationDescription = $"{description}={formattedResult}";
         }
 
         private static string FormatNumber(double value)
         {
+            if (!IsFinite(value))
+            {
+                return "Error";
+            }
+
             var formatted = value.ToString("G12", Culture);
             if (formatted.Contains('E', StringComparison.Ordinal))
             {
-                return formatted;
+                return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
             }
 
             formatted = formatted.TrimEnd('0').TrimEnd('.');
@@ -435,8 +527,15 @@ namespace CalcApp
                 formatted = "0";
             }
 
+            if (formatted.Length > MaxDisplayLength)
+            {
+                formatted = value.ToString("E6", Culture);
+            }
+
             return string.IsNullOrEmpty(formatted) ? "0" : formatted;
         }
+
+        private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
         private static double Evaluate(double left, double right, string operatorSymbol)
         {
@@ -458,24 +557,44 @@ namespace CalcApp
         private async void ThemeToggle_Click(object sender, RoutedEventArgs e)
         {
             if (_isAnimating) return; // Prevent multiple clicks during animation
-            
+
             _isAnimating = true;
-            
-            // Animate button click
-            await AnimateButtonClick();
-            
-            // Fade out current theme
-            await FadeOutWindow();
-            
-            // Switch theme
-            _isDarkMode = !_isDarkMode;
-            ApplyTheme();
-            UpdateThemeToggleButton();
-            
-            // Fade in new theme
-            await FadeInWindow();
-            
-            _isAnimating = false;
+            var previousMode = _isDarkMode;
+            var nextMode = !previousMode;
+
+            try
+            {
+                await AnimateButtonClick().ConfigureAwait(true);
+                await FadeOutWindow().ConfigureAwait(true);
+
+                _isDarkMode = nextMode;
+                ApplyTheme();
+                UpdateThemeToggleButton();
+
+                await FadeInWindow().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Theme toggle failed: {ex}");
+                _isDarkMode = previousMode;
+                try
+                {
+                    ApplyTheme();
+                    UpdateThemeToggleButton();
+                }
+                catch (Exception innerEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to restore previous theme: {innerEx}");
+                }
+
+                Opacity = 1.0;
+                MessageBox.Show("Theme switch failed. The previous theme has been restored.", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            finally
+            {
+                _isAnimating = false;
+                Opacity = 1.0;
+            }
         }
 
         private void ApplyTheme()
@@ -566,10 +685,30 @@ namespace CalcApp
             {
                 var leftOperand = _leftOperand.Value;
                 var pendingOp = _pendingOperator;
-                var result = Evaluate(leftOperand, currentValue, pendingOp);
-                _leftOperand = result;
-                SetDisplayValue(result);
-                RecordOperation($"{FormatNumber(leftOperand)}{pendingOp}{FormatNumber(currentValue)}", result);
+                try
+                {
+                    var result = Evaluate(leftOperand, currentValue, pendingOp);
+                    if (!IsFinite(result))
+                    {
+                        ShowError();
+                        return;
+                    }
+
+                    _leftOperand = result;
+                    SetDisplayValue(result);
+                    if (DisplayBox.Text == "Error") return;
+                    RecordOperation($"{FormatNumber(leftOperand)}{pendingOp}{FormatNumber(currentValue)}", result);
+                }
+                catch (DivideByZeroException)
+                {
+                    ShowError();
+                    return;
+                }
+                catch (InvalidOperationException)
+                {
+                    ShowError();
+                    return;
+                }
             }
             else
             {
@@ -590,7 +729,14 @@ namespace CalcApp
                 var leftOperand = _leftOperand.Value;
                 var pendingOperator = _pendingOperator!;
                 var result = Evaluate(leftOperand, rightOperand, pendingOperator);
+                if (!IsFinite(result))
+                {
+                    ShowError();
+                    return;
+                }
+
                 SetDisplayValue(result);
+                if (DisplayBox.Text == "Error") return;
                 RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(rightOperand)}", result);
                 _leftOperand = null;
                 _pendingOperator = null;
@@ -748,8 +894,18 @@ namespace CalcApp
             await tcs.Task.ConfigureAwait(true);
         }
 
-        private static ResourceDictionary CreateThemeDictionary(string relativePath) =>
-            new() { Source = new Uri(relativePath, UriKind.Relative) };
+        private static ResourceDictionary CreateThemeDictionary(string relativePath)
+        {
+            try
+            {
+                return new ResourceDictionary { Source = new Uri(relativePath, UriKind.Relative) };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load theme dictionary '{relativePath}': {ex}");
+                return new ResourceDictionary();
+            }
+        }
 
         private static int FindThemeDictionaryIndex(IList<ResourceDictionary> dictionaries)
         {
