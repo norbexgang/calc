@@ -11,21 +11,35 @@
             <!-- Témaváltás animációk -->
             <Storyboard x:Key="FadeOutAnimation">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                               From="1.0" To="0.3" Duration="0:0:0.25"
-                               EasingFunction="{x:Static local:App.EaseOut}"/>
+                               From="1.0" To="0.3" Duration="0:0:0.25">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
             </Storyboard>
             
             <Storyboard x:Key="FadeInAnimation">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                               From="0.3" To="1.0" Duration="0:0:0.25"
-                               EasingFunction="{x:Static local:App.EaseIn}"/>
+                               From="0.3" To="1.0" Duration="0:0:0.25">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseIn"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
             </Storyboard>
             
             <Storyboard x:Key="ButtonClickAnimation">
                 <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                               From="1.0" To="0.95" Duration="0:0:0.1" AutoReverse="True"/>
+                               From="1.0" To="0.95" Duration="0:0:0.1" AutoReverse="True">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseInOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
                 <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                               From="1.0" To="0.95" Duration="0:0:0.1" AutoReverse="True"/>
+                               From="1.0" To="0.95" Duration="0:0:0.1" AutoReverse="True">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseInOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
             </Storyboard>
         </ResourceDictionary>
     </Application.Resources>
