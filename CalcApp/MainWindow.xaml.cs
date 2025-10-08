@@ -243,7 +243,7 @@ namespace CalcApp
             RecordOperation($"sqrt({FormatNumber(value)})", result);
         }
 
-        private void Factorial_Click(object sender, RoutedEventArgs e)
+        private async void Factorial_Click(object sender, RoutedEventArgs e)
         {
             if (!TryGetDisplayValue(out var value)) return;
 
@@ -263,15 +263,16 @@ namespace CalcApp
             try
             {
                 var roundedValue = (int)Math.Round(value);
-                
+
                 // Security: double-check bounds before calculation
                 if (roundedValue < 0 || roundedValue > MaxFactorial)
                 {
                     ShowError();
                     return;
                 }
-                
-                var result = Factorial(roundedValue);
+
+                // Async: nagy faktoriális számítás háttérszálon
+                var result = await Task.Run(() => Factorial(roundedValue));
                 SetDisplayValue(result);
                 if (DisplayBox.Text == "Error") return;
                 _shouldResetDisplay = true;

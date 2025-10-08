@@ -1,11 +1,19 @@
-# Számológép (Calculator) 🧮
+# 🧮 Modern Kalkulátor
 
-**Verzió**: 2.1 - Optimalizált és Egyszerűsített
+**Verzió**: 2.2 - Modernizált Kinézet + Optimalizált Teljesítmény
 
 ## Leírás
-Modern WPF számológép alkalmazás C# nyelven írva. Az alkalmazás támogatja az alap aritmetikai műveleteket, tudományos funkciókat és memória műveleteket. **Verzió 2.1-ben optimalizálva a teljesítményre és egyszerűségre**.
+Prémium WPF számológép alkalmazás C# nyelven írva modern gradiens dizájnnal és smooth animációkkal. Az alkalmazás támogatja az alap aritmetikai műveleteket, tudományos funkciókat és memória műveleteket.
 
-## ✨ Új a 2.1 verzióban
+## ✨ Új a 2.2 verzióban (Visual Refresh)
+- 🎨 **Gradiens témák** - Gyönyörű színátmenetek dark és light módban
+- 🔘 **Még kerekebb gombok** - 16px corner radius élénk árnyékokkal
+- 💫 **Enhanced effektek** - DropShadow minden elemen
+- 📱 **Nagyobb betűk** - 20px gombok, 40px display, bold típusok
+- 🖼️ **Professzionális UI** - Modern, prémium megjelenés
+- ⚡ **Megtartott sebesség** - Minden optimalizálás megmaradt!
+
+## ✨ Új a 2.1 verzióban (Performance)
 - ⚡ **50-60% gyorsabb számítások** - egyszerűsített ProcessEquals()
 - 💾 **~200 byte memória megtakarítás** műveleteként
 - 📉 **~8% kisebb kód** (~100 sor eltávolítva)
@@ -23,12 +31,21 @@ Modern WPF számológép alkalmazás C# nyelven írva. Az alkalmazás támogatja
 - **További funkciók**: százalék számítás, előjel váltás, törlés, visszalépés
 - ~~**Zárójelek**~~ - *eltávolítva v2.1-ben az egyszerűség érdekében*
 
-## Animációs Rendszer ✨
+## 🎨 Vizuális Rendszer (v2.2)
+- **Gradiens Témák**: LinearGradientBrush beautiful color transitions
+- **DropShadow Effects**: GPU-gyorsított árnyékok minden elemen
+- **16px Rounded Corners**: Extra kerek gombok modern megjelenéssel
+- **Hover Feedback**: Opacity változás + fehér overlay effekt
+- **Bold Typography**: SemiBold/Bold betűk professzionális kinézetért
+- **Nagyobb Elemek**: 20px gombok, 40px display jobb olvashatóságért
+
+## ✨ Animációs Rendszer
 - **Fade Transitions**: 250ms smooth átmenetek témaváltáskor
 - **Button Animations**: hover és click effektek
-- **Scale Effects**: finom nagyítás/kicsinyítés animációk
+- **Scale Effects**: 1.08x zoom téma gombon
 - **Easing Functions**: QuadraticEase természetes mozgásért
 - **Async Animation**: nem blokkoló, fluid animációk
+- **GPU Accelerated**: Hardware gyorsított effektek
 
 ## Technológiai stack
 - **Framework**: .NET 8.0 Windows
@@ -54,12 +71,16 @@ Modern WPF számológép alkalmazás C# nyelven írva. Az alkalmazás támogatja
 - ✅ Resource cleanup és memory leak prevention
 - ✅ Bounds checking (faktoriális, string length)
 
-Részletek: [OPTIMIZATIONS.md](OPTIMIZATIONS.md) | [CHANGELOG_v2.1.md](CHANGELOG_v2.1.md)
-
 ## Fejlesztés
 A projekt fejlesztésében **GitHub Copilot**, **ChatGPT és a Codex Agentje** és a **Jetbrains AI** AI asszisztensek közreműködött a kód optimalizálásában és a fejlesztési folyamat gyorsításában.
 
-**v2.1 Optimalizálás**: GitHub Copilot által végzett kód egyszerűsítés és teljesítmény javítás.
+**v2.1 Optimalizálás**: GitHub Copilot által végzett kód egyszerűsítés és teljesítmény javítás.  
+**v2.2 Visual Refresh**: GitHub Copilot által tervezett modern gradiens dizájn és enhanced UI effektek.
+
+## 📸 Kinézet
+- 🌙 **Sötét Téma**: Mély purple-blue gradiens, cián szöveg, vibráló lila-kék accent
+- ☀️ **Világos Téma**: Tiszta grey-blue gradiens, sötét szöveg, friss kék-zöld accent
+- 💎 **Prémium**: Mindkét téma profi, modern és elegáns dizájnnal
 
 ## Indítás
 ```bash
