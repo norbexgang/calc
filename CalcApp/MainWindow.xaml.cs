@@ -401,13 +401,14 @@ namespace CalcApp
 
         private bool TryGetDisplayValue(out double value)
         {
-            if (DisplayBox.Text == "Error")
+            var text = DisplayBox.Text;
+            if (text == "Error")
             {
                 value = 0;
                 return false;
             }
 
-            if (!double.TryParse(DisplayBox.Text, NumberStyles.Float, Culture, out value))
+            if (!double.TryParse(text, NumberStyles.Float, Culture, out value))
             {
                 value = 0;
                 return false;
@@ -424,25 +425,17 @@ namespace CalcApp
 
         private void SetDisplayValue(double value)
         {
-            if (!IsFinite(value))
-            {
-                ShowError();
-                return;
-            }
-
+            // FormatNumber performs the finite check and returns "Error" for invalid values.
             var formatted = FormatNumber(value);
-            if (formatted == "Error")
-            {
-                ShowError();
-                return;
-            }
+            if (formatted == "Error") { ShowError(); return; }
 
             DisplayBox.Text = formatted;
         }
 
         private void ShowError()
         {
-            DisplayBox.Text = "Error";
+            var d = DisplayBox;
+            d.Text = "Error";
             _leftOperand = null;
             _pendingOperator = null;
             _shouldResetDisplay = true;
@@ -463,13 +456,13 @@ namespace CalcApp
             {
                 value = "0";
             }
-            // ensure memory value and history are bounded
-            var history = _memoryHistoryBuilder.Length == 0 ? string.Empty : _memoryHistoryBuilder.ToString();
-            if (history.Length > MaxMemoryHistoryLength)
+            // ensure memory value and history are bounded (operate in-place on StringBuilder to avoid extra allocations)
+            if (_memoryHistoryBuilder.Length > MaxMemoryHistoryLength)
             {
-                history = history.Substring(history.Length - MaxMemoryHistoryLength);
+                _memoryHistoryBuilder.Remove(0, _memoryHistoryBuilder.Length - MaxMemoryHistoryLength);
             }
 
+            var history = _memoryHistoryBuilder.Length == 0 ? string.Empty : _memoryHistoryBuilder.ToString();
             var displayText = history.Length == 0 ? $"Memory: {value}" : $"Memory: {history} (Total: {value})";
 
             if (items.Count == 0) items.Add(displayText); else items[0] = displayText;
@@ -497,13 +490,10 @@ namespace CalcApp
                 builder.Append(description);
             }
 
-            // Bound the history to avoid unbounded memory growth
+            // Bound the history to avoid unbounded memory growth - trim from the start in-place
             if (builder.Length > MaxMemoryHistoryLength)
             {
-                // keep the tail of the history
-                var keep = builder.ToString(builder.Length - MaxMemoryHistoryLength, MaxMemoryHistoryLength);
-                builder.Clear();
-                builder.Append(keep);
+                builder.Remove(0, builder.Length - MaxMemoryHistoryLength);
             }
 
             UpdateMemoryDisplay();
