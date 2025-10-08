@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,10 +24,16 @@ namespace CalcApp
         private Button? _themeToggle;
         private bool _isDarkMode = true; // Start with dark mode
         private bool _isAnimating = false;
+        private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
+        private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
+        private int _themeDictionaryIndex = -1;
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
         private static readonly double DegreesToRadians = Math.PI / 180.0;
         private const int MaxFactorial = 170; // 170! fits in double, 171! overflows
+        private const string DarkThemePath = "Themes/MaterialTheme.xaml";
+        private const string LightThemePath = "Themes/ClassicTheme.xaml";
+        private static int _maxComputedFactorial;
         private static readonly double[] _factorialCache = new double[MaxFactorial + 1];
         private static readonly object _factorialLock = new();
 
@@ -36,6 +43,7 @@ namespace CalcApp
             for (var i = 0; i <= MaxFactorial; i++) _factorialCache[i] = -1.0;
             _factorialCache[0] = 1.0;
             _factorialCache[1] = 1.0;
+            _maxComputedFactorial = 1;
         }
 
         public MainWindow()
@@ -157,7 +165,7 @@ namespace CalcApp
             var result = Math.Sqrt(value);
             SetDisplayValue(result);
             _shouldResetDisplay = true;
-            RecordOperation($"√({FormatNumber(value)})", result);
+            RecordOperation($"sqrt({FormatNumber(value)})", result);
         }
 
         private void Factorial_Click(object sender, RoutedEventArgs e)
@@ -258,15 +266,10 @@ namespace CalcApp
                 cached = cache[value];
                 if (cached >= 0) return cached;
 
-                // find highest precomputed index
-                var start = 1;
-                for (var i = value - 1; i >= 0; i--)
+                var start = _maxComputedFactorial;
+                if (start > value)
                 {
-                    if (cache[i] >= 0)
-                    {
-                        start = i;
-                        break;
-                    }
+                    start = value;
                 }
 
                 double result = cache[start];
@@ -277,7 +280,13 @@ namespace CalcApp
                     {
                         throw new OverflowException();
                     }
+
                     cache[i] = result;
+                }
+
+                if (value > _maxComputedFactorial)
+                {
+                    _maxComputedFactorial = value;
                 }
 
                 return cache[value];
@@ -326,14 +335,19 @@ namespace CalcApp
         private void UpdateMemoryDisplay()
         {
             var items = MemoryListBox.Items;
-            items.Clear();
-            
             var value = FormatNumber(_memoryValue);
-            var displayText = _memoryHistoryBuilder.Length == 0 
-                ? $"Memória: {value}"
-                : $"Memória: {_memoryHistoryBuilder} (összesen: {value})";
-                
-            items.Add(displayText);
+            var displayText = _memoryHistoryBuilder.Length == 0
+                ? $"Memory: {value}"
+                : $"Memory: {_memoryHistoryBuilder} (Total: {value})";
+
+            if (items.Count == 0)
+            {
+                items.Add(displayText);
+            }
+            else
+            {
+                items[0] = displayText;
+            }
         }
 
         private void TrackMemoryOperation(double value, bool isAddition)
@@ -421,28 +435,30 @@ namespace CalcApp
 
         private void ApplyTheme()
         {
-            var resources = Resources.MergedDictionaries;
-            resources.Clear();
+            var dictionaries = Resources.MergedDictionaries;
+            var targetDictionary = _isDarkMode ? _darkThemeDictionary : _lightThemeDictionary;
 
-            var themeUri = _isDarkMode 
-                ? new Uri("Themes/MaterialTheme.xaml", UriKind.Relative)
-                : new Uri("Themes/ClassicTheme.xaml", UriKind.Relative);
+            if (_themeDictionaryIndex < 0 || _themeDictionaryIndex >= dictionaries.Count)
+            {
+                _themeDictionaryIndex = FindThemeDictionaryIndex(dictionaries);
+                if (_themeDictionaryIndex < 0)
+                {
+                    dictionaries.Add(targetDictionary);
+                    _themeDictionaryIndex = dictionaries.Count - 1;
+                    return;
+                }
+            }
 
-            var themeDict = new ResourceDictionary { Source = themeUri };
-            resources.Add(themeDict);
+            if (!ReferenceEquals(dictionaries[_themeDictionaryIndex], targetDictionary))
+            {
+                dictionaries[_themeDictionaryIndex] = targetDictionary;
+            }
         }
 
         private void UpdateThemeToggleButton()
         {
             var button = ThemeToggleButton;
-            if (_isDarkMode)
-            {
-                button.Content = "☀️ Light";
-            }
-            else
-            {
-                button.Content = "🌙 Dark";
-            }
+            button.Content = _isDarkMode ? "Light mode" : "Dark mode";
         }
 
         // --- Keyboard / shared processing helpers ---
@@ -687,6 +703,24 @@ namespace CalcApp
             
             storyboard.Begin();
             await tcs.Task;
+        }
+
+        private static ResourceDictionary CreateThemeDictionary(string relativePath) =>
+            new() { Source = new Uri(relativePath, UriKind.Relative) };
+
+        private static int FindThemeDictionaryIndex(IList<ResourceDictionary> dictionaries)
+        {
+            for (var i = 0; i < dictionaries.Count; i++)
+            {
+                var source = dictionaries[i].Source?.OriginalString;
+                if (string.Equals(source, DarkThemePath, StringComparison.Ordinal) ||
+                    string.Equals(source, LightThemePath, StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }
