@@ -49,8 +49,41 @@ namespace CalcApp
         public MainWindow()
         {
             LoadComponentFromXaml();
+            // cache frequently used controls once window is loaded to avoid repeated FindName lookups
+            Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
+
             InitializeMemory();
             InitializeTheme();
+        }
+
+        private void OnLoaded(object? sender, RoutedEventArgs e)
+        {
+            // Try to cache controls to avoid repeated runtime lookups which allocate
+            if (_display == null && FindName("Display") is TextBox tb) _display = tb;
+            if (_memoryList == null && FindName("MemoryList") is ListBox lb) _memoryList = lb;
+            if (_themeToggle == null && FindName("ThemeToggle") is Button btn) _themeToggle = btn;
+        }
+
+        private void OnUnloaded(object? sender, RoutedEventArgs e)
+        {
+            // Clear references so the Window can be fully collected and to avoid holding UI elements longer than needed
+            Loaded -= OnLoaded;
+            Unloaded -= OnUnloaded;
+
+            if (_themeToggle != null)
+            {
+                // Try to safely detach known handlers if they were attached from code
+                try
+                {
+                    _themeToggle.Click -= ThemeToggle_Click;
+                }
+                catch { }
+            }
+
+            _display = null;
+            _memoryList = null;
+            _themeToggle = null;
         }
 
         private void LoadComponentFromXaml()
@@ -622,22 +655,19 @@ namespace CalcApp
         private async Task AnimateButtonClick()
         {
             var button = ThemeToggleButton;
-            var scaleTransform = button.RenderTransform as System.Windows.Media.ScaleTransform;
-            
-            if (scaleTransform == null) return;
+            // Ensure a ScaleTransform exists (avoid null and extra returns)
+            if (button.RenderTransform is not System.Windows.Media.ScaleTransform scaleTransform)
+            {
+                scaleTransform = new System.Windows.Media.ScaleTransform(1.0, 1.0);
+                button.RenderTransform = scaleTransform;
+            }
 
             var storyboard = new Storyboard();
-            
+
             var scaleXDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
             var scaleYDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
-            var scaleXUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100))
-            {
-                BeginTime = TimeSpan.FromMilliseconds(100)
-            };
-            var scaleYUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100))
-            {
-                BeginTime = TimeSpan.FromMilliseconds(100)
-            };
+            var scaleXUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100)) { BeginTime = TimeSpan.FromMilliseconds(100) };
+            var scaleYUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100)) { BeginTime = TimeSpan.FromMilliseconds(100) };
 
             Storyboard.SetTarget(scaleXDown, scaleTransform);
             Storyboard.SetTargetProperty(scaleXDown, new PropertyPath("ScaleX"));
@@ -654,48 +684,48 @@ namespace CalcApp
             storyboard.Children.Add(scaleYUp);
 
             var tcs = new TaskCompletionSource<bool>();
-            storyboard.Completed += (s, e) => tcs.SetResult(true);
-            
+            EventHandler handler = null!;
+            handler = (s, e) =>
+            {
+                try { storyboard.Completed -= handler; } catch { }
+                tcs.TrySetResult(true);
+            };
+
+            storyboard.Completed += handler;
+
             storyboard.Begin();
-            await tcs.Task;
+            await tcs.Task.ConfigureAwait(true);
         }
 
         private async Task FadeOutWindow()
         {
-            var fadeOut = new DoubleAnimation(1.0, 0.3, TimeSpan.FromMilliseconds(250))
-            {
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            };
-
-            var storyboard = new Storyboard();
-            Storyboard.SetTarget(fadeOut, this);
-            Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
-            storyboard.Children.Add(fadeOut);
-
-            var tcs = new TaskCompletionSource<bool>();
-            storyboard.Completed += (s, e) => tcs.SetResult(true);
-            
-            storyboard.Begin();
-            await tcs.Task;
+            await FadeOpacity(1.0, 0.3, TimeSpan.FromMilliseconds(250), new QuadraticEase { EasingMode = EasingMode.EaseOut });
         }
 
         private async Task FadeInWindow()
         {
-            var fadeIn = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(250))
-            {
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
-            };
+            await FadeOpacity(0.3, 1.0, TimeSpan.FromMilliseconds(250), new QuadraticEase { EasingMode = EasingMode.EaseIn });
+        }
 
+        private async Task FadeOpacity(double from, double to, TimeSpan duration, IEasingFunction? easing = null)
+        {
+            var animation = new DoubleAnimation(from, to, duration) { EasingFunction = easing };
             var storyboard = new Storyboard();
-            Storyboard.SetTarget(fadeIn, this);
-            Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
-            storyboard.Children.Add(fadeIn);
+            Storyboard.SetTarget(animation, this);
+            Storyboard.SetTargetProperty(animation, new PropertyPath("Opacity"));
+            storyboard.Children.Add(animation);
 
             var tcs = new TaskCompletionSource<bool>();
-            storyboard.Completed += (s, e) => tcs.SetResult(true);
-            
+            EventHandler handler = null!;
+            handler = (s, e) =>
+            {
+                try { storyboard.Completed -= handler; } catch { }
+                tcs.TrySetResult(true);
+            };
+
+            storyboard.Completed += handler;
             storyboard.Begin();
-            await tcs.Task;
+            await tcs.Task.ConfigureAwait(true);
         }
 
         private static ResourceDictionary CreateThemeDictionary(string relativePath) =>
