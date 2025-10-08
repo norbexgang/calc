@@ -18,7 +18,7 @@ namespace CalcApp
         private TextBox? _display;
         private ListBox? _memoryList;
 
-        private readonly CultureInfo _culture = CultureInfo.InvariantCulture;
+        private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
         public MainWindow()
         {
@@ -29,7 +29,8 @@ namespace CalcApp
         private void LoadComponentFromXaml()
         {
             // Manually load the XAML to work around designer not seeing InitializeComponent.
-            Application.LoadComponent(this, new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative));
+            var uri = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
+            Application.LoadComponent(this, uri);
         }
 
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
@@ -48,22 +49,19 @@ namespace CalcApp
 
         private void Digit_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is not Button button)
-            {
-                return;
-            }
+            if (sender is not Button button) return;
 
             var digit = button.Content?.ToString() ?? string.Empty;
-
             _lastOperationDescription = null;
 
-            if (_shouldResetDisplay || DisplayBox.Text == "0" || DisplayBox.Text == "Error")
+            var currentText = DisplayBox.Text;
+            if (_shouldResetDisplay || currentText is "0" or "Error")
             {
                 DisplayBox.Text = digit;
             }
             else
             {
-                DisplayBox.Text += digit;
+                DisplayBox.Text = currentText + digit;
             }
 
             _shouldResetDisplay = false;
@@ -71,7 +69,9 @@ namespace CalcApp
 
         private void Decimal_Click(object sender, RoutedEventArgs e)
         {
-            if (_shouldResetDisplay || DisplayBox.Text == "Error")
+            var currentText = DisplayBox.Text;
+            
+            if (_shouldResetDisplay || currentText == "Error")
             {
                 DisplayBox.Text = "0.";
                 _shouldResetDisplay = false;
@@ -79,9 +79,9 @@ namespace CalcApp
                 return;
             }
 
-            if (!DisplayBox.Text.Contains('.', StringComparison.Ordinal))
+            if (!currentText.Contains('.', StringComparison.Ordinal))
             {
-                DisplayBox.Text += ".";
+                DisplayBox.Text = currentText + ".";
                 _lastOperationDescription = null;
             }
         }
@@ -119,7 +119,9 @@ namespace CalcApp
 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
-            if (_shouldResetDisplay || DisplayBox.Text == "Error")
+            var currentText = DisplayBox.Text;
+            
+            if (_shouldResetDisplay || currentText == "Error")
             {
                 DisplayBox.Text = "0";
                 _shouldResetDisplay = false;
@@ -127,34 +129,18 @@ namespace CalcApp
                 return;
             }
 
-            if (DisplayBox.Text.Length <= 1)
-            {
-                DisplayBox.Text = "0";
-                _lastOperationDescription = null;
-                return;
-            }
-
-            DisplayBox.Text = DisplayBox.Text[..^1];
+            DisplayBox.Text = currentText.Length <= 1 ? "0" : currentText[..^1];
             _lastOperationDescription = null;
         }
 
         private void Operator_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is not Button button)
-            {
-                return;
-            }
+            if (sender is not Button button) return;
 
             var operatorSymbol = button.Tag?.ToString() ?? button.Content?.ToString();
-            if (string.IsNullOrWhiteSpace(operatorSymbol))
-            {
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(operatorSymbol)) return;
 
-            if (!TryGetDisplayValue(out var currentValue))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var currentValue)) return;
 
             if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
             {
@@ -176,15 +162,8 @@ namespace CalcApp
 
         private void Equals_Click(object sender, RoutedEventArgs e)
         {
-            if (!_leftOperand.HasValue || _pendingOperator is null)
-            {
-                return;
-            }
-
-            if (!TryGetDisplayValue(out var rightOperand))
-            {
-                return;
-            }
+            if (!_leftOperand.HasValue || _pendingOperator is null) return;
+            if (!TryGetDisplayValue(out var rightOperand)) return;
 
             try
             {
@@ -224,10 +203,7 @@ namespace CalcApp
 
         private void Sqrt_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetDisplayValue(out var value))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var value)) return;
 
             if (value < 0)
             {
@@ -243,10 +219,7 @@ namespace CalcApp
 
         private void Factorial_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetDisplayValue(out var value))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var value)) return;
 
             if (value < 0 || Math.Abs(value - Math.Round(value)) > double.Epsilon)
             {
@@ -270,25 +243,19 @@ namespace CalcApp
 
         private void MemoryAdd_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetDisplayValue(out var value))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var value)) return;
 
             _memoryValue += value;
-            TrackMemoryOperation(value, true);
+            TrackMemoryOperation(value, isAddition: true);
             _shouldResetDisplay = true;
         }
 
         private void MemorySubtract_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetDisplayValue(out var value))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var value)) return;
 
             _memoryValue -= value;
-            TrackMemoryOperation(value, false);
+            TrackMemoryOperation(value, isAddition: false);
             _shouldResetDisplay = true;
         }
 
@@ -308,16 +275,13 @@ namespace CalcApp
 
         private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
         {
-            if (!TryGetDisplayValue(out var value))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var value)) return;
 
             var originalValue = value;
 
             if (degrees)
             {
-                value = value * Math.PI / 180.0;
+                value *= Math.PI / 180.0;
             }
 
             if (validateTan)
@@ -368,7 +332,7 @@ namespace CalcApp
                 return false;
             }
 
-            return double.TryParse(DisplayBox.Text, NumberStyles.Float, _culture, out value);
+            return double.TryParse(DisplayBox.Text, NumberStyles.Float, Culture, out value);
         }
 
         private void SetDisplayValue(double value)
@@ -392,40 +356,32 @@ namespace CalcApp
 
         private void UpdateMemoryDisplay()
         {
-            MemoryListBox.Items.Clear();
+            var items = MemoryListBox.Items;
+            items.Clear();
+            
             var value = FormatNumber(_memoryValue);
-            if (_memoryHistoryBuilder.Length == 0)
-            {
-                MemoryListBox.Items.Add($"Memória: {value}");
-            }
-            else
-            {
-                MemoryListBox.Items.Add($"Memória: {_memoryHistoryBuilder} (összesen: {value})");
-            }
-
+            var displayText = _memoryHistoryBuilder.Length == 0 
+                ? $"Memória: {value}"
+                : $"Memória: {_memoryHistoryBuilder} (összesen: {value})";
+                
+            items.Add(displayText);
         }
 
         private void TrackMemoryOperation(double value, bool isAddition)
         {
             var description = _lastOperationDescription ?? FormatNumber(value);
+            var builder = _memoryHistoryBuilder;
 
-            if (_memoryHistoryBuilder.Length == 0)
+            if (builder.Length == 0)
             {
-                if (isAddition)
-                {
-                    _memoryHistoryBuilder.Append(description);
-                }
-                else
-                {
-                    _memoryHistoryBuilder.Append("- ");
-                    _memoryHistoryBuilder.Append(description);
-                }
+                if (!isAddition) builder.Append("- ");
+                builder.Append(description);
             }
             else
             {
-                _memoryHistoryBuilder.Append("; ");
-                _memoryHistoryBuilder.Append(isAddition ? "+ " : "- ");
-                _memoryHistoryBuilder.Append(description);
+                builder.Append("; ");
+                builder.Append(isAddition ? "+ " : "- ");
+                builder.Append(description);
             }
 
             UpdateMemoryDisplay();
@@ -437,9 +393,9 @@ namespace CalcApp
             _lastOperationDescription = $"{description}={formattedResult}";
         }
 
-        private string FormatNumber(double value)
+        private static string FormatNumber(double value)
         {
-            var formatted = value.ToString("G12", _culture);
+            var formatted = value.ToString("G12", Culture);
             if (formatted.Contains('E', StringComparison.Ordinal))
             {
                 return formatted;
