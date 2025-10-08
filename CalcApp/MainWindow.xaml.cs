@@ -95,25 +95,19 @@ namespace CalcApp
 
         private void Sign_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetDisplayValue(out var value))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var value)) return;
 
-            value *= -1;
+            value = -value;
             SetDisplayValue(value);
             _lastOperationDescription = null;
         }
 
         private void Percent_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetDisplayValue(out var value))
-            {
-                return;
-            }
+            if (!TryGetDisplayValue(out var value)) return;
 
             var originalValue = value;
-            value /= 100;
+            value /= 100.0;
             SetDisplayValue(value);
             _shouldResetDisplay = true;
             RecordOperation($"{FormatNumber(originalValue)}%", value);
@@ -155,7 +149,6 @@ namespace CalcApp
         private void Sqrt_Click(object sender, RoutedEventArgs e)
         {
             if (!TryGetDisplayValue(out var value)) return;
-
             if (value < 0)
             {
                 ShowError();
