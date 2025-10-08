@@ -901,7 +901,6 @@ namespace CalcApp
                     e.Handled = true;
                     break;
                 case Key.D0 when Keyboard.Modifiers == ModifierKeys.Shift:
-                case Key.OemCloseBrackets when Keyboard.Modifiers == ModifierKeys.Shift:
                     ProcessCloseParenthesis();
                     e.Handled = true;
                     break;
