@@ -16,7 +16,8 @@ namespace CalcApp
         private string? _pendingOperator;
         private bool _shouldResetDisplay;
         private double _memoryValue;
-        private readonly StringBuilder _memoryHistoryBuilder = new();
+        private readonly Queue<(bool IsAddition, string Description)> _memoryHistoryEntries = new();
+        private string _memoryHistoryText = string.Empty;
         private string? _lastOperationDescription;
 
         private TextBox? _display;
@@ -36,18 +37,7 @@ namespace CalcApp
     private const int MaxMemoryHistoryLength = 1024; // bound memory history to avoid unbounded growth
         private const string DarkThemePath = "Themes/MaterialTheme.xaml";
         private const string LightThemePath = "Themes/ClassicTheme.xaml";
-        private static int _maxComputedFactorial;
-        private static readonly double[] _factorialCache = new double[MaxFactorial + 1];
-        private static readonly object _factorialLock = new();
-
-        static MainWindow()
-        {
-            // initialize factorial cache with sentinel (-1)
-            for (var i = 0; i <= MaxFactorial; i++) _factorialCache[i] = -1.0;
-            _factorialCache[0] = 1.0;
-            _factorialCache[1] = 1.0;
-            _maxComputedFactorial = 1;
-        }
+        private static readonly double[] _factorialCache = CreateFactorialCache();
 
         public MainWindow()
         {
@@ -376,7 +366,8 @@ namespace CalcApp
         private void ResetMemory()
         {
             _memoryValue = 0;
-            _memoryHistoryBuilder.Clear();
+            _memoryHistoryEntries.Clear();
+            _memoryHistoryText = string.Empty;
             UpdateMemoryDisplay();
         }
 
@@ -429,75 +420,40 @@ namespace CalcApp
             }
         }
 
+        private static double[] CreateFactorialCache()
+        {
+            var cache = new double[MaxFactorial + 1];
+            cache[0] = 1.0;
+
+            for (var i = 1; i <= MaxFactorial; i++)
+            {
+                var next = cache[i - 1] * i;
+
+                if (!IsFinite(next))
+                {
+                    cache[i] = double.PositiveInfinity;
+                    break;
+                }
+
+                cache[i] = next;
+            }
+
+            return cache;
+        }
+
         private static double Factorial(int value)
         {
             // Security: validate input bounds
             if (value < 0) throw new OverflowException("Factorial is not defined for negative numbers");
             if (value > MaxFactorial) throw new OverflowException($"Factorial overflow: maximum supported value is {MaxFactorial}");
 
-            var cache = _factorialCache;
-            
-            // Performance: check cache without lock first (double-checked locking pattern)
-            var cached = cache[value];
-            if (cached >= 0) return cached;
-
-            lock (_factorialLock)
+            var result = _factorialCache[value];
+            if (!IsFinite(result))
             {
-                // Performance: double-check pattern - another thread might have computed it
-                cached = cache[value];
-                if (cached >= 0) return cached;
-
-                var start = _maxComputedFactorial;
-                if (start > value)
-                {
-                    start = value;
-                }
-
-                double result = cache[start];
-                
-                // Performance: unroll loop for small factorials (common case optimization)
-                if (value <= 10 && start == 0)
-                {
-                    // Precomputed small factorials for common cases
-                    result = 1.0;
-                    for (var i = 1; i <= value; i++)
-                    {
-                        result *= i;
-                    }
-                    
-                    // Fill cache for all computed values
-                    for (var i = 1; i <= value; i++)
-                    {
-                        var temp = 1.0;
-                        for (var j = 1; j <= i; j++) temp *= j;
-                        cache[i] = temp;
-                    }
-                    
-                    _maxComputedFactorial = value;
-                    return result;
-                }
-                
-                // General case: compute from last cached value
-                for (var i = start + 1; i <= value; i++)
-                {
-                    result *= i;
-                    
-                    // Security: check for overflow during computation
-                    if (!IsFinite(result))
-                    {
-                        throw new OverflowException($"Factorial overflow at {i}!");
-                    }
-
-                    cache[i] = result;
-                }
-
-                if (value > _maxComputedFactorial)
-                {
-                    _maxComputedFactorial = value;
-                }
-
-                return cache[value];
+                throw new OverflowException($"Factorial overflow at {value}!");
             }
+
+            return result;
         }
 
         private void ResetCalculatorState()
@@ -573,17 +529,11 @@ namespace CalcApp
                 {
                     value = "0";
                 }
-                
-                // Security: ensure memory value and history are bounded
-                if (_memoryHistoryBuilder.Length > MaxMemoryHistoryLength)
-                {
-                    _memoryHistoryBuilder.Remove(0, _memoryHistoryBuilder.Length - MaxMemoryHistoryLength);
-                }
 
-                // Performance: avoid creating intermediate string if not needed
-                var displayText = _memoryHistoryBuilder.Length == 0 
-                    ? $"Memory: {value}" 
-                    : $"Memory: {_memoryHistoryBuilder} (Total: {value})";
+                var historyText = _memoryHistoryText;
+                var displayText = string.IsNullOrEmpty(historyText)
+                    ? $"Memory: {value}"
+                    : $"Memory: {historyText} (Total: {value})";
 
                 // Performance: update existing item rather than clearing and re-adding
                 if (items.Count == 0)
@@ -610,38 +560,75 @@ namespace CalcApp
                 description = "0";
             }
 
-            var builder = _memoryHistoryBuilder;
-            
-            // Security: prevent excessive string builder capacity growth
-            if (builder.Capacity > MaxMemoryHistoryLength * 2)
-            {
-                // Trim capacity if it grows too large
-                var currentContent = builder.ToString();
-                builder.Clear();
-                builder.Capacity = MaxMemoryHistoryLength;
-                builder.Append(currentContent);
-            }
-
-            if (builder.Length == 0)
-            {
-                if (!isAddition) builder.Append("- ");
-                builder.Append(description);
-            }
-            else
-            {
-                // Performance: append operations are more efficient than concatenation
-                builder.Append("; ");
-                builder.Append(isAddition ? "+ " : "- ");
-                builder.Append(description);
-            }
-
-            // Security: bound the history to avoid unbounded memory growth
-            if (builder.Length > MaxMemoryHistoryLength)
-            {
-                builder.Remove(0, builder.Length - MaxMemoryHistoryLength);
-            }
-
+            _memoryHistoryEntries.Enqueue((isAddition, description));
+            UpdateMemoryHistoryText();
             UpdateMemoryDisplay();
+        }
+
+        private void UpdateMemoryHistoryText()
+        {
+            if (_memoryHistoryEntries.Count == 0)
+            {
+                _memoryHistoryText = string.Empty;
+                return;
+            }
+
+            while (true)
+            {
+                var historyText = BuildMemoryHistoryString();
+                if (historyText.Length <= MaxMemoryHistoryLength)
+                {
+                    _memoryHistoryText = historyText;
+                    return;
+                }
+
+                if (_memoryHistoryEntries.Count == 0)
+                {
+                    _memoryHistoryText = string.Empty;
+                    return;
+                }
+
+                _memoryHistoryEntries.Dequeue();
+
+                if (_memoryHistoryEntries.Count == 0)
+                {
+                    _memoryHistoryText = string.Empty;
+                    return;
+                }
+            }
+        }
+
+        private string BuildMemoryHistoryString()
+        {
+            if (_memoryHistoryEntries.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var builder = new StringBuilder(Math.Min(MaxMemoryHistoryLength, 128));
+            var isFirst = true;
+            foreach (var entry in _memoryHistoryEntries)
+            {
+                var (isAddition, description) = entry;
+
+                if (isFirst)
+                {
+                    if (!isAddition)
+                    {
+                        builder.Append("- ");
+                    }
+                    builder.Append(description);
+                    isFirst = false;
+                }
+                else
+                {
+                    builder.Append("; ");
+                    builder.Append(isAddition ? "+ " : "- ");
+                    builder.Append(description);
+                }
+            }
+
+            return builder.ToString();
         }
 
         private void RecordOperation(string description, double result)
