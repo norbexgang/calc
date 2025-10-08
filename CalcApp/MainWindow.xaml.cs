@@ -17,6 +17,8 @@ namespace CalcApp
 
         private TextBox? _display;
         private ListBox? _memoryList;
+        private Button? _themeToggle;
+        private bool _isDarkMode = true; // Start with dark mode
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
@@ -24,6 +26,7 @@ namespace CalcApp
         {
             LoadComponentFromXaml();
             InitializeMemory();
+            InitializeTheme();
         }
 
         private void LoadComponentFromXaml()
@@ -36,6 +39,8 @@ namespace CalcApp
         private TextBox DisplayBox => _display ??= FindRequiredControl<TextBox>("Display");
 
         private ListBox MemoryListBox => _memoryList ??= FindRequiredControl<ListBox>("MemoryList");
+
+        private Button ThemeToggleButton => _themeToggle ??= FindRequiredControl<Button>("ThemeToggle");
 
         private T FindRequiredControl<T>(string name) where T : class
         {
@@ -420,6 +425,44 @@ namespace CalcApp
                 "/" => right == 0 ? throw new DivideByZeroException() : left / right,
                 _ => throw new InvalidOperationException($"Unknown operator: {operatorSymbol}")
             };
+        }
+
+        private void InitializeTheme()
+        {
+            UpdateThemeToggleButton();
+        }
+
+        private void ThemeToggle_Click(object sender, RoutedEventArgs e)
+        {
+            _isDarkMode = !_isDarkMode;
+            ApplyTheme();
+            UpdateThemeToggleButton();
+        }
+
+        private void ApplyTheme()
+        {
+            var resources = Resources.MergedDictionaries;
+            resources.Clear();
+
+            var themeUri = _isDarkMode 
+                ? new Uri("Themes/MaterialTheme.xaml", UriKind.Relative)
+                : new Uri("Themes/ClassicTheme.xaml", UriKind.Relative);
+
+            var themeDict = new ResourceDictionary { Source = themeUri };
+            resources.Add(themeDict);
+        }
+
+        private void UpdateThemeToggleButton()
+        {
+            var button = ThemeToggleButton;
+            if (_isDarkMode)
+            {
+                button.Content = "☀️ Light";
+            }
+            else
+            {
+                button.Content = "🌙 Dark";
+            }
         }
     }
 }

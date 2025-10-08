@@ -7,6 +7,7 @@ Modern WPF számológép alkalmazás C# nyelven írva. Az alkalmazás támogatja
 - **Alap műveletek**: összeadás, kivonás, szorzás, osztás
 - **Tudományos funkciók**: sin, cos, tan, négyzetgyök, faktoriális
 - **Memória műveletek**: M+, M-, MR, MC
+- **Témaváltás**: világos és sötét mód között váltás gombbal (🌙 Dark / ☀️ Light)
 - **További funkciók**: százalék számítás, előjel váltás, törlés, visszalépés
 
 ## Technológiai stack
