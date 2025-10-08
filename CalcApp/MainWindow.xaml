@@ -1,8 +1,8 @@
 <Window x:Class="CalcApp.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Calculator" Width="380" MinWidth="360" Height="560" MinHeight="520" ResizeMode="CanResize"
-        Background="{DynamicResource WindowBackgroundBrush}">
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Calculator" Width="380" MinWidth="360" Height="560" MinHeight="520" ResizeMode="CanResize"
+    Background="{DynamicResource WindowBackgroundBrush}" KeyDown="Window_KeyDown" Focusable="True">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
@@ -70,40 +71,13 @@ namespace CalcApp
         private void Digit_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not Button button) return;
-
             var digit = button.Content?.ToString() ?? string.Empty;
-            _lastOperationDescription = null;
-
-            var currentText = DisplayBox.Text;
-            if (_shouldResetDisplay || currentText is "0" or "Error")
-            {
-                DisplayBox.Text = digit;
-            }
-            else
-            {
-                DisplayBox.Text = currentText + digit;
-            }
-
-            _shouldResetDisplay = false;
+            ProcessDigit(digit);
         }
 
         private void Decimal_Click(object sender, RoutedEventArgs e)
         {
-            var currentText = DisplayBox.Text;
-            
-            if (_shouldResetDisplay || currentText == "Error")
-            {
-                DisplayBox.Text = "0.";
-                _shouldResetDisplay = false;
-                _lastOperationDescription = null;
-                return;
-            }
-
-            if (!currentText.Contains('.', StringComparison.Ordinal))
-            {
-                DisplayBox.Text = currentText + ".";
-                _lastOperationDescription = null;
-            }
+            ProcessDecimal();
         }
 
         private void Clear_Click(object sender, RoutedEventArgs e)
@@ -139,71 +113,20 @@ namespace CalcApp
 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
-            var currentText = DisplayBox.Text;
-            
-            if (_shouldResetDisplay || currentText == "Error")
-            {
-                DisplayBox.Text = "0";
-                _shouldResetDisplay = false;
-                _lastOperationDescription = null;
-                return;
-            }
-
-            DisplayBox.Text = currentText.Length <= 1 ? "0" : currentText[..^1];
-            _lastOperationDescription = null;
+            ProcessDelete();
         }
 
         private void Operator_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not Button button) return;
-
             var operatorSymbol = button.Tag?.ToString() ?? button.Content?.ToString();
             if (string.IsNullOrWhiteSpace(operatorSymbol)) return;
-
-            if (!TryGetDisplayValue(out var currentValue)) return;
-
-            if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
-            {
-                var leftOperand = _leftOperand.Value;
-                var pendingOp = _pendingOperator;
-                var result = Evaluate(leftOperand, currentValue, pendingOp);
-                _leftOperand = result;
-                SetDisplayValue(result);
-                RecordOperation($"{FormatNumber(leftOperand)}{pendingOp}{FormatNumber(currentValue)}", result);
-            }
-            else
-            {
-                _leftOperand = currentValue;
-            }
-
-            _pendingOperator = operatorSymbol;
-            _shouldResetDisplay = true;
+            ProcessOperator(operatorSymbol);
         }
 
         private void Equals_Click(object sender, RoutedEventArgs e)
         {
-            if (!_leftOperand.HasValue || _pendingOperator is null) return;
-            if (!TryGetDisplayValue(out var rightOperand)) return;
-
-            try
-            {
-                var leftOperand = _leftOperand.Value;
-                var pendingOperator = _pendingOperator!;
-                var result = Evaluate(leftOperand, rightOperand, pendingOperator);
-                SetDisplayValue(result);
-                RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(rightOperand)}", result);
-                _leftOperand = null;
-                _pendingOperator = null;
-                _shouldResetDisplay = true;
-            }
-            catch (DivideByZeroException)
-            {
-                ShowError();
-            }
-            catch (InvalidOperationException)
-            {
-                ShowError();
-            }
+            ProcessEquals();
         }
 
         private void Sin_Click(object sender, RoutedEventArgs e)
@@ -519,6 +442,171 @@ namespace CalcApp
             else
             {
                 button.Content = "🌙 Dark";
+            }
+        }
+
+        // --- Keyboard / shared processing helpers ---
+        private void ProcessDigit(string digit)
+        {
+            _lastOperationDescription = null;
+            var currentText = DisplayBox.Text;
+            if (_shouldResetDisplay || currentText is "0" or "Error")
+            {
+                DisplayBox.Text = digit;
+            }
+            else
+            {
+                DisplayBox.Text = currentText + digit;
+            }
+
+            _shouldResetDisplay = false;
+        }
+
+        private void ProcessDecimal()
+        {
+            var currentText = DisplayBox.Text;
+            if (_shouldResetDisplay || currentText == "Error")
+            {
+                DisplayBox.Text = "0.";
+                _shouldResetDisplay = false;
+                _lastOperationDescription = null;
+                return;
+            }
+
+            if (!currentText.Contains('.'))
+            {
+                DisplayBox.Text = currentText + ".";
+                _lastOperationDescription = null;
+            }
+        }
+
+        private void ProcessDelete()
+        {
+            var currentText = DisplayBox.Text;
+            if (_shouldResetDisplay || currentText == "Error")
+            {
+                DisplayBox.Text = "0";
+                _shouldResetDisplay = false;
+                _lastOperationDescription = null;
+                return;
+            }
+
+            DisplayBox.Text = currentText.Length <= 1 ? "0" : currentText[..^1];
+            _lastOperationDescription = null;
+        }
+
+        private void ProcessOperator(string operatorSymbol)
+        {
+            if (string.IsNullOrWhiteSpace(operatorSymbol)) return;
+            if (!TryGetDisplayValue(out var currentValue)) return;
+
+            if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
+            {
+                var leftOperand = _leftOperand.Value;
+                var pendingOp = _pendingOperator;
+                var result = Evaluate(leftOperand, currentValue, pendingOp);
+                _leftOperand = result;
+                SetDisplayValue(result);
+                RecordOperation($"{FormatNumber(leftOperand)}{pendingOp}{FormatNumber(currentValue)}", result);
+            }
+            else
+            {
+                _leftOperand = currentValue;
+            }
+
+            _pendingOperator = operatorSymbol;
+            _shouldResetDisplay = true;
+        }
+
+        private void ProcessEquals()
+        {
+            if (!_leftOperand.HasValue || _pendingOperator is null) return;
+            if (!TryGetDisplayValue(out var rightOperand)) return;
+
+            try
+            {
+                var leftOperand = _leftOperand.Value;
+                var pendingOperator = _pendingOperator!;
+                var result = Evaluate(leftOperand, rightOperand, pendingOperator);
+                SetDisplayValue(result);
+                RecordOperation($"{FormatNumber(leftOperand)}{pendingOperator}{FormatNumber(rightOperand)}", result);
+                _leftOperand = null;
+                _pendingOperator = null;
+                _shouldResetDisplay = true;
+            }
+            catch (DivideByZeroException)
+            {
+                ShowError();
+            }
+            catch (InvalidOperationException)
+            {
+                ShowError();
+            }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Digits
+            if (e.Key >= Key.D0 && e.Key <= Key.D9)
+            {
+                var ch = (char)('0' + (e.Key - Key.D0));
+                ProcessDigit(ch.ToString());
+                e.Handled = true;
+                return;
+            }
+
+            if (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)
+            {
+                var ch = (char)('0' + (e.Key - Key.NumPad0));
+                ProcessDigit(ch.ToString());
+                e.Handled = true;
+                return;
+            }
+
+            // Operators and control keys
+            switch (e.Key)
+            {
+                case Key.Add:
+                case Key.OemPlus when Keyboard.Modifiers == ModifierKeys.None:
+                    ProcessOperator("+");
+                    e.Handled = true;
+                    break;
+                case Key.Subtract:
+                case Key.OemMinus:
+                    ProcessOperator("-");
+                    e.Handled = true;
+                    break;
+                case Key.Multiply:
+                    ProcessOperator("*");
+                    e.Handled = true;
+                    break;
+                case Key.Divide:
+                case Key.Oem2: // '/'
+                    ProcessOperator("/");
+                    e.Handled = true;
+                    break;
+                case Key.Decimal:
+                case Key.OemPeriod:
+                    ProcessDecimal();
+                    e.Handled = true;
+                    break;
+                case Key.Return:
+                    ProcessEquals();
+                    e.Handled = true;
+                    break;
+                case Key.Back:
+                    ProcessDelete();
+                    e.Handled = true;
+                    break;
+                case Key.Escape:
+                    ResetCalculatorState();
+                    e.Handled = true;
+                    break;
+                case Key.Oem5: // percent? fallback
+                    // fallback: '%'
+                    Percent_Click(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
             }
         }
 
