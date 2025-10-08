@@ -1,4 +1,7 @@
 {
     "FSharp.suggestGitignore": false,
-    "markdown.validate.enabled": true
+    "markdown.validate.enabled": true,
+    "markdown.validate.ignoredLinks": [
+        "CHANGELOG_v2.1.md"
+    ]
 }
