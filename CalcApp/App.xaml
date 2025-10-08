@@ -3,5 +3,30 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/MaterialTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Témaváltás animációk -->
+            <Storyboard x:Key="FadeOutAnimation">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                               From="1.0" To="0.3" Duration="0:0:0.25"
+                               EasingFunction="{x:Static local:App.EaseOut}"/>
+            </Storyboard>
+            
+            <Storyboard x:Key="FadeInAnimation">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                               From="0.3" To="1.0" Duration="0:0:0.25"
+                               EasingFunction="{x:Static local:App.EaseIn}"/>
+            </Storyboard>
+            
+            <Storyboard x:Key="ButtonClickAnimation">
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                               From="1.0" To="0.95" Duration="0:0:0.1" AutoReverse="True"/>
+                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                               From="1.0" To="0.95" Duration="0:0:0.1" AutoReverse="True"/>
+            </Storyboard>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

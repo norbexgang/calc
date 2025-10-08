@@ -53,7 +53,37 @@
         <!-- Theme Toggle Button -->
         <Button x:Name="ThemeToggle" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" 
                 Width="80" Height="35" Margin="0,0,0,8" Click="ThemeToggle_Click"
-                Content="🌙 Dark" FontSize="12" />
+                Content="🌙 Dark" FontSize="12" Cursor="Hand">
+            <Button.RenderTransform>
+                <ScaleTransform x:Name="ThemeButtonScale" ScaleX="1" ScaleY="1" CenterX="40" CenterY="17.5"/>
+            </Button.RenderTransform>
+            <Button.Triggers>
+                <EventTrigger RoutedEvent="Button.MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale"
+                                           Storyboard.TargetProperty="ScaleX"
+                                           To="1.05" Duration="0:0:0.15"/>
+                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale"
+                                           Storyboard.TargetProperty="ScaleY"
+                                           To="1.05" Duration="0:0:0.15"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="Button.MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale"
+                                           Storyboard.TargetProperty="ScaleX"
+                                           To="1.0" Duration="0:0:0.15"/>
+                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale"
+                                           Storyboard.TargetProperty="ScaleY"
+                                           To="1.0" Duration="0:0:0.15"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Button.Triggers>
+        </Button>
 
         <Grid Grid.Row="1">
             <Border CornerRadius="12" BorderBrush="#FFB0B0B0" BorderThickness="1" Padding="8"

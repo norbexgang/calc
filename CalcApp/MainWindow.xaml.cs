@@ -1,8 +1,10 @@
 using System;
 using System.Globalization;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 
 namespace CalcApp
 {
@@ -19,6 +21,7 @@ namespace CalcApp
         private ListBox? _memoryList;
         private Button? _themeToggle;
         private bool _isDarkMode = true; // Start with dark mode
+        private bool _isAnimating = false;
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
@@ -432,11 +435,27 @@ namespace CalcApp
             UpdateThemeToggleButton();
         }
 
-        private void ThemeToggle_Click(object sender, RoutedEventArgs e)
+        private async void ThemeToggle_Click(object sender, RoutedEventArgs e)
         {
+            if (_isAnimating) return; // Prevent multiple clicks during animation
+            
+            _isAnimating = true;
+            
+            // Animate button click
+            await AnimateButtonClick();
+            
+            // Fade out current theme
+            await FadeOutWindow();
+            
+            // Switch theme
             _isDarkMode = !_isDarkMode;
             ApplyTheme();
             UpdateThemeToggleButton();
+            
+            // Fade in new theme
+            await FadeInWindow();
+            
+            _isAnimating = false;
         }
 
         private void ApplyTheme()
@@ -463,6 +482,85 @@ namespace CalcApp
             {
                 button.Content = "🌙 Dark";
             }
+        }
+
+        private async Task AnimateButtonClick()
+        {
+            var button = ThemeToggleButton;
+            var scaleTransform = button.RenderTransform as System.Windows.Media.ScaleTransform;
+            
+            if (scaleTransform == null) return;
+
+            var storyboard = new Storyboard();
+            
+            var scaleXDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
+            var scaleYDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
+            var scaleXUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(100)
+            };
+            var scaleYUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(100)
+            };
+
+            Storyboard.SetTarget(scaleXDown, scaleTransform);
+            Storyboard.SetTargetProperty(scaleXDown, new PropertyPath("ScaleX"));
+            Storyboard.SetTarget(scaleYDown, scaleTransform);
+            Storyboard.SetTargetProperty(scaleYDown, new PropertyPath("ScaleY"));
+            Storyboard.SetTarget(scaleXUp, scaleTransform);
+            Storyboard.SetTargetProperty(scaleXUp, new PropertyPath("ScaleX"));
+            Storyboard.SetTarget(scaleYUp, scaleTransform);
+            Storyboard.SetTargetProperty(scaleYUp, new PropertyPath("ScaleY"));
+
+            storyboard.Children.Add(scaleXDown);
+            storyboard.Children.Add(scaleYDown);
+            storyboard.Children.Add(scaleXUp);
+            storyboard.Children.Add(scaleYUp);
+
+            var tcs = new TaskCompletionSource<bool>();
+            storyboard.Completed += (s, e) => tcs.SetResult(true);
+            
+            storyboard.Begin();
+            await tcs.Task;
+        }
+
+        private async Task FadeOutWindow()
+        {
+            var fadeOut = new DoubleAnimation(1.0, 0.3, TimeSpan.FromMilliseconds(250))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            var storyboard = new Storyboard();
+            Storyboard.SetTarget(fadeOut, this);
+            Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
+            storyboard.Children.Add(fadeOut);
+
+            var tcs = new TaskCompletionSource<bool>();
+            storyboard.Completed += (s, e) => tcs.SetResult(true);
+            
+            storyboard.Begin();
+            await tcs.Task;
+        }
+
+        private async Task FadeInWindow()
+        {
+            var fadeIn = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(250))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
+            };
+
+            var storyboard = new Storyboard();
+            Storyboard.SetTarget(fadeIn, this);
+            Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
+            storyboard.Children.Add(fadeIn);
+
+            var tcs = new TaskCompletionSource<bool>();
+            storyboard.Completed += (s, e) => tcs.SetResult(true);
+            
+            storyboard.Begin();
+            await tcs.Task;
         }
     }
 }
