@@ -39,6 +39,11 @@ namespace CalcApp
         private const string LightThemePath = "Themes/ClassicTheme.xaml";
         private static readonly double[] _factorialCache = CreateFactorialCache();
 
+        // --- OPTIMALIZÁLÁS: static readonly delegate-k trigonometrikus függvényekhez ---
+        private static readonly Func<double, double> SinFunc = Math.Sin;
+        private static readonly Func<double, double> CosFunc = Math.Cos;
+        private static readonly Func<double, double> TanFunc = Math.Tan;
+
         public MainWindow()
         {
             LoadComponentFromXaml();
@@ -64,6 +69,7 @@ namespace CalcApp
             Loaded -= OnLoaded;
             Unloaded -= OnUnloaded;
 
+#if DEBUG
             if (_themeToggle != null)
             {
                 // Try to safely detach known handlers if they were attached from code
@@ -73,7 +79,7 @@ namespace CalcApp
                 }
                 catch { }
             }
-
+#endif
             _display = null;
             _memoryList = null;
             _themeToggle = null;
@@ -208,17 +214,17 @@ namespace CalcApp
 
         private void Sin_Click(object sender, RoutedEventArgs e)
         {
-            ApplyUnaryFunction(Math.Sin, "sin", degrees: true);
+            ApplyUnaryFunction(SinFunc, "sin", degrees: true);
         }
 
         private void Cos_Click(object sender, RoutedEventArgs e)
         {
-            ApplyUnaryFunction(Math.Cos, "cos", degrees: true);
+            ApplyUnaryFunction(CosFunc, "cos", degrees: true);
         }
 
         private void Tan_Click(object sender, RoutedEventArgs e)
         {
-            ApplyUnaryFunction(Math.Tan, "tan", degrees: true, validateTan: true);
+            ApplyUnaryFunction(TanFunc, "tan", degrees: true, validateTan: true);
         }
 
         private void Sqrt_Click(object sender, RoutedEventArgs e)
@@ -243,7 +249,7 @@ namespace CalcApp
             RecordOperation($"sqrt({FormatNumber(value)})", result);
         }
 
-        private async void Factorial_Click(object sender, RoutedEventArgs e)
+        private void Factorial_Click(object sender, RoutedEventArgs e)
         {
             if (!TryGetDisplayValue(out var value)) return;
 
@@ -271,8 +277,8 @@ namespace CalcApp
                     return;
                 }
 
-                // Async: nagy faktoriális számítás háttérszálon
-                var result = await Task.Run(() => Factorial(roundedValue));
+                // Factorial lookup is O(1) thanks to the precomputed cache, so run synchronously
+                var result = Factorial(roundedValue);
                 SetDisplayValue(result);
                 if (DisplayBox.Text == "Error") return;
                 _shouldResetDisplay = true;
@@ -568,53 +574,68 @@ namespace CalcApp
 
         private void UpdateMemoryHistoryText()
         {
-            if (_memoryHistoryEntries.Count == 0)
+            var entryCount = _memoryHistoryEntries.Count;
+            if (entryCount == 0)
             {
                 _memoryHistoryText = string.Empty;
                 return;
             }
 
-            while (true)
+            var entries = _memoryHistoryEntries.ToArray();
+            var firstContributions = new int[entryCount];
+            var subsequentContributions = new int[entryCount];
+
+            for (var i = 0; i < entryCount; i++)
             {
-                var historyText = BuildMemoryHistoryString();
-                if (historyText.Length <= MaxMemoryHistoryLength)
-                {
-                    _memoryHistoryText = historyText;
-                    return;
-                }
+                var entry = entries[i];
+                var description = entry.Description ?? string.Empty;
+                var descriptionLength = description.Length;
+                firstContributions[i] = descriptionLength + (entry.IsAddition ? 0 : 2);
+                subsequentContributions[i] = descriptionLength + 4; // "; " + sign + space
+            }
 
-                if (_memoryHistoryEntries.Count == 0)
-                {
-                    _memoryHistoryText = string.Empty;
-                    return;
-                }
+            var suffixLengths = new int[entryCount + 1];
+            for (var i = entryCount - 1; i >= 0; i--)
+            {
+                suffixLengths[i] = suffixLengths[i + 1] + subsequentContributions[i];
+            }
 
+            var startIndex = 0;
+            for (; startIndex < entryCount; startIndex++)
+            {
+                var totalLength = firstContributions[startIndex] + suffixLengths[startIndex + 1];
+                if (totalLength <= MaxMemoryHistoryLength)
+                {
+                    break;
+                }
+            }
+
+            if (startIndex >= entryCount)
+            {
+                _memoryHistoryEntries.Clear();
+                _memoryHistoryText = string.Empty;
+                return;
+            }
+
+            for (var i = 0; i < startIndex; i++)
+            {
                 _memoryHistoryEntries.Dequeue();
-
-                if (_memoryHistoryEntries.Count == 0)
-                {
-                    _memoryHistoryText = string.Empty;
-                    return;
-                }
-            }
-        }
-
-        private string BuildMemoryHistoryString()
-        {
-            if (_memoryHistoryEntries.Count == 0)
-            {
-                return string.Empty;
             }
 
-            var builder = new StringBuilder(Math.Min(MaxMemoryHistoryLength, 128));
+            var trimmedCount = entryCount - startIndex;
+            var estimatedLength = firstContributions[startIndex] + suffixLengths[startIndex + 1];
+            var builderCapacity = Math.Min(MaxMemoryHistoryLength, Math.Max(128, estimatedLength));
+            var builder = new StringBuilder(builderCapacity);
+
             var isFirst = true;
-            foreach (var entry in _memoryHistoryEntries)
+            for (var i = 0; i < trimmedCount; i++)
             {
-                var (isAddition, description) = entry;
+                var entry = entries[startIndex + i];
+                var description = entry.Description ?? string.Empty;
 
                 if (isFirst)
                 {
-                    if (!isAddition)
+                    if (!entry.IsAddition)
                     {
                         builder.Append("- ");
                     }
@@ -624,12 +645,12 @@ namespace CalcApp
                 else
                 {
                     builder.Append("; ");
-                    builder.Append(isAddition ? "+ " : "- ");
+                    builder.Append(entry.IsAddition ? "+ " : "- ");
                     builder.Append(description);
                 }
             }
 
-            return builder.ToString();
+            _memoryHistoryText = builder.ToString();
         }
 
         private void RecordOperation(string description, double result)
@@ -658,25 +679,19 @@ namespace CalcApp
 
             // Performance: use Span<char> for string manipulation would be ideal, but ToString doesn't support it
             var formatted = value.ToString("G12", Culture);
-            
+
             // Performance: IndexOf is faster than Contains for single character
             if (formatted.IndexOf('E') >= 0)
-            {
                 return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
-            }
 
             formatted = formatted.TrimEnd('0').TrimEnd('.');
-            
+
             // Performance: use == for single comparison instead of multiple conditions
-            if (formatted.Length == 2 && formatted[0] == '-' && formatted[1] == '0')
-            {
+            if (formatted == "-0")
                 return "0";
-            }
 
             if (formatted.Length > MaxDisplayLength)
-            {
                 formatted = value.ToString("E6", Culture);
-            }
 
             // Security: ensure we never return empty string
             return formatted.Length > 0 ? formatted : "0";
