@@ -19,10 +19,12 @@
     <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FF1A202C" />
     
     <!-- Gomb háttér - Világos szürke gradiens -->
-    <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+    <!-- Slightly cheaper gradient rendering -->
+    <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="1,0">
         <GradientStop Color="#FFE2E8F0" Offset="0.0"/>
         <GradientStop Color="#FFCBD5E0" Offset="1.0"/>
     </LinearGradientBrush>
+
     
     <!-- Gomb szöveg - Sötét szín -->
     <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FF2D3748" />

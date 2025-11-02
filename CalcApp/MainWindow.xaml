@@ -185,13 +185,18 @@
             <Border CornerRadius="18" BorderBrush="{DynamicResource ButtonBackgroundBrush}"
                     BorderThickness="2" Padding="12"
                     Background="{DynamicResource BorderBackgroundBrush}">
-                <Border.Effect>
-                    <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="12" ShadowDepth="4" Direction="270" />
+               <Border.Effect>
+                    <!-- cheaper shadow settings -->
+                    <DropShadowEffect Color="Black" Opacity="0.35" BlurRadius="8" ShadowDepth="3" Direction="270" />
                 </Border.Effect>
                 <TextBox x:Name="Display" FontSize="36" FontWeight="Normal"
                          HorizontalAlignment="Stretch" VerticalAlignment="Center"
                          Text="0" TextAlignment="Right" IsReadOnly="True" BorderThickness="0"
-                         Background="Transparent" Foreground="{DynamicResource BorderForegroundBrush}" />
+                         Background="Transparent" Foreground="{DynamicResource BorderForegroundBrush}"
+                         UseLayoutRounding="True" SnapsToDevicePixels="True"
+                         TextOptions.TextFormattingMode="Display" />
+
+
             </Border>
         </Grid>
 
@@ -203,8 +208,9 @@
                 BorderThickness="2"
                 SnapsToDevicePixels="True">
             <Border.Effect>
-                <DropShadowEffect Color="Black" Opacity="0.4" BlurRadius="10" ShadowDepth="3" Direction="270" />
+                <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="6" ShadowDepth="3" Direction="270" />
             </Border.Effect>
+
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -216,7 +222,10 @@
                          Foreground="{DynamicResource BorderForegroundBrush}"
                          Background="Transparent" BorderThickness="0"
                          FontSize="12" FontWeight="Normal"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling" />
+
             </Grid>
         </Border>
 

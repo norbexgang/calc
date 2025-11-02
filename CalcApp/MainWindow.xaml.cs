@@ -7,6 +7,8 @@ using System.Windows.Input;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
+using System.Runtime.CompilerServices;
 
 namespace CalcApp
 {
@@ -44,6 +46,10 @@ namespace CalcApp
         private static readonly Func<double, double> CosFunc = Math.Cos;
         private static readonly Func<double, double> TanFunc = Math.Tan;
 
+// Cached storyboards to reduce per-click allocations
+        private Storyboard? _cachedButtonClickStoryboard;
+        private Storyboard? _cachedFadeStoryboard;
+
         public MainWindow()
         {
             LoadComponentFromXaml();
@@ -53,6 +59,7 @@ namespace CalcApp
 
             InitializeMemory();
             InitializeTheme();
+            FreezeResourceDictionaries();
         }
 
         private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -122,6 +129,28 @@ namespace CalcApp
         private ListBox MemoryListBox => _memoryList ??= FindRequiredControl<ListBox>("MemoryList");
 
         private Button ThemeToggleButton => _themeToggle ??= FindRequiredControl<Button>("ThemeToggle");
+
+private void FreezeResourceDictionaries()
+        {
+            try
+            {
+                foreach (var dict in Resources.MergedDictionaries)
+                {
+                    foreach (var key in dict.Keys)
+                    {
+                        if (dict[key] is System.Windows.Freezable f && f.CanFreeze)
+                        {
+                            f.Freeze();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Freeze resources failed: {ex}");
+            }
+        }
+
 
         private T FindRequiredControl<T>(string name) where T : class
         {
@@ -667,37 +696,37 @@ namespace CalcApp
 
         private static string FormatNumber(double value)
         {
-            // Security: check for invalid values first
-            if (!IsFinite(value))
+            if (!IsFinite(value)) return "Error";
+            if (value == 0.0 || Math.Abs(value) < double.Epsilon) return "0";
+
+            Span<char> buffer = stackalloc char[32];
+            if (value.TryFormat(buffer, out int written, "G12", Culture))
             {
-                return "Error";
+                var s = new string(buffer[..written]);
+                if (s.IndexOf('E') >= 0)
+                    return s.Length <= MaxDisplayLength ? s : value.ToString("E6", Culture);
+
+                s = s.TrimEnd('0').TrimEnd('.');
+                if (s == "-0") return "0";
+                if (s.Length > MaxDisplayLength) s = value.ToString("E6", Culture);
+                return s.Length > 0 ? s : "0";
             }
 
-            // Performance: handle special cases quickly
-            if (value == 0.0) return "0";
-            if (Math.Abs(value) < double.Epsilon) return "0";
-
-            // Performance: use Span<char> for string manipulation would be ideal, but ToString doesn't support it
+            // Fallback if TryFormat fails (shouldn't in practice)
             var formatted = value.ToString("G12", Culture);
-
-            // Performance: IndexOf is faster than Contains for single character
             if (formatted.IndexOf('E') >= 0)
                 return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
-
             formatted = formatted.TrimEnd('0').TrimEnd('.');
-
-            // Performance: use == for single comparison instead of multiple conditions
-            if (formatted == "-0")
-                return "0";
-
-            if (formatted.Length > MaxDisplayLength)
-                formatted = value.ToString("E6", Culture);
-
-            // Security: ensure we never return empty string
+            if (formatted == "-0") return "0";
+            if (formatted.Length > MaxDisplayLength) formatted = value.ToString("E6", Culture);
             return formatted.Length > 0 ? formatted : "0";
         }
 
-        private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]      
+         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+
 
         private static double Evaluate(double left, double right, string operatorSymbol)
         {
@@ -998,8 +1027,14 @@ namespace CalcApp
             
             try
             {
+                var modifiers = Keyboard.Modifiers;
+                var key = e.Key;
+
+
+
+
                 // Performance: check most common cases first (digits)
-                if (Keyboard.Modifiers == ModifierKeys.None && e.Key >= Key.D0 && e.Key <= Key.D9)
+                if (modifiers == ModifierKeys.None && key >= Key.D0 && key <= Key.D9)
                 {
                     var ch = (char)('0' + (e.Key - Key.D0));
                     ProcessDigit(ch.ToString());
@@ -1007,62 +1042,63 @@ namespace CalcApp
                     return;
                 }
 
-                if (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)
+                if (key < Key.NumPad0 || key > Key.NumPad9)
                 {
-                    var ch = (char)('0' + (e.Key - Key.NumPad0));
+                    // Performance: group related operations using if-else for better branch prediction
+
+                    if (key == Key.Add || (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None))
+                    {
+                        ProcessOperator("+");
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Subtract || key == Key.OemMinus)
+                    {
+                        ProcessOperator("-");
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Multiply)
+                    {
+                        ProcessOperator("*");
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Divide || key == Key.Oem2)
+                    {
+                        ProcessOperator("/");
+                        e.Handled = true;
+                    }
+                    // Removed: Parenthesis keyboard shortcuts - no longer supported
+                    else if (key == Key.Decimal || key == Key.OemPeriod)
+                    {
+                        ProcessDecimal();
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Return || key == Key.Enter)
+                    {
+                        ProcessEquals();
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Back)
+                    {
+                        ProcessDelete();
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Escape)
+                    {
+                        ResetCalculatorState();
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Oem5)
+                    {
+                        Percent_Click(this, new RoutedEventArgs());
+                        e.Handled = true;
+                    }
+                }
+                else
+                {
+                    var ch = (char)('0' + (key - Key.NumPad0));
                     ProcessDigit(ch.ToString());
                     e.Handled = true;
                     return;
-                }
-
-                // Performance: group related operations using if-else for better branch prediction
-                var key = e.Key;
-                
-                if (key == Key.Add || (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None))
-                {
-                    ProcessOperator("+");
-                    e.Handled = true;
-                }
-                else if (key == Key.Subtract || key == Key.OemMinus)
-                {
-                    ProcessOperator("-");
-                    e.Handled = true;
-                }
-                else if (key == Key.Multiply)
-                {
-                    ProcessOperator("*");
-                    e.Handled = true;
-                }
-                else if (key == Key.Divide || key == Key.Oem2)
-                {
-                    ProcessOperator("/");
-                    e.Handled = true;
-                }
-                // Removed: Parenthesis keyboard shortcuts - no longer supported
-                else if (key == Key.Decimal || key == Key.OemPeriod)
-                {
-                    ProcessDecimal();
-                    e.Handled = true;
-                }
-                else if (key == Key.Return || key == Key.Enter)
-                {
-                    ProcessEquals();
-                    e.Handled = true;
-                }
-                else if (key == Key.Back)
-                {
-                    ProcessDelete();
-                    e.Handled = true;
-                }
-                else if (key == Key.Escape)
-                {
-                    ResetCalculatorState();
-                    e.Handled = true;
-                }
-                else if (key == Key.Oem5)
-                {
-                    Percent_Click(this, new RoutedEventArgs());
-                    e.Handled = true;
                 }
             }
             catch (Exception ex)
@@ -1072,18 +1108,11 @@ namespace CalcApp
             }
         }
 
-        private async Task AnimateButtonClick()
+private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransform)
         {
-            var button = ThemeToggleButton;
-            // Ensure a ScaleTransform exists (avoid null and extra returns)
-            if (button.RenderTransform is not System.Windows.Media.ScaleTransform scaleTransform)
-            {
-                scaleTransform = new System.Windows.Media.ScaleTransform(1.0, 1.0);
-                button.RenderTransform = scaleTransform;
-            }
+            if (_cachedButtonClickStoryboard != null) return _cachedButtonClickStoryboard;
 
             var storyboard = new Storyboard();
-
             var scaleXDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
             var scaleYDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
             var scaleXUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100)) { BeginTime = TimeSpan.FromMilliseconds(100) };
@@ -1102,6 +1131,21 @@ namespace CalcApp
             storyboard.Children.Add(scaleYDown);
             storyboard.Children.Add(scaleXUp);
             storyboard.Children.Add(scaleYUp);
+            _cachedButtonClickStoryboard = storyboard;
+            return storyboard;
+        }
+
+        private async Task AnimateButtonClick()
+        {
+            var button = ThemeToggleButton;
+            // Ensure a ScaleTransform exists (avoid null and extra returns)
+            if (button.RenderTransform is not System.Windows.Media.ScaleTransform scaleTransform)
+            {
+                scaleTransform = new System.Windows.Media.ScaleTransform(1.0, 1.0);
+                button.RenderTransform = scaleTransform;
+            }
+
+            var storyboard = EnsureCachedButtonClickStoryboard(scaleTransform);
 
             var tcs = new TaskCompletionSource<bool>();
             EventHandler handler = null!;
@@ -1129,8 +1173,9 @@ namespace CalcApp
 
         private async Task FadeOpacity(double from, double to, TimeSpan duration, IEasingFunction? easing = null)
         {
-            var animation = new DoubleAnimation(from, to, duration) { EasingFunction = easing };
-            var storyboard = new Storyboard();
+           var animation = new DoubleAnimation(from, to, duration) { EasingFunction = easing };
+            var storyboard = _cachedFadeStoryboard ??= new Storyboard();
+            storyboard.Children.Clear();
             Storyboard.SetTarget(animation, this);
             Storyboard.SetTargetProperty(animation, new PropertyPath("Opacity"));
             storyboard.Children.Add(animation);

@@ -8,12 +8,11 @@ namespace CalcApp;
 public partial class App : Application
 {
     public App()
-    {
-        // Initialize Serilog
+    { 
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
-            .CreateLogger();
-
+             .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day))
+             .CreateLogger();
+            
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;

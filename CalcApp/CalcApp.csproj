@@ -1,24 +1,39 @@
 <Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+     <OutputType>WinExe</OutputType>
+     <TargetFramework>net8.0-windows</TargetFramework>
+     <UseWPF>true</UseWPF>
+     <Nullable>enable</Nullable>
+     <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <Optimize>true</Optimize>
+    <TieredCompilation>true</TieredCompilation>
+    <TieredPgo>true</TieredPgo>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-</PropertyGroup>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Update="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-    </Compile>
-  </ItemGroup>
+   <ItemGroup>
+     <Compile Update="App.xaml.cs">
+       <DependentUpon>App.xaml</DependentUpon>
+     </Compile>
+     <Compile Update="MainWindow.xaml.cs">
+       <DependentUpon>MainWindow.xaml</DependentUpon>
+     </Compile>
+   </ItemGroup>
 
-  <ItemGroup>
+   <ItemGroup>
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-  </ItemGroup>
+    <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
+   </ItemGroup>
 
 </Project>
