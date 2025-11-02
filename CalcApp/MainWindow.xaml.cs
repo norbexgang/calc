@@ -11,6 +11,7 @@ using System.Speech.Recognition;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Runtime.CompilerServices;
+using System.Linq;
 
 namespace CalcApp
 {
