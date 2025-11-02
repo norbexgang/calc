@@ -66,3 +66,7 @@ _ReSharper*/
 # Platformfüggetlen általános fájlok
 *.DS_Store
 Thumbs.db
+
+# AllCodeBackup.txt
+AllCodeBackup.txt
+SaveAllCode.cs
