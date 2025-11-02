@@ -25,8 +25,7 @@ namespace CalcApp
         private TextBox? _display;
         private ListBox? _memoryList;
         private Button? _themeToggle;
-        private bool _isDarkMode = true; // Start with dark mode
-        private bool _isAnimating = false;
+    private bool _animationsEnabled = true;
         private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
         private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
         private int _themeDictionaryIndex = -1;
@@ -77,8 +76,11 @@ namespace CalcApp
             Unloaded -= OnUnloaded;
 
 #if DEBUG
-            if (_themeToggle != null)
+            if (_themeToggle != null && FindName("ThemeToggle") is Button btn) _themeToggle = btn;
             {
+            _cachedButtonClickStoryboard ??= TryFindResource("ButtonClickAnimation") as Storyboard;
+            _cachedFadeStoryboard ??= TryFindResource("FadeOutAnimation") as Storyboard;
+
                 // Try to safely detach known handlers if they were attached from code
                 try
                 {
@@ -162,17 +164,15 @@ private void FreezeResourceDictionaries()
             throw new InvalidOperationException($"Could not find control '{name}'.");
         }
 
-        private void Digit_Click(object sender, RoutedEventArgs e)
+        private void Digit_Click(object sender,
+                                 RoutedEventArgs e)
         {
-            // Security: validate sender type and content
-            if (sender is not Button button) return;
-            var content = button.Content?.ToString();
-            if (string.IsNullOrEmpty(content) || content.Length > 1) return;
-            
-            // Security: validate digit is actually a number
-            if (!char.IsDigit(content[0])) return;
-            
-            ProcessDigit(content);
+        if (sender is not Button button) return;
+            var digit = button.Tag?.ToString();
+            if (string.IsNullOrEmpty(digit) || digit.Length != 1) return;
+            if (!char.IsDigit(digit[0])) return;
+            ProcessDigit(digit);
+   
         }
 
         private void Decimal_Click(object sender, RoutedEventArgs e)
@@ -552,14 +552,17 @@ private void FreezeResourceDictionaries()
 
         private void InitializeMemory()
         {
-            UpdateMemoryDisplay();
+          MemoryListBox.ItemsSource = _memoryItems;
+          UpdateMemoryDisplay();
+   
         }
+private readonly System.Collections.ObjectModel.ObservableCollection<string> _memoryItems 
+           = new System.Collections.ObjectModel.ObservableCollection<string>();
 
         private void UpdateMemoryDisplay()
         {
             try
             {
-                var items = MemoryListBox.Items;
                 var value = FormatNumber(_memoryValue);
                 if (value == "Error")
                 {
@@ -567,19 +570,20 @@ private void FreezeResourceDictionaries()
                 }
 
                 var historyText = _memoryHistoryText;
-                var displayText = string.IsNullOrEmpty(historyText)
-                    ? $"Memory: {value}"
-                    : $"Memory: {historyText} (Total: {value})";
+                
 
                 // Performance: update existing item rather than clearing and re-adding
-                if (items.Count == 0)
+_memoryItems.Clear();
+                if (string.IsNullOrEmpty(historyText))
                 {
-                    items.Add(displayText);
+                    _memoryItems.Add($"Memory: {value}");
                 }
                 else
                 {
-                    items[0] = displayText;
+                    _memoryItems.Add($"Memory total: {value}");
+                    _memoryItems.Add($"History: {historyText}");
                 }
+
             }
             catch (Exception ex)
             {
@@ -1087,6 +1091,17 @@ private void FreezeResourceDictionaries()
                         ResetCalculatorState();
                         e.Handled = true;
                     }
+else if (modifiers == ModifierKeys.Control && key == Key.C)
+                    {
+                        ResetCalculatorState();
+                        e.Handled = true;
+                    }
+                    else if (modifiers == ModifierKeys.Control && key == Key.M)
+                    {
+                        ResetMemory();
+                        e.Handled = true;
+                    }
+
                     else if (key == Key.Oem5)
                     {
                         Percent_Click(this, new RoutedEventArgs());
@@ -1137,7 +1152,9 @@ private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransfo
 
         private async Task AnimateButtonClick()
         {
+            if (!_animationsEnabled) return;
             var button = ThemeToggleButton;
+
             // Ensure a ScaleTransform exists (avoid null and extra returns)
             if (button.RenderTransform is not System.Windows.Media.ScaleTransform scaleTransform)
             {
@@ -1163,6 +1180,7 @@ private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransfo
 
         private async Task FadeOutWindow()
         {
+         if (!_animationsEnabled) return;
             await FadeOpacity(1.0, 0.3, TimeSpan.FromMilliseconds(250), new QuadraticEase { EasingMode = EasingMode.EaseOut });
         }
 

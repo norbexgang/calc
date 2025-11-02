@@ -30,7 +30,6 @@
        <DependentUpon>MainWindow.xaml</DependentUpon>
      </Compile>
    </ItemGroup>
-
    <ItemGroup>
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />

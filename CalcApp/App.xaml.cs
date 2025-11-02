@@ -9,9 +9,12 @@ public partial class App : Application
 {
     public App()
     { 
-        Log.Logger = new LoggerConfiguration()
+      Log.Logger = new LoggerConfiguration()
+             .Enrich.WithThreadId()
+             .Enrich.FromLogContext()
              .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day))
              .CreateLogger();
+
             
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
@@ -57,5 +60,13 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException -= OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
         Log.CloseAndFlush();
+    }
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        // Run the SaveAllCode script
+        SaveAllCode.RunSaveAllCode();
     }
 }

@@ -267,27 +267,27 @@
             <Button Content="%" Grid.Row="2" Grid.Column="3" Click="Percent_Click" />
 
             <!-- Row 3 -->
-            <Button Content="7" Grid.Row="3" Grid.Column="0" Click="Digit_Click" />
-            <Button Content="8" Grid.Row="3" Grid.Column="1" Click="Digit_Click" />
-            <Button Content="9" Grid.Row="3" Grid.Column="2" Click="Digit_Click" />
+            <Button Content="7" Tag="7" Grid.Row="3" Grid.Column="0" Click="Digit_Click" />
+            <Button Content="8" Tag="8" Grid.Row="3" Grid.Column="1" Click="Digit_Click" />
+            <Button Content="9" Tag="9" Grid.Row="3" Grid.Column="2" Click="Digit_Click" />
             <Button Content="÷" Grid.Row="3" Grid.Column="3" Click="Operator_Click" Tag="/" />
 
             <!-- Row 4 -->
-            <Button Content="4" Grid.Row="4" Grid.Column="0" Click="Digit_Click" />
-            <Button Content="5" Grid.Row="4" Grid.Column="1" Click="Digit_Click" />
-            <Button Content="6" Grid.Row="4" Grid.Column="2" Click="Digit_Click" />
+            <Button Content="4" Tag="4" Grid.Row="4" Grid.Column="0" Click="Digit_Click" />
+            <Button Content="5" Tag="5" Grid.Row="4" Grid.Column="1" Click="Digit_Click" />
+            <Button Content="6" Tag="6" Grid.Row="4" Grid.Column="2" Click="Digit_Click" />
             <Button Content="×" Grid.Row="4" Grid.Column="3" Click="Operator_Click" Tag="*" />
 
             <!-- Row 5 -->
-            <Button Content="1" Grid.Row="5" Grid.Column="0" Click="Digit_Click" />
-            <Button Content="2" Grid.Row="5" Grid.Column="1" Click="Digit_Click" />
-            <Button Content="3" Grid.Row="5" Grid.Column="2" Click="Digit_Click" />
+           <Button Content="1" Tag="1" Grid.Row="5" Grid.Column="0" Click="Digit_Click" />
+            <Button Content="2" Tag="2" Grid.Row="5" Grid.Column="1" Click="Digit_Click" />
+            <Button Content="3" Tag="3" Grid.Row="5" Grid.Column="2" Click="Digit_Click" />
             <Button Content="−" Grid.Row="5" Grid.Column="3" Click="Operator_Click" Tag="-" />
 
             <!-- Row 6 -->
             <Button Content="0" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Click="Digit_Click" />
             <Button Content="." Grid.Row="6" Grid.Column="2" Click="Decimal_Click" />
-            <Button Content="+" Grid.Row="6" Grid.Column="3" Click="Operator_Click" Tag="+" />
+            <Button Content="0" Tag="0" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Click="Digit_Click" />
 
             <!-- Row 7 -->
             <Button Content="±" Grid.Row="7" Grid.Column="0" Click="Sign_Click" />
