@@ -137,10 +137,10 @@
             <RowDefinition Height="*" />    <!-- Keypad -->
         </Grid.RowDefinitions>
 
-        <!-- Theme Toggle Button -->
-        <Button x:Name="ThemeToggle" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top"
-                Width="90" Height="36" Margin="0,0,0,8" Click="ThemeToggle_Click"
-                Content="🌙 Dark" FontSize="12" FontWeight="Normal" Cursor="Hand">
+        <!-- Top controls: Theme toggle and Speech toggle -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,8">
+            <Button x:Name="ThemeToggle" Width="90" Height="36" Margin="0,0,8,0" Click="ThemeToggle_Click"
+                    Content="🌙 Dark" FontSize="12" FontWeight="Normal" Cursor="Hand">
             <Button.RenderTransform>
                 <ScaleTransform x:Name="ThemeButtonScale" ScaleX="1" ScaleY="1" CenterX="45" CenterY="19" />
             </Button.RenderTransform>
@@ -178,7 +178,13 @@
                     </BeginStoryboard>
                 </EventTrigger>
             </Button.Triggers>
-        </Button>
+            </Button>
+
+            <!-- Speech toggle: enables/disables voice control (magyar) -->
+            <ToggleButton x:Name="SpeechToggle" Width="120" Height="36" VerticalAlignment="Top"
+                          Content="🎤 Beszéd: Be" FontSize="12" FontWeight="Normal" Cursor="Hand"
+                          Checked="SpeechToggle_Checked" Unchecked="SpeechToggle_Unchecked" />
+        </StackPanel>
 
         <!-- Display Area -->
         <Grid Grid.Row="1">
@@ -285,7 +291,7 @@
             <Button Content="−" Grid.Row="5" Grid.Column="3" Click="Operator_Click" Tag="-" />
 
             <!-- Row 6 -->
-            <Button Content="0" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Click="Digit_Click" />
+            <Button Content="6" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Click="Digit_Click" />
             <Button Content="." Grid.Row="6" Grid.Column="2" Click="Decimal_Click" />
             <Button Content="0" Tag="0" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Click="Digit_Click" />
 

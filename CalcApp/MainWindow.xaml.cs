@@ -7,6 +7,8 @@ using System.Windows.Input;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using System.Speech.Recognition;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Runtime.CompilerServices;
 
@@ -25,7 +27,11 @@ namespace CalcApp
         private TextBox? _display;
         private ListBox? _memoryList;
         private Button? _themeToggle;
-    private bool _animationsEnabled = true;
+        private bool _animationsEnabled = true;
+        // Tracks whether a theme animation is currently running (used to avoid overlapping animations)
+        private bool _isAnimating = false;
+        // Current theme state: true = dark mode, false = light mode
+        private bool _isDarkMode = false;
         private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
         private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
         private int _themeDictionaryIndex = -1;
@@ -33,9 +39,9 @@ namespace CalcApp
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
         private static readonly double DegreesToRadians = Math.PI / 180.0;
-    private const int MaxFactorial = 170; // 170! fits in double, 171! overflows
-    private const int MaxDisplayLength = 64; // protect against extremely long input/overflow UI
-    private const int MaxMemoryHistoryLength = 1024; // bound memory history to avoid unbounded growth
+        private const int MaxFactorial = 170; // 170! fits in double, 171! overflows
+        private const int MaxDisplayLength = 64; // protect against extremely long input/overflow UI
+        private const int MaxMemoryHistoryLength = 1024; // bound memory history to avoid unbounded growth
         private const string DarkThemePath = "Themes/MaterialTheme.xaml";
         private const string LightThemePath = "Themes/ClassicTheme.xaml";
         private static readonly double[] _factorialCache = CreateFactorialCache();
@@ -45,9 +51,13 @@ namespace CalcApp
         private static readonly Func<double, double> CosFunc = Math.Cos;
         private static readonly Func<double, double> TanFunc = Math.Tan;
 
-// Cached storyboards to reduce per-click allocations
+        // Cached storyboards to reduce per-click allocations
         private Storyboard? _cachedButtonClickStoryboard;
         private Storyboard? _cachedFadeStoryboard;
+    // Speech recognition controller (nullable; initialized on construction)
+    private SpeechControl? _speech;
+    // Whether user has enabled speech (persisted setting could be used later)
+    private bool _speechEnabled = true;
 
         public MainWindow()
         {
@@ -59,6 +69,32 @@ namespace CalcApp
             InitializeMemory();
             InitializeTheme();
             FreezeResourceDictionaries();
+
+            // Initialize speech control only if enabled and a Hungarian recognizer exists
+            try
+            {
+                // Ensure the newly added SpeechToggle can be found (loaded by LoadComponentFromXaml)
+                var hasRecognizer = HasHungarianRecognizer();
+                // If the toggle exists in XAML, set its initial state and content
+                if (FindName("SpeechToggle") is ToggleButton tb)
+                {
+                    tb.IsChecked = _speechEnabled && hasRecognizer;
+                    tb.Content = tb.IsChecked == true ? "🎤 Beszéd: Be" : "🎤 Beszéd: Ki";
+                }
+
+                if (_speechEnabled && hasRecognizer)
+                {
+                    _speech = new SpeechControl(this);
+                }
+                else if (!hasRecognizer)
+                {
+                    System.Diagnostics.Debug.WriteLine("No Hungarian speech recognizer installed; speech control disabled.");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Speech init failed in MainWindow ctor: {ex}");
+            }
         }
 
         private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -76,10 +112,11 @@ namespace CalcApp
             Unloaded -= OnUnloaded;
 
 #if DEBUG
-            if (_themeToggle != null && FindName("ThemeToggle") is Button btn) _themeToggle = btn;
+            if (_themeToggle != null && FindName("ThemeToggle") is Button btn)
             {
-            _cachedButtonClickStoryboard ??= TryFindResource("ButtonClickAnimation") as Storyboard;
-            _cachedFadeStoryboard ??= TryFindResource("FadeOutAnimation") as Storyboard;
+                _themeToggle = btn;
+                _cachedButtonClickStoryboard ??= TryFindResource("ButtonClickAnimation") as Storyboard;
+                _cachedFadeStoryboard ??= TryFindResource("FadeOutAnimation") as Storyboard;
 
                 // Try to safely detach known handlers if they were attached from code
                 try
@@ -89,6 +126,10 @@ namespace CalcApp
                 catch { }
             }
 #endif
+            // Dispose speech control if present
+            try { _speech?.Dispose(); } catch { }
+            _speech = null;
+
             _display = null;
             _memoryList = null;
             _themeToggle = null;
@@ -106,13 +147,13 @@ namespace CalcApp
             {
                 // Security: fail fast on UI load error to avoid running in an inconsistent state
                 System.Diagnostics.Debug.WriteLine($"CRITICAL: Failed to load main window XAML: {ex}");
-                
+
                 try
                 {
                     MessageBox.Show(
-                        "Failed to initialize application UI. The application will exit.", 
-                        "Initialization Error", 
-                        MessageBoxButton.OK, 
+                        "Failed to initialize application UI. The application will exit.",
+                        "Initialization Error",
+                        MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 }
                 catch
@@ -120,9 +161,70 @@ namespace CalcApp
                     // If MessageBox fails, just write to debug
                     System.Diagnostics.Debug.WriteLine("Failed to show error message box");
                 }
-                
+
                 Application.Current?.Shutdown();
                 Environment.Exit(1); // Force exit if shutdown doesn't work
+            }
+        }
+
+        // UI handlers for the speech toggle
+        private void SpeechToggle_Checked(object sender, RoutedEventArgs e)
+        {
+            EnableSpeech(true);
+            if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Be";
+        }
+
+        private void SpeechToggle_Unchecked(object sender, RoutedEventArgs e)
+        {
+            EnableSpeech(false);
+            if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Ki";
+        }
+
+        private void EnableSpeech(bool enable)
+        {
+            _speechEnabled = enable;
+            if (enable)
+            {
+                if (_speech != null) return; // already enabled
+                if (!HasHungarianRecognizer())
+                {
+                    MessageBox.Show("Nincs telepítve magyar beszédfelismerő; a beszédvezérlés nem elérhető.", "Beszédvezérlés", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // Update toggle UI if present
+                    if (FindName("SpeechToggle") is ToggleButton tb) { tb.IsChecked = false; tb.Content = "🎤 Beszéd: Ki"; }
+                    _speechEnabled = false;
+                    return;
+                }
+
+                try
+                {
+                    _speech = new SpeechControl(this);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to start speech control: {ex}");
+                    MessageBox.Show("A beszédvezérlés indítása nem sikerült.", "Beszédvezérlés hiba", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            else
+            {
+                try { _speech?.Dispose(); } catch { }
+                _speech = null;
+            }
+        }
+
+        // Check if a Hungarian recognizer is installed
+        private static bool HasHungarianRecognizer()
+        {
+            try
+            {
+                var culture = new System.Globalization.CultureInfo("hu-HU");
+                var recognizerInfo = SpeechRecognitionEngine.InstalledRecognizers()
+                    .FirstOrDefault(r => r.Culture.Equals(culture));
+                return recognizerInfo != null;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -132,7 +234,7 @@ namespace CalcApp
 
         private Button ThemeToggleButton => _themeToggle ??= FindRequiredControl<Button>("ThemeToggle");
 
-private void FreezeResourceDictionaries()
+        private void FreezeResourceDictionaries()
         {
             try
             {
@@ -167,12 +269,12 @@ private void FreezeResourceDictionaries()
         private void Digit_Click(object sender,
                                  RoutedEventArgs e)
         {
-        if (sender is not Button button) return;
+            if (sender is not Button button) return;
             var digit = button.Tag?.ToString();
             if (string.IsNullOrEmpty(digit) || digit.Length != 1) return;
             if (!char.IsDigit(digit[0])) return;
             ProcessDigit(digit);
-   
+
         }
 
         private void Decimal_Click(object sender, RoutedEventArgs e)
@@ -225,14 +327,14 @@ private void FreezeResourceDictionaries()
             if (sender is not Button button) return;
             var operatorSymbol = button.Tag?.ToString() ?? button.Content?.ToString();
             if (string.IsNullOrWhiteSpace(operatorSymbol)) return;
-            
+
             // Security: whitelist validation - only allow known operators
-            if (operatorSymbol != "+" && operatorSymbol != "-" && 
+            if (operatorSymbol != "+" && operatorSymbol != "-" &&
                 operatorSymbol != "*" && operatorSymbol != "/")
             {
                 return;
             }
-            
+
             ProcessOperator(operatorSymbol);
         }
 
@@ -435,7 +537,7 @@ private void FreezeResourceDictionaries()
             try
             {
                 var result = func(value);
-                
+
                 // Security: validate result
                 if (!IsFinite(result))
                 {
@@ -492,7 +594,7 @@ private void FreezeResourceDictionaries()
             return result;
         }
 
-        private void ResetCalculatorState()
+    internal void ResetCalculatorState()
         {
             DisplayBox.Text = "0";
             _leftOperand = null;
@@ -505,7 +607,7 @@ private void FreezeResourceDictionaries()
         private bool TryGetDisplayValue(out double value)
         {
             var text = DisplayBox.Text;
-            
+
             // Security: validate text length to prevent potential issues
             if (string.IsNullOrEmpty(text) || text.Length > MaxDisplayLength || text == "Error")
             {
@@ -552,12 +654,12 @@ private void FreezeResourceDictionaries()
 
         private void InitializeMemory()
         {
-          MemoryListBox.ItemsSource = _memoryItems;
-          UpdateMemoryDisplay();
-   
+            MemoryListBox.ItemsSource = _memoryItems;
+            UpdateMemoryDisplay();
+
         }
-private readonly System.Collections.ObjectModel.ObservableCollection<string> _memoryItems 
-           = new System.Collections.ObjectModel.ObservableCollection<string>();
+        private readonly System.Collections.ObjectModel.ObservableCollection<string> _memoryItems
+                   = new System.Collections.ObjectModel.ObservableCollection<string>();
 
         private void UpdateMemoryDisplay()
         {
@@ -570,10 +672,10 @@ private readonly System.Collections.ObjectModel.ObservableCollection<string> _me
                 }
 
                 var historyText = _memoryHistoryText;
-                
+
 
                 // Performance: update existing item rather than clearing and re-adding
-_memoryItems.Clear();
+                _memoryItems.Clear();
                 if (string.IsNullOrEmpty(historyText))
                 {
                     _memoryItems.Add($"Memory: {value}");
@@ -728,8 +830,8 @@ _memoryItems.Clear();
 
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]      
-         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
 
         private static double Evaluate(double left, double right, string operatorSymbol)
@@ -768,7 +870,7 @@ _memoryItems.Clear();
                 if (!IsFinite(result)) throw new OverflowException("Division overflow");
                 return result;
             }
-            
+
             // Security: reject unknown operators
             throw new InvalidOperationException($"Unknown operator: {operatorSymbol}");
         }
@@ -866,10 +968,10 @@ _memoryItems.Clear();
         }
 
         // --- Keyboard / shared processing helpers ---
-        private void ProcessDigit(string digit)
+    internal void ProcessDigit(string digit)
         {
             if (string.IsNullOrEmpty(digit)) return; // Security: validate input
-            
+
             _lastOperationDescription = null;
             var currentText = DisplayBox.Text;
             if (_shouldResetDisplay || currentText is "0" or "Error")
@@ -890,7 +992,7 @@ _memoryItems.Clear();
             _shouldResetDisplay = false;
         }
 
-        private void ProcessDecimal()
+    internal void ProcessDecimal()
         {
             var currentText = DisplayBox.Text;
             if (_shouldResetDisplay || currentText == "Error")
@@ -911,7 +1013,7 @@ _memoryItems.Clear();
 
         // Removed: ProcessOpenParenthesis() and ProcessCloseParenthesis() - parenthesis support removed for simplification and optimization
 
-        private void ProcessDelete()
+    internal void ProcessDelete()
         {
             var currentText = DisplayBox.Text;
             if (_shouldResetDisplay || currentText == "Error")
@@ -925,15 +1027,15 @@ _memoryItems.Clear();
             _lastOperationDescription = null;
         }
 
-        private void ProcessOperator(string operatorSymbol)
+    internal void ProcessOperator(string operatorSymbol)
         {
             // Security: validate operator is one of the allowed operations
-            if (string.IsNullOrWhiteSpace(operatorSymbol) || 
+            if (string.IsNullOrWhiteSpace(operatorSymbol) ||
                 (operatorSymbol != "+" && operatorSymbol != "-" && operatorSymbol != "*" && operatorSymbol != "/"))
             {
                 return;
             }
-            
+
             if (!TryGetDisplayValue(out var currentValue)) return;
 
             if (_leftOperand.HasValue && _pendingOperator is not null && !_shouldResetDisplay)
@@ -981,7 +1083,7 @@ _memoryItems.Clear();
             _shouldResetDisplay = true;
         }
 
-        private void ProcessEquals()
+    internal void ProcessEquals()
         {
             // Performance: Simplified without parenthesis support - direct calculation
             if (!_leftOperand.HasValue || _pendingOperator is null) return;
@@ -992,7 +1094,7 @@ _memoryItems.Clear();
                 var leftOperand = _leftOperand.Value;
                 var pendingOperator = _pendingOperator!;
                 var result = Evaluate(leftOperand, rightOperand, pendingOperator);
-                
+
                 if (!IsFinite(result))
                 {
                     ShowError();
@@ -1028,7 +1130,7 @@ _memoryItems.Clear();
         {
             // Security: validate event args
             if (e == null) return;
-            
+
             try
             {
                 var modifiers = Keyboard.Modifiers;
@@ -1091,7 +1193,7 @@ _memoryItems.Clear();
                         ResetCalculatorState();
                         e.Handled = true;
                     }
-else if (modifiers == ModifierKeys.Control && key == Key.C)
+                    else if (modifiers == ModifierKeys.Control && key == Key.C)
                     {
                         ResetCalculatorState();
                         e.Handled = true;
@@ -1123,7 +1225,7 @@ else if (modifiers == ModifierKeys.Control && key == Key.C)
             }
         }
 
-private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransform)
+        private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransform)
         {
             if (_cachedButtonClickStoryboard != null) return _cachedButtonClickStoryboard;
 
@@ -1180,7 +1282,7 @@ private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransfo
 
         private async Task FadeOutWindow()
         {
-         if (!_animationsEnabled) return;
+            if (!_animationsEnabled) return;
             await FadeOpacity(1.0, 0.3, TimeSpan.FromMilliseconds(250), new QuadraticEase { EasingMode = EasingMode.EaseOut });
         }
 
@@ -1191,7 +1293,7 @@ private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransfo
 
         private async Task FadeOpacity(double from, double to, TimeSpan duration, IEasingFunction? easing = null)
         {
-           var animation = new DoubleAnimation(from, to, duration) { EasingFunction = easing };
+            var animation = new DoubleAnimation(from, to, duration) { EasingFunction = easing };
             var storyboard = _cachedFadeStoryboard ??= new Storyboard();
             storyboard.Children.Clear();
             Storyboard.SetTarget(animation, this);
@@ -1238,5 +1340,7 @@ private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransfo
 
             return -1;
         }
+
     }
 }
+
