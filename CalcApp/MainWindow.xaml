@@ -33,43 +33,89 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,8">
             <Button x:Name="ThemeToggle" Width="90" Height="36" Margin="0,0,8,0" Click="ThemeToggle_Click"
                     Content="🌙 Dark" FontSize="12" FontWeight="Normal" Cursor="Hand">
-            <Button.RenderTransform>
-                <ScaleTransform x:Name="ThemeButtonScale" ScaleX="1" ScaleY="1" CenterX="45" CenterY="19" />
-            </Button.RenderTransform>
-            <Button.Triggers>
-                <EventTrigger RoutedEvent="MouseEnter">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleX" To="1.08" Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
-                                    <CubicEase EasingMode="EaseOut" />
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleY" To="1.08" Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
-                                    <CubicEase EasingMode="EaseOut" />
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-                <EventTrigger RoutedEvent="MouseLeave">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
-                                    <CubicEase EasingMode="EaseIn" />
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
-                                    <CubicEase EasingMode="EaseIn" />
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
+                <Button.RenderTransform>
+                    <ScaleTransform x:Name="ThemeButtonScale" ScaleX="1" ScaleY="1" CenterX="45" CenterY="19" />
+                </Button.RenderTransform>
+                <Button.Triggers>
+                    <EventTrigger RoutedEvent="MouseEnter">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleX" To="1.08" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleY" To="1.08" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                    <EventTrigger RoutedEvent="MouseLeave">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseIn" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseIn" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <!-- Speech toggle -->
+            <ToggleButton x:Name="SpeechToggle" Width="120" Height="36" VerticalAlignment="Top"
+                          Content="🎤 Beszéd: Be" FontSize="12" FontWeight="Normal" Cursor="Hand"
+                          Checked="SpeechToggle_Checked" Unchecked="SpeechToggle_Unchecked" />
+
+            <!-- Experimental toggle -->
+            <ToggleButton x:Name="ExperimentalToggle" Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
+                          Content="🧪 Exp." FontSize="12" FontWeight="Normal" Cursor="Hand"
+                          Click="ExperimentalToggle_Click" />
+
+            <!-- Turbo toggle -->
+            <ToggleButton x:Name="TurboToggle" Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
+                          Content="🚀 Turbo" FontSize="12" FontWeight="Normal" Cursor="Hand"
+                          Click="TurboToggle_Click" />
+        </StackPanel>
+
+        <!-- Display Area -->
+        <Grid Grid.Row="1">
+            <Border CornerRadius="18" BorderBrush="{DynamicResource ButtonBackgroundBrush}"
+                    BorderThickness="2" Padding="12"
+                    Background="{DynamicResource BorderBackgroundBrush}"
+                    Effect="{DynamicResource WindowShadowEffect}">
+                <TextBox x:Name="Display" FontSize="36" FontWeight="Normal"
+                         HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         Text="{Binding Display, Mode=TwoWay}" TextAlignment="Right" IsReadOnly="True" BorderThickness="0"
+                         Background="Transparent" Foreground="{DynamicResource BorderForegroundBrush}"
+                         UseLayoutRounding="True" SnapsToDevicePixels="True"
+                         TextOptions.TextFormattingMode="Display" />
             </Border>
         </Grid>
 
         <!-- Memory Area -->
+        <Border Grid.Row="2" Margin="0,12,0,0" Padding="14"
+                Background="{DynamicResource BorderBackgroundBrush}"
+                CornerRadius="18"
+                BorderBrush="{DynamicResource ButtonBackgroundBrush}"
+                BorderThickness="2"
+                SnapsToDevicePixels="True"
+                Effect="{DynamicResource WindowShadowEffect}">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <TextBlock Text="💾 Memória" FontSize="16" FontWeight="SemiBold"
                            Margin="0,0,0,8" Foreground="{DynamicResource BorderForegroundBrush}" />
