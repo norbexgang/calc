@@ -24,8 +24,8 @@
         <GradientStop Color="#FFFFF0F5" Offset="1.0"/>
     </LinearGradientBrush>
     
-    <!-- Gomb szöveg - Purple -->
-    <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FF6A1B9A" />
+    <!-- Gomb szöveg - Black -->
+    <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FF000000" />
     
     <!-- Egyenlőség gomb - Fresh Mint/Green -->
     <LinearGradientBrush x:Key="AccentButtonBrush" StartPoint="0,0" EndPoint="1,1">
