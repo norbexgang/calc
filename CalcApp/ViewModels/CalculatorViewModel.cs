@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -58,6 +60,7 @@ namespace CalcApp.ViewModels
         public ICommand MemorySubtractCommand { get; }
         public ICommand MemoryRecallCommand { get; }
         public ICommand MemoryClearCommand { get; }
+        public ICommand OpenLogsCommand { get; }
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
         private static readonly double DegreesToRadians = Math.PI / 180.0;
@@ -88,7 +91,9 @@ namespace CalcApp.ViewModels
             MemoryAddCommand = new RelayCommand(_ => ProcessMemoryAdd());
             MemorySubtractCommand = new RelayCommand(_ => ProcessMemorySubtract());
             MemoryRecallCommand = new RelayCommand(_ => ProcessMemoryRecall());
+            MemoryRecallCommand = new RelayCommand(_ => ProcessMemoryRecall());
             MemoryClearCommand = new RelayCommand(_ => ResetMemory());
+            OpenLogsCommand = new RelayCommand(_ => ProcessOpenLogs());
 
             InitializeMemory();
         }
@@ -476,6 +481,29 @@ namespace CalcApp.ViewModels
             _memoryHistoryEntries.Clear();
             _memoryHistoryText = string.Empty;
             UpdateMemoryDisplay();
+        }
+
+        private void ProcessOpenLogs()
+        {
+            try
+            {
+                var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+                if (!Directory.Exists(logPath))
+                {
+                    Directory.CreateDirectory(logPath);
+                }
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = logPath,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to open logs folder");
+            }
         }
 
         private bool TryGetDisplayValue(out double value)

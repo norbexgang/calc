@@ -41,7 +41,8 @@ namespace CalcApp
                 var ops = new Choices(new string[] {
                     "plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza",
                     "szinusz", "koszinusz", "tangens", "gyök", "faktoriális",
-                    "memória hozzáad", "memória kivon", "memória előhív", "memória törlés"
+                    "memória hozzáad", "memória kivon", "memória előhív", "memória törlés",
+                    "napló"
                 });
 
                 var gb = new GrammarBuilder { Culture = culture };
@@ -98,6 +99,7 @@ namespace CalcApp
                     case "memória kivon": _viewModel.MemorySubtractCommand.Execute(null); break;
                     case "memória előhív": _viewModel.MemoryRecallCommand.Execute(null); break;
                     case "memória törlés": _viewModel.MemoryClearCommand.Execute(null); break;
+                    case "napló": _viewModel.OpenLogsCommand.Execute(null); break;
                 }
             });
         }
