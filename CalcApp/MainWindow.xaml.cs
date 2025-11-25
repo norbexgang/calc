@@ -19,12 +19,20 @@ namespace CalcApp
         private bool _animationsEnabled = true;
         private bool _isAnimating = false;
         private bool _isDarkMode = false;
-        private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
-        private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
+
         private int _themeDictionaryIndex = -1;
 
         private const string DarkThemePath = "Themes/MaterialTheme.xaml";
         private const string LightThemePath = "Themes/ClassicTheme.xaml";
+        private const string ExperimentalDarkThemePath = "Themes/ExperimentalDark.xaml";
+        private const string ExperimentalLightThemePath = "Themes/ExperimentalLight.xaml";
+
+        private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
+        private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
+        private readonly ResourceDictionary _experimentalDarkThemeDictionary = CreateThemeDictionary(ExperimentalDarkThemePath);
+        private readonly ResourceDictionary _experimentalLightThemeDictionary = CreateThemeDictionary(ExperimentalLightThemePath);
+
+        private bool _isExperimental = false;
 
         private Storyboard? _cachedButtonClickStoryboard;
         private Storyboard? _cachedFadeStoryboard;
@@ -71,6 +79,10 @@ namespace CalcApp
         private void OnLoaded(object? sender, RoutedEventArgs e)
         {
             if (_themeToggle == null && FindName("ThemeToggle") is Button btn) _themeToggle = btn;
+            if (FindName("ExperimentalToggle") is ToggleButton expBtn)
+            {
+                expBtn.IsChecked = _isExperimental;
+            }
         }
 
         private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -290,7 +302,16 @@ namespace CalcApp
         private void ApplyTheme()
         {
             var dictionaries = Resources.MergedDictionaries;
-            var targetDictionary = _isDarkMode ? _darkThemeDictionary : _lightThemeDictionary;
+            ResourceDictionary targetDictionary;
+
+            if (_isExperimental)
+            {
+                targetDictionary = _isDarkMode ? _experimentalDarkThemeDictionary : _experimentalLightThemeDictionary;
+            }
+            else
+            {
+                targetDictionary = _isDarkMode ? _darkThemeDictionary : _lightThemeDictionary;
+            }
 
             if (_themeDictionaryIndex < 0 || _themeDictionaryIndex >= dictionaries.Count)
             {
@@ -313,6 +334,15 @@ namespace CalcApp
         {
             var button = ThemeToggleButton;
             button.Content = _isDarkMode ? "Light mode" : "Dark mode";
+        }
+
+        private void ExperimentalToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleButton tb)
+            {
+                _isExperimental = tb.IsChecked == true;
+                ApplyTheme();
+            }
         }
 
         private readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = new();
@@ -526,7 +556,9 @@ namespace CalcApp
             {
                 var source = dictionaries[i].Source?.OriginalString;
                 if (string.Equals(source, DarkThemePath, StringComparison.Ordinal) ||
-                    string.Equals(source, LightThemePath, StringComparison.Ordinal))
+                    string.Equals(source, LightThemePath, StringComparison.Ordinal) ||
+                    string.Equals(source, ExperimentalDarkThemePath, StringComparison.Ordinal) ||
+                    string.Equals(source, ExperimentalLightThemePath, StringComparison.Ordinal))
                 {
                     return i;
                 }
