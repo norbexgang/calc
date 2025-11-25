@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using Serilog;
 
 namespace CalcApp.ViewModels
 {
@@ -19,7 +20,10 @@ namespace CalcApp.ViewModels
         private double _memoryValue;
         private readonly Queue<(bool IsAddition, string Description)> _memoryHistoryEntries = new();
         private string _memoryHistoryText = string.Empty;
+
         private string? _lastOperationDescription;
+        private double? _lastRightOperand;
+        private string? _lastOperator;
 
         private string _display = "0";
         public string Display
@@ -117,9 +121,9 @@ namespace CalcApp.ViewModels
                     MemoryItems.Add($"History: {historyText}");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Error updating memory display: {ex}");
+                Log.Error(ex, "Error updating memory display");
             }
         }
 
@@ -190,9 +194,9 @@ namespace CalcApp.ViewModels
             {
                 ShowError();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Unexpected error in ExecuteOperation: {ex}");
+                Log.Error(ex, "Unexpected error in ExecuteOperation");
                 ShowError();
             }
         }
@@ -265,37 +269,31 @@ namespace CalcApp.ViewModels
 
         private void ProcessEquals()
         {
-            if (!_leftOperand.HasValue || _pendingOperator is null) return;
-            if (!TryGetDisplayValue(out var rightOperand)) return;
+            if (_pendingOperator != null)
+            {
+                if (!_leftOperand.HasValue) return;
+                if (!TryGetDisplayValue(out var rightOperand)) return;
 
-            ExecuteOperation(_leftOperand.Value, rightOperand, _pendingOperator);
+                _lastRightOperand = rightOperand;
+                _lastOperator = _pendingOperator;
 
-            // After equals, we clear the pending operator and left operand effectively starting fresh with the result
-            // But ExecuteOperation sets _leftOperand to result. 
-            // Standard calculator behavior: 
-            // 5 + 3 = 8. 
-            // If I type + 2, it does 8 + 2.
-            // If I type 5, it starts new.
-            // So _leftOperand = result is correct for chaining, but for Equals we might want to clear _pendingOperator.
+                ExecuteOperation(_leftOperand.Value, rightOperand, _pendingOperator);
 
-            _pendingOperator = null;
-            _shouldResetDisplay = true;
+                _pendingOperator = null;
+                _shouldResetDisplay = true;
+                // Reset left operand so next operator press picks up the display value
+                _leftOperand = null;
+            }
+            else if (_lastOperator != null && _lastRightOperand.HasValue)
+            {
+                // Repeat last operation
+                if (!TryGetDisplayValue(out var currentDisplay)) return;
 
-            // Note: ExecuteOperation sets _leftOperand = result. 
-            // If we want to support "Repeat last operation" (e.g. pressing = again), we'd need more state.
-            // For now, we just match previous logic which cleared them.
-            // Wait, previous logic:
-            // _leftOperand = null;
-            // _pendingOperator = null;
+                ExecuteOperation(currentDisplay, _lastRightOperand.Value, _lastOperator);
 
-            // So I should reset _leftOperand to null if I want to match exactly, OR keep it as result.
-            // Previous code:
-            // _leftOperand = null;
-            // _pendingOperator = null;
-
-            // But ExecuteOperation sets _leftOperand = result.
-            // Let's override it.
-            _leftOperand = null;
+                _shouldResetDisplay = true;
+                _leftOperand = null;
+            }
         }
 
         private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
@@ -335,9 +333,9 @@ namespace CalcApp.ViewModels
                 _shouldResetDisplay = true;
                 RecordOperation($"{operationName}({FormatNumber(originalValue)})", result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Error in unary function {operationName}: {ex}");
+                Log.Error(ex, "Error in unary function {OperationName}", operationName);
                 ShowError();
             }
         }
@@ -400,9 +398,9 @@ namespace CalcApp.ViewModels
             {
                 ShowError();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Unexpected error in Factorial: {ex}");
+                Log.Error(ex, "Unexpected error in Factorial");
                 ShowError();
             }
         }
@@ -425,9 +423,9 @@ namespace CalcApp.ViewModels
                 TrackMemoryOperation(value, isAddition: true);
                 _shouldResetDisplay = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Error in MemoryAdd: {ex}");
+                Log.Error(ex, "Error in MemoryAdd");
                 ResetMemory();
                 ShowError();
             }
@@ -451,9 +449,9 @@ namespace CalcApp.ViewModels
                 TrackMemoryOperation(value, isAddition: false);
                 _shouldResetDisplay = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Error in MemorySubtract: {ex}");
+                Log.Error(ex, "Error in MemorySubtract");
                 ResetMemory();
                 ShowError();
             }

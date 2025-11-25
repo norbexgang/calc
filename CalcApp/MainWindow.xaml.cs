@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Linq;
 using CalcApp.ViewModels;
+using Serilog;
 
 namespace CalcApp
 {
@@ -131,9 +132,9 @@ namespace CalcApp
                 var viewModel = new CalculatorViewModel();
                 DataContext = viewModel;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"CRITICAL: Failed to load main window XAML: {ex}");
+                Log.Fatal(ex, "CRITICAL: Failed to load main window XAML");
 
                 try
                 {
@@ -143,9 +144,9 @@ namespace CalcApp
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 }
-                catch
+                catch (Exception logEx)
                 {
-                    // System.Diagnostics.Debug.WriteLine("Failed to show error message box");
+                    Log.Error(logEx, "Failed to show error message box");
                 }
 
                 Application.Current?.Shutdown();
@@ -186,9 +187,9 @@ namespace CalcApp
                         _speech = new SpeechControl(viewModel);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // System.Diagnostics.Debug.WriteLine($"Failed to start speech control: {ex}");
+                    Log.Error(ex, "Failed to start speech control");
                     MessageBox.Show("A beszédvezérlés indítása nem sikerült.", "Beszédvezérlés hiba", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
@@ -235,9 +236,9 @@ namespace CalcApp
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Freeze resources failed: {ex}");
+                Log.Error(ex, "Freeze resources failed");
             }
         }
 
@@ -287,18 +288,18 @@ namespace CalcApp
                 catch { }
                 Opacity = 1.0;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Theme toggle failed: {ex}");
+                Log.Error(ex, "Theme toggle failed");
                 _isDarkMode = previousMode;
                 try
                 {
                     ApplyTheme();
                     UpdateThemeToggleButton();
                 }
-                catch (Exception)
+                catch (Exception innerEx)
                 {
-                    // System.Diagnostics.Debug.WriteLine($"Failed to restore previous theme: {innerEx}");
+                    Log.Error(innerEx, "Failed to restore previous theme");
                 }
 
                 Opacity = 1.0;
@@ -476,9 +477,9 @@ namespace CalcApp
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Error in keyboard handler: {ex}");
+                Log.Error(ex, "Error in keyboard handler");
             }
         }
 
@@ -581,9 +582,9 @@ namespace CalcApp
             {
                 return new ResourceDictionary { Source = new Uri(relativePath, UriKind.Relative) };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Failed to load theme dictionary '{relativePath}': {ex}");
+                Log.Error(ex, "Failed to load theme dictionary '{RelativePath}'", relativePath);
                 return new ResourceDictionary();
             }
         }

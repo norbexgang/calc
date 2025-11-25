@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Speech.Recognition;
 using System.Windows;
+using Serilog;
 using CalcApp.ViewModels;
 
 namespace CalcApp
@@ -30,14 +31,18 @@ namespace CalcApp
 
                 if (recognizerInfo == null)
                 {
-                    // System.Diagnostics.Debug.WriteLine($"Nincs telepítve magyar ({CultureCode}) speech recognizer.");
+                    Log.Warning("Nincs telepítve magyar ({CultureCode}) speech recognizer.", CultureCode);
                     return;
                 }
 
                 _sr = new SpeechRecognitionEngine(recognizerInfo);
 
                 var numbers = new Choices(new string[] { "nulla", "egy", "kettő", "három", "négy", "öt", "hat", "hét", "nyolc", "kilenc" });
-                var ops = new Choices(new string[] { "plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza" });
+                var ops = new Choices(new string[] {
+                    "plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza",
+                    "szinusz", "koszinusz", "tangens", "gyök", "faktoriális",
+                    "memória hozzáad", "memória kivon", "memória előhív", "memória törlés"
+                });
 
                 var gb = new GrammarBuilder { Culture = culture };
                 gb.Append(new Choices(numbers, ops));
@@ -48,9 +53,9 @@ namespace CalcApp
                 _sr.SpeechRecognized += OnSpeechRecognized;
                 _sr.RecognizeAsync(RecognizeMode.Multiple);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // System.Diagnostics.Debug.WriteLine($"Speech init error: {ex}");
+                Log.Error(ex, "Speech init error");
             }
         }
 
@@ -82,6 +87,17 @@ namespace CalcApp
                     case "pont": _viewModel.DecimalCommand.Execute(null); break;
                     case "törlés": _viewModel.ClearCommand.Execute(null); break;
                     case "vissza": _viewModel.DeleteCommand.Execute(null); break;
+
+                    case "szinusz": _viewModel.SinCommand.Execute(null); break;
+                    case "koszinusz": _viewModel.CosCommand.Execute(null); break;
+                    case "tangens": _viewModel.TanCommand.Execute(null); break;
+                    case "gyök": _viewModel.SqrtCommand.Execute(null); break;
+                    case "faktoriális": _viewModel.FactorialCommand.Execute(null); break;
+
+                    case "memória hozzáad": _viewModel.MemoryAddCommand.Execute(null); break;
+                    case "memória kivon": _viewModel.MemorySubtractCommand.Execute(null); break;
+                    case "memória előhív": _viewModel.MemoryRecallCommand.Execute(null); break;
+                    case "memória törlés": _viewModel.MemoryClearCommand.Execute(null); break;
                 }
             });
         }
