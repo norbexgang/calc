@@ -28,6 +28,8 @@ namespace CalcApp.ViewModels
         private string? _lastOperator;
 
         private string _display = "0";
+        public bool IsTurboEnabled { get; private set; }
+
         public string Display
         {
             get => _display;
@@ -96,6 +98,11 @@ namespace CalcApp.ViewModels
             OpenLogsCommand = new RelayCommand(_ => ProcessOpenLogs());
 
             InitializeMemory();
+        }
+
+        public void SetTurboMode(bool isEnabled)
+        {
+            IsTurboEnabled = isEnabled;
         }
 
         private void InitializeMemory()
@@ -179,7 +186,7 @@ namespace CalcApp.ViewModels
         {
             try
             {
-                var result = Evaluate(left, right, op);
+                var result = IsTurboEnabled ? TryEvaluate(left, right, op) : Evaluate(left, right, op);
                 if (!IsFinite(result))
                 {
                     ShowError();
@@ -635,6 +642,27 @@ namespace CalcApp.ViewModels
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static double TryEvaluate(double left, double right, string operatorSymbol)
+        {
+            try
+            {
+                return Evaluate(left, right, operatorSymbol);
+            }
+            catch (DivideByZeroException)
+            {
+                return double.NaN;
+            }
+            catch (InvalidOperationException)
+            {
+                return double.NaN;
+            }
+            catch (OverflowException)
+            {
+                return double.NaN;
+            }
+        }
+
         private static double Evaluate(double left, double right, string operatorSymbol)
         {
             if (!IsFinite(left) || !IsFinite(right))
@@ -642,33 +670,21 @@ namespace CalcApp.ViewModels
                 throw new InvalidOperationException("Invalid operand values");
             }
 
-            if (operatorSymbol == "+")
+            double result = operatorSymbol switch
             {
-                var result = left + right;
-                if (!IsFinite(result)) throw new OverflowException("Addition overflow");
-                return result;
-            }
-            if (operatorSymbol == "-")
-            {
-                var result = left - right;
-                if (!IsFinite(result)) throw new OverflowException("Subtraction overflow");
-                return result;
-            }
-            if (operatorSymbol == "*")
-            {
-                var result = left * right;
-                if (!IsFinite(result)) throw new OverflowException("Multiplication overflow");
-                return result;
-            }
-            if (operatorSymbol == "/")
-            {
-                if (Math.Abs(right) < double.Epsilon) throw new DivideByZeroException();
-                var result = left / right;
-                if (!IsFinite(result)) throw new OverflowException("Division overflow");
-                return result;
-            }
+                "+" => left + right,
+                "-" => left - right,
+                "*" => left * right,
+                "/" when Math.Abs(right) >= double.Epsilon => left / right,
+                "/" => throw new DivideByZeroException(),
+                _ => throw new InvalidOperationException($"Unknown operator: {operatorSymbol}"),
+            };
 
-            throw new InvalidOperationException($"Unknown operator: {operatorSymbol}");
+            if (!IsFinite(result))
+            {
+                throw new OverflowException("Operation resulted in overflow");
+            }
+            return result;
         }
 
         private static double[] CreateFactorialCache()
