@@ -66,6 +66,27 @@
                                     <CubicEase EasingMode="EaseIn" />
                                 </DoubleAnimation.EasingFunction>
                             </DoubleAnimation>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Button.Triggers>
+            </Button>
+
+            <!-- Speech toggle: enables/disables voice control (magyar) -->
+            <ToggleButton x:Name="SpeechToggle" Width="120" Height="36" VerticalAlignment="Top"
+                          Content="🎤 Beszéd: Be" FontSize="12" FontWeight="Normal" Cursor="Hand"
+                          Checked="SpeechToggle_Checked" Unchecked="SpeechToggle_Unchecked" />
+
+            <!-- Experimental toggle -->
+            <ToggleButton x:Name="ExperimentalToggle" Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
+                          Content="🧪 Exp." FontSize="12" FontWeight="Normal" Cursor="Hand"
+                          Click="ExperimentalToggle_Click" />
+        </StackPanel>
+
+        <!-- Display Area -->
+        <Grid Grid.Row="1">
+            <Border CornerRadius="18" BorderBrush="{DynamicResource ButtonBackgroundBrush}"
+                    BorderThickness="2" Padding="12"
                     Background="{DynamicResource BorderBackgroundBrush}">
                <Border.Effect>
                     <!-- cheaper shadow settings -->
