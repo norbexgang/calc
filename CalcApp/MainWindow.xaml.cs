@@ -363,6 +363,10 @@ namespace CalcApp
             if (sender is ToggleButton tb)
             {
                 _isTurbo = tb.IsChecked == true;
+                if (DataContext is CalculatorViewModel vm)
+                {
+                    vm.SetTurboMode(_isTurbo);
+                }
                 UpdateShadowResources();
             }
         }
