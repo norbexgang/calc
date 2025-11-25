@@ -1,16 +1,4 @@
-using System;
-using System.Globalization;
-using System.Linq;
-using System.Speech.Recognition;
-using System.Windows;
-using CalcApp.ViewModels;
-
-namespace CalcApp
-{
-    public class SpeechControl : IDisposable
-    {
-        private SpeechRecognitionEngine? _sr;
-        private readonly CalculatorViewModel _viewModel;
+        private const string CultureCode = "hu-HU";
 
         public SpeechControl(CalculatorViewModel viewModel)
         {
@@ -22,20 +10,20 @@ namespace CalcApp
         {
             try
             {
-                var culture = new CultureInfo("hu-HU");
+                var culture = new CultureInfo(CultureCode);
                 var recognizerInfo = SpeechRecognitionEngine.InstalledRecognizers()
                     .FirstOrDefault(r => r.Culture.Equals(culture));
 
                 if (recognizerInfo == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("Nincs telepítve magyar (hu-HU) speech recognizer.");
+                    System.Diagnostics.Debug.WriteLine($"Nincs telepítve magyar ({CultureCode}) speech recognizer.");
                     return;
                 }
 
                 _sr = new SpeechRecognitionEngine(recognizerInfo);
 
-                var numbers = new Choices("nulla", "egy", "kettő", "három", "négy", "öt", "hat", "hét", "nyolc", "kilenc");
-                var ops = new Choices("plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza");
+                var numbers = new Choices(new string[] { "nulla", "egy", "kettő", "három", "négy", "öt", "hat", "hét", "nyolc", "kilenc" });
+                var ops = new Choices(new string[] { "plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza" });
 
                 var gb = new GrammarBuilder { Culture = culture };
                 gb.Append(new Choices(numbers, ops));
@@ -54,7 +42,7 @@ namespace CalcApp
 
         private void OnSpeechRecognized(object? sender, SpeechRecognizedEventArgs e)
         {
-            if (e.Result.Confidence < 0.65) return;
+            if (e.Result.Confidence < ConfidenceThreshold) return;
             var text = e.Result.Text.ToLowerInvariant();
 
             Application.Current.Dispatcher.Invoke(() =>
