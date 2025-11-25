@@ -48,11 +48,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="8" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect Color="#FF651FFF" Opacity="0.5" BlurRadius="15" ShadowDepth="0" Direction="0" />
-            </Setter.Value>
-        </Setter>
+        <Setter Property="Effect" Value="{DynamicResource ButtonShadowEffect}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -71,11 +67,7 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="ButtonBorder" Property="Opacity" Value="1.0" />
                             <Setter TargetName="HighlightBorder" Property="Opacity" Value="0.15" />
-                            <Setter Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect Color="#FF00E5FF" Opacity="0.8" BlurRadius="20" ShadowDepth="0" />
-                                </Setter.Value>
-                            </Setter>
+                            <Setter Property="Effect" Value="{DynamicResource ButtonHoverShadowEffect}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.8" />

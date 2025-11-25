@@ -30,7 +30,7 @@ namespace CalcApp
 
                 if (recognizerInfo == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Nincs telepítve magyar ({CultureCode}) speech recognizer.");
+                    // System.Diagnostics.Debug.WriteLine($"Nincs telepítve magyar ({CultureCode}) speech recognizer.");
                     return;
                 }
 
@@ -48,9 +48,9 @@ namespace CalcApp
                 _sr.SpeechRecognized += OnSpeechRecognized;
                 _sr.RecognizeAsync(RecognizeMode.Multiple);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Speech init error: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Speech init error: {ex}");
             }
         }
 

@@ -8,6 +8,7 @@ using System.Windows.Media.Animation;
 using System.Speech.Recognition;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Linq;
 using CalcApp.ViewModels;
 
@@ -33,11 +34,17 @@ namespace CalcApp
         private readonly ResourceDictionary _experimentalLightThemeDictionary = CreateThemeDictionary(ExperimentalLightThemePath);
 
         private bool _isExperimental = false;
+        private bool _isTurbo = false;
 
         private Storyboard? _cachedButtonClickStoryboard;
         private Storyboard? _cachedFadeStoryboard;
         private SpeechControl? _speech;
         private bool _speechEnabled = true;
+
+        private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270 };
+        private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270 };
+        private readonly DropShadowEffect _defaultButtonHoverShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270 };
+
 
         public MainWindow()
         {
@@ -46,6 +53,7 @@ namespace CalcApp
             Unloaded += OnUnloaded;
 
             InitializeTheme();
+            UpdateShadowResources();
             FreezeResourceDictionaries();
             InitializeKeyMappings();
 
@@ -67,12 +75,12 @@ namespace CalcApp
                 }
                 else if (!hasRecognizer)
                 {
-                    System.Diagnostics.Debug.WriteLine("No Hungarian speech recognizer installed; speech control disabled.");
+                    // System.Diagnostics.Debug.WriteLine("No Hungarian speech recognizer installed; speech control disabled.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Speech init failed in MainWindow ctor: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Speech init failed in MainWindow ctor: {ex}");
             }
         }
 
@@ -82,6 +90,10 @@ namespace CalcApp
             if (FindName("ExperimentalToggle") is ToggleButton expBtn)
             {
                 expBtn.IsChecked = _isExperimental;
+            }
+            if (FindName("TurboToggle") is ToggleButton turboBtn)
+            {
+                turboBtn.IsChecked = _isTurbo;
             }
         }
 
@@ -119,9 +131,9 @@ namespace CalcApp
                 var viewModel = new CalculatorViewModel();
                 DataContext = viewModel;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"CRITICAL: Failed to load main window XAML: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"CRITICAL: Failed to load main window XAML: {ex}");
 
                 try
                 {
@@ -133,7 +145,7 @@ namespace CalcApp
                 }
                 catch
                 {
-                    System.Diagnostics.Debug.WriteLine("Failed to show error message box");
+                    // System.Diagnostics.Debug.WriteLine("Failed to show error message box");
                 }
 
                 Application.Current?.Shutdown();
@@ -174,9 +186,9 @@ namespace CalcApp
                         _speech = new SpeechControl(viewModel);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to start speech control: {ex}");
+                    // System.Diagnostics.Debug.WriteLine($"Failed to start speech control: {ex}");
                     MessageBox.Show("A beszédvezérlés indítása nem sikerült.", "Beszédvezérlés hiba", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
@@ -223,9 +235,9 @@ namespace CalcApp
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Freeze resources failed: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Freeze resources failed: {ex}");
             }
         }
 
@@ -275,18 +287,18 @@ namespace CalcApp
                 catch { }
                 Opacity = 1.0;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Theme toggle failed: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Theme toggle failed: {ex}");
                 _isDarkMode = previousMode;
                 try
                 {
                     ApplyTheme();
                     UpdateThemeToggleButton();
                 }
-                catch (Exception innerEx)
+                catch (Exception)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to restore previous theme: {innerEx}");
+                    // System.Diagnostics.Debug.WriteLine($"Failed to restore previous theme: {innerEx}");
                 }
 
                 Opacity = 1.0;
@@ -342,6 +354,31 @@ namespace CalcApp
             {
                 _isExperimental = tb.IsChecked == true;
                 ApplyTheme();
+            }
+        }
+
+        private void TurboToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleButton tb)
+            {
+                _isTurbo = tb.IsChecked == true;
+                UpdateShadowResources();
+            }
+        }
+
+        private void UpdateShadowResources()
+        {
+            if (_isTurbo)
+            {
+                Resources["WindowShadowEffect"] = null;
+                Resources["ButtonShadowEffect"] = null;
+                Resources["ButtonHoverShadowEffect"] = null;
+            }
+            else
+            {
+                Resources["WindowShadowEffect"] = _defaultWindowShadow;
+                Resources["ButtonShadowEffect"] = _defaultButtonShadow;
+                Resources["ButtonHoverShadowEffect"] = _defaultButtonHoverShadow;
             }
         }
 
@@ -439,9 +476,9 @@ namespace CalcApp
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in keyboard handler: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Error in keyboard handler: {ex}");
             }
         }
 
@@ -477,7 +514,7 @@ namespace CalcApp
 
         private async Task AnimateButtonClick()
         {
-            if (!_animationsEnabled) return;
+            if (!_animationsEnabled || _isTurbo) return;
             var button = ThemeToggleButton;
 
             if (button.RenderTransform is not System.Windows.Media.ScaleTransform scaleTransform)
@@ -504,13 +541,14 @@ namespace CalcApp
 
         private async Task FadeOutWindow()
         {
-            if (!_animationsEnabled) return;
+            if (!_animationsEnabled || _isTurbo) return;
             // Smoother fade out
             await FadeOpacity(1.0, 0.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseOut });
         }
 
         private async Task FadeInWindow()
         {
+            if (_isTurbo) return;
             // Smoother fade in
             await FadeOpacity(0.0, 1.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseIn });
         }
@@ -543,9 +581,9 @@ namespace CalcApp
             {
                 return new ResourceDictionary { Source = new Uri(relativePath, UriKind.Relative) };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load theme dictionary '{relativePath}': {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Failed to load theme dictionary '{relativePath}': {ex}");
                 return new ResourceDictionary();
             }
         }

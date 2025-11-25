@@ -117,9 +117,9 @@ namespace CalcApp.ViewModels
                     MemoryItems.Add($"History: {historyText}");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating memory display: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Error updating memory display: {ex}");
             }
         }
 
@@ -190,9 +190,9 @@ namespace CalcApp.ViewModels
             {
                 ShowError();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Unexpected error in ExecuteOperation: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Unexpected error in ExecuteOperation: {ex}");
                 ShowError();
             }
         }
@@ -269,7 +269,7 @@ namespace CalcApp.ViewModels
             if (!TryGetDisplayValue(out var rightOperand)) return;
 
             ExecuteOperation(_leftOperand.Value, rightOperand, _pendingOperator);
-            
+
             // After equals, we clear the pending operator and left operand effectively starting fresh with the result
             // But ExecuteOperation sets _leftOperand to result. 
             // Standard calculator behavior: 
@@ -277,22 +277,22 @@ namespace CalcApp.ViewModels
             // If I type + 2, it does 8 + 2.
             // If I type 5, it starts new.
             // So _leftOperand = result is correct for chaining, but for Equals we might want to clear _pendingOperator.
-            
+
             _pendingOperator = null;
             _shouldResetDisplay = true;
-            
+
             // Note: ExecuteOperation sets _leftOperand = result. 
             // If we want to support "Repeat last operation" (e.g. pressing = again), we'd need more state.
             // For now, we just match previous logic which cleared them.
             // Wait, previous logic:
             // _leftOperand = null;
             // _pendingOperator = null;
-            
+
             // So I should reset _leftOperand to null if I want to match exactly, OR keep it as result.
             // Previous code:
             // _leftOperand = null;
             // _pendingOperator = null;
-            
+
             // But ExecuteOperation sets _leftOperand = result.
             // Let's override it.
             _leftOperand = null;
@@ -335,9 +335,9 @@ namespace CalcApp.ViewModels
                 _shouldResetDisplay = true;
                 RecordOperation($"{operationName}({FormatNumber(originalValue)})", result);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in unary function {operationName}: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Error in unary function {operationName}: {ex}");
                 ShowError();
             }
         }
@@ -400,9 +400,9 @@ namespace CalcApp.ViewModels
             {
                 ShowError();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Unexpected error in Factorial: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Unexpected error in Factorial: {ex}");
                 ShowError();
             }
         }
@@ -425,9 +425,9 @@ namespace CalcApp.ViewModels
                 TrackMemoryOperation(value, isAddition: true);
                 _shouldResetDisplay = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in MemoryAdd: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Error in MemoryAdd: {ex}");
                 ResetMemory();
                 ShowError();
             }
@@ -451,9 +451,9 @@ namespace CalcApp.ViewModels
                 TrackMemoryOperation(value, isAddition: false);
                 _shouldResetDisplay = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in MemorySubtract: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"Error in MemorySubtract: {ex}");
                 ResetMemory();
                 ShowError();
             }
@@ -546,19 +546,19 @@ namespace CalcApp.ViewModels
             // Simplified logic: Just show the last N items that fit, or just the last few.
             // The previous logic was very complex trying to fit exactly MaxMemoryHistoryLength characters.
             // Let's simplify to just taking the last 20 entries or so, or building it up until it's too long.
-            
+
             var builder = new StringBuilder();
             var entries = _memoryHistoryEntries.Reverse().Take(50).Reverse().ToList(); // Take last 50
-            
+
             bool isFirst = true;
             foreach (var entry in entries)
             {
-                 if (!isFirst) builder.Append("; ");
-                 if (entry.IsAddition) builder.Append("+ "); else builder.Append("- ");
-                 builder.Append(entry.Description);
-                 isFirst = false;
+                if (!isFirst) builder.Append("; ");
+                if (entry.IsAddition) builder.Append("+ "); else builder.Append("- ");
+                builder.Append(entry.Description);
+                isFirst = false;
             }
-            
+
             if (_memoryHistoryEntries.Count > 50)
             {
                 builder.Insert(0, "...; ");
@@ -596,7 +596,7 @@ namespace CalcApp.ViewModels
                 if (s.Length > MaxDisplayLength) s = value.ToString("E6", Culture);
                 return s.Length > 0 ? s : "0";
             }
-            
+
             var formatted = value.ToString("G12", Culture);
             if (formatted.IndexOf('E') >= 0)
                 return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
@@ -641,7 +641,7 @@ namespace CalcApp.ViewModels
                 if (!IsFinite(result)) throw new OverflowException("Division overflow");
                 return result;
             }
-            
+
             throw new InvalidOperationException($"Unknown operator: {operatorSymbol}");
         }
 
