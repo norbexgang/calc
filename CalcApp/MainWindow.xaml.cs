@@ -229,6 +229,7 @@ namespace CalcApp
 
         private void InitializeTheme()
         {
+            ApplyTheme();
             UpdateThemeToggleButton();
         }
 
@@ -384,11 +385,11 @@ namespace CalcApp
                             // Special check for OemPlus (Shift+= is +) vs (= is usually unshifted for equals, but here we treat OemPlus as +)
                             // Let's stick to the original logic's intent but cleaner.
                             // Original: Key.Add || (Key.OemPlus && NoModifiers) -> +
-                            
+
                             // Refined check for OemPlus to match original logic strictly if needed, 
                             // but usually OemPlus is + or =. 
                             // The original code: if (key == Key.Add || (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None))
-                            
+
                             if (key == Key.OemPlus && modifiers != ModifierKeys.None)
                             {
                                 // If shift is pressed on OemPlus, it might be + on some layouts, or just + on others.
@@ -397,11 +398,11 @@ namespace CalcApp
                                 // Original code: (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None) -> Execute("+")
                                 // This seems backwards for US layout (+ is shift+=), but maybe it's for numpad +? No, Key.Add is numpad.
                                 // Let's assume the user wants the original behavior.
-                                
+
                                 // Actually, let's just use the map.
                             }
 
-                             // Execute mapped action
+                            // Execute mapped action
                             action(viewModel);
                             e.Handled = true;
                         }
@@ -419,10 +420,13 @@ namespace CalcApp
             if (_cachedButtonClickStoryboard != null) return _cachedButtonClickStoryboard;
 
             var storyboard = new Storyboard();
-            var scaleXDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
-            var scaleYDown = new DoubleAnimation(1.0, 0.95, TimeSpan.FromMilliseconds(100));
-            var scaleXUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100)) { BeginTime = TimeSpan.FromMilliseconds(100) };
-            var scaleYUp = new DoubleAnimation(0.95, 1.0, TimeSpan.FromMilliseconds(100)) { BeginTime = TimeSpan.FromMilliseconds(100) };
+            // Smoother easing: CubicEase instead of default linear/quadratic mix
+            var easing = new CubicEase { EasingMode = EasingMode.EaseInOut };
+
+            var scaleXDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(150)) { EasingFunction = easing };
+            var scaleYDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(150)) { EasingFunction = easing };
+            var scaleXUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(150)) { BeginTime = TimeSpan.FromMilliseconds(150), EasingFunction = easing };
+            var scaleYUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(150)) { BeginTime = TimeSpan.FromMilliseconds(150), EasingFunction = easing };
 
             Storyboard.SetTarget(scaleXDown, scaleTransform);
             Storyboard.SetTargetProperty(scaleXDown, new PropertyPath("ScaleX"));
@@ -471,12 +475,14 @@ namespace CalcApp
         private async Task FadeOutWindow()
         {
             if (!_animationsEnabled) return;
-            await FadeOpacity(1.0, 0.3, TimeSpan.FromMilliseconds(250), new QuadraticEase { EasingMode = EasingMode.EaseOut });
+            // Smoother fade out
+            await FadeOpacity(1.0, 0.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseOut });
         }
 
         private async Task FadeInWindow()
         {
-            await FadeOpacity(0.3, 1.0, TimeSpan.FromMilliseconds(250), new QuadraticEase { EasingMode = EasingMode.EaseIn });
+            // Smoother fade in
+            await FadeOpacity(0.0, 1.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseIn });
         }
 
         private async Task FadeOpacity(double from, double to, TimeSpan duration, IEasingFunction? easing = null)
