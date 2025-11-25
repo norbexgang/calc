@@ -3,17 +3,18 @@ using System.Globalization;
 using System.Linq;
 using System.Speech.Recognition;
 using System.Windows;
+using CalcApp.ViewModels;
 
 namespace CalcApp
 {
     public class SpeechControl : IDisposable
     {
         private SpeechRecognitionEngine? _sr;
-        private readonly MainWindow _window;
+        private readonly CalculatorViewModel _viewModel;
 
-        public SpeechControl(MainWindow window)
+        public SpeechControl(CalculatorViewModel viewModel)
         {
-            _window = window;
+            _viewModel = viewModel;
             InitSpeech();
         }
 
@@ -33,8 +34,8 @@ namespace CalcApp
 
                 _sr = new SpeechRecognitionEngine(recognizerInfo);
 
-                var numbers = new Choices("nulla","egy","kettő","három","négy","öt","hat","hét","nyolc","kilenc");
-                var ops = new Choices("plusz","mínusz","szor","oszt","egyenlő","pont","törlés","vissza");
+                var numbers = new Choices("nulla", "egy", "kettő", "három", "négy", "öt", "hat", "hét", "nyolc", "kilenc");
+                var ops = new Choices("plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza");
 
                 var gb = new GrammarBuilder { Culture = culture };
                 gb.Append(new Choices(numbers, ops));
@@ -56,29 +57,29 @@ namespace CalcApp
             if (e.Result.Confidence < 0.65) return;
             var text = e.Result.Text.ToLowerInvariant();
 
-            _window.Dispatcher.Invoke(() =>
+            Application.Current.Dispatcher.Invoke(() =>
             {
                 switch (text)
                 {
-                    case "nulla": _window.ProcessDigit("0"); break;
-                    case "egy": _window.ProcessDigit("1"); break;
-                    case "kettő": _window.ProcessDigit("2"); break;
-                    case "három": _window.ProcessDigit("3"); break;
-                    case "négy": _window.ProcessDigit("4"); break;
-                    case "öt": _window.ProcessDigit("5"); break;
-                    case "hat": _window.ProcessDigit("6"); break;
-                    case "hét": _window.ProcessDigit("7"); break;
-                    case "nyolc": _window.ProcessDigit("8"); break;
-                    case "kilenc": _window.ProcessDigit("9"); break;
+                    case "nulla": _viewModel.DigitCommand.Execute("0"); break;
+                    case "egy": _viewModel.DigitCommand.Execute("1"); break;
+                    case "kettő": _viewModel.DigitCommand.Execute("2"); break;
+                    case "három": _viewModel.DigitCommand.Execute("3"); break;
+                    case "négy": _viewModel.DigitCommand.Execute("4"); break;
+                    case "öt": _viewModel.DigitCommand.Execute("5"); break;
+                    case "hat": _viewModel.DigitCommand.Execute("6"); break;
+                    case "hét": _viewModel.DigitCommand.Execute("7"); break;
+                    case "nyolc": _viewModel.DigitCommand.Execute("8"); break;
+                    case "kilenc": _viewModel.DigitCommand.Execute("9"); break;
 
-                    case "plusz": _window.ProcessOperator("+"); break;
-                    case "mínusz": _window.ProcessOperator("-"); break;
-                    case "szor": _window.ProcessOperator("*"); break;
-                    case "oszt": _window.ProcessOperator("/"); break;
-                    case "egyenlő": _window.ProcessEquals(); break;
-                    case "pont": _window.ProcessDecimal(); break;
-                    case "törlés": _window.ResetCalculatorState(); break;
-                    case "vissza": _window.ProcessDelete(); break;
+                    case "plusz": _viewModel.OperatorCommand.Execute("+"); break;
+                    case "mínusz": _viewModel.OperatorCommand.Execute("-"); break;
+                    case "szor": _viewModel.OperatorCommand.Execute("*"); break;
+                    case "oszt": _viewModel.OperatorCommand.Execute("/"); break;
+                    case "egyenlő": _viewModel.EqualsCommand.Execute(null); break;
+                    case "pont": _viewModel.DecimalCommand.Execute(null); break;
+                    case "törlés": _viewModel.ClearCommand.Execute(null); break;
+                    case "vissza": _viewModel.DeleteCommand.Execute(null); break;
                 }
             });
         }

@@ -5,7 +5,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/MaterialTheme.xaml"/>
+                <ResourceDictionary Source="Themes/SharedStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
             <!-- Témaváltás animációk -->
