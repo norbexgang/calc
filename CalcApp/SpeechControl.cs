@@ -1,4 +1,18 @@
+using System;
+using System.Globalization;
+using System.Linq;
+using System.Speech.Recognition;
+using System.Windows;
+using CalcApp.ViewModels;
+
+namespace CalcApp
+{
+    public class SpeechControl : IDisposable
+    {
         private const string CultureCode = "hu-HU";
+        private const float ConfidenceThreshold = 0.7f;
+        private readonly CalculatorViewModel _viewModel;
+        private SpeechRecognitionEngine? _sr;
 
         public SpeechControl(CalculatorViewModel viewModel)
         {
