@@ -334,58 +334,61 @@ namespace CalcApp
                     }
                     else
                     {
-                        switch (key)
-                        {
-                            case Key.Add:
-                            case Key.OemPlus when Keyboard.Modifiers == ModifierKeys.None:
-                                viewModel.OperatorCommand.Execute("+");
-                                e.Handled = true;
-                                break;
-                            case Key.Subtract:
-                            case Key.OemMinus:
-                                viewModel.OperatorCommand.Execute("-");
-                                e.Handled = true;
-                                break;
-                            case Key.Multiply:
-                                viewModel.OperatorCommand.Execute("*");
-                                e.Handled = true;
-                                break;
-                            case Key.Divide:
-                            case Key.Oem2:
-                                viewModel.OperatorCommand.Execute("/");
-                                e.Handled = true;
-                                break;
-                            case Key.Decimal:
-                            case Key.OemPeriod:
-                                viewModel.DecimalCommand.Execute(null);
-                                e.Handled = true;
-                                break;
-                            case Key.Return:
-                            case Key.Enter:
-                                viewModel.EqualsCommand.Execute(null);
-                                e.Handled = true;
-                                break;
-                            case Key.Back:
-                                viewModel.DeleteCommand.Execute(null);
-                                e.Handled = true;
-                                break;
-                            case Key.Escape:
-                                viewModel.ClearCommand.Execute(null);
-                                e.Handled = true;
-                                break;
-                            case Key.C when modifiers == ModifierKeys.Control:
-                                viewModel.ClearCommand.Execute(null);
-                                e.Handled = true;
-                                break;
-                            case Key.M when modifiers == ModifierKeys.Control:
-                                viewModel.MemoryClearCommand.Execute(null);
-                                e.Handled = true;
-                                break;
-                            case Key.Oem5:
-                                viewModel.PercentCommand.Execute(null);
-                                e.Handled = true;
-                                break;
-                        }
+                    if (key == Key.Add || (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None))
+                    {
+                        viewModel.OperatorCommand.Execute("+");
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Subtract || key == Key.OemMinus)
+                    {
+                        viewModel.OperatorCommand.Execute("-");
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Multiply)
+                    {
+                        viewModel.OperatorCommand.Execute("*");
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Divide || key == Key.Oem2)
+                    {
+                        viewModel.OperatorCommand.Execute("/");
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Decimal || key == Key.OemPeriod)
+                    {
+                        viewModel.DecimalCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Return || key == Key.Enter)
+                    {
+                        viewModel.EqualsCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Back)
+                    {
+                        viewModel.DeleteCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Escape)
+                    {
+                        viewModel.ClearCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                    else if (key == Key.C && modifiers == ModifierKeys.Control)
+                    {
+                        viewModel.ClearCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                    else if (key == Key.M && modifiers == ModifierKeys.Control)
+                    {
+                        viewModel.MemoryClearCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                    else if (key == Key.Oem5)
+                    {
+                        viewModel.PercentCommand.Execute(null);
+                        e.Handled = true;
+                    }
                     }
                 }
             }
