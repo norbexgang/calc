@@ -3,9 +3,10 @@
     <!-- Experimental Light Theme - Fresh & Rounded -->
     
     <!-- Háttér - Soft Peach/Pink Gradient -->
+    <!-- Háttér - White Gradient -->
     <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#FFFFF0F5" Offset="0.0"/>
-        <GradientStop Color="#FFFFE4E1" Offset="1.0"/>
+        <GradientStop Color="#FFFFFFFF" Offset="0.0"/>
+        <GradientStop Color="#FFF8F9FA" Offset="1.0"/>
     </LinearGradientBrush>
     
     <!-- Display háttér - Glassy White -->
