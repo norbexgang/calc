@@ -3,8 +3,14 @@ using CalcApp.ViewModels;
 
 namespace CalcApp.Tests;
 
+/// <summary>
+/// A CalculatorViewModel tesztjei.
+/// </summary>
 public class CalculatorViewModelTests
 {
+    /// <summary>
+    /// Teszteli, hogy a százalék hozzáadása helyes eredményt ad-e.
+    /// </summary>
     [Fact]
     public void AddPercentage_ShouldReturnCorrectResult()
     {

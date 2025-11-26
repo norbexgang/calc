@@ -14,6 +14,9 @@ using Serilog;
 
 namespace CalcApp.ViewModels
 {
+    /// <summary>
+    /// A számológép nézetmodellje, amely a számológép logikáját és állapotát tartalmazza.
+    /// </summary>
     public class CalculatorViewModel : BaseViewModel
     {
         private double? _leftOperand;
@@ -28,8 +31,14 @@ namespace CalcApp.ViewModels
         private string? _lastOperator;
 
         private string _display = "0";
+        /// <summary>
+        /// Megadja, hogy a turbó mód engedélyezve van-e.
+        /// </summary>
         public bool IsTurboEnabled { get; private set; }
 
+        /// <summary>
+        /// A számológép kijelzőjének aktuális értéke.
+        /// </summary>
         public string Display
         {
             get => _display;
@@ -43,25 +52,46 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// A memóriaelőzmények elemeit tartalmazó gyűjtemény.
+        /// </summary>
         public ObservableCollection<string> MemoryItems { get; } = new();
 
+        /// <summary> Parancs egy számjegy feldolgozásához. </summary>
         public ICommand DigitCommand { get; }
+        /// <summary> Parancs egy operátor feldolgozásához. </summary>
         public ICommand OperatorCommand { get; }
+        /// <summary> Parancs a tizedesjel feldolgozásához. </summary>
         public ICommand DecimalCommand { get; }
+        /// <summary> Parancs a számológép törléséhez. </summary>
         public ICommand ClearCommand { get; }
+        /// <summary> Parancs az előjel megváltoztatásához. </summary>
         public ICommand SignCommand { get; }
+        /// <summary> Parancs a százalék feldolgozásához. </summary>
         public ICommand PercentCommand { get; }
+        /// <summary> Parancs az utolsó karakter törléséhez. </summary>
         public ICommand DeleteCommand { get; }
+        /// <summary> Parancs az egyenlőségjel feldolgozásához. </summary>
         public ICommand EqualsCommand { get; }
+        /// <summary> Parancs a szinusz függvény alkalmazásához. </summary>
         public ICommand SinCommand { get; }
+        /// <summary> Parancs a koszinusz függvény alkalmazásához. </summary>
         public ICommand CosCommand { get; }
+        /// <summary> Parancs a tangens függvény alkalmazásához. </summary>
         public ICommand TanCommand { get; }
+        /// <summary> Parancs a négyzetgyök függvény alkalmazásához. </summary>
         public ICommand SqrtCommand { get; }
+        /// <summary> Parancs a faktoriális függvény alkalmazásához. </summary>
         public ICommand FactorialCommand { get; }
+        /// <summary> Parancs a memória hozzáadásához. </summary>
         public ICommand MemoryAddCommand { get; }
+        /// <summary> Parancs a memória kivonásához. </summary>
         public ICommand MemorySubtractCommand { get; }
+        /// <summary> Parancs a memória előhívásához. </summary>
         public ICommand MemoryRecallCommand { get; }
+        /// <summary> Parancs a memória törléséhez. </summary>
         public ICommand MemoryClearCommand { get; }
+        /// <summary> Parancs a naplók megnyitásához. </summary>
         public ICommand OpenLogsCommand { get; }
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
@@ -75,6 +105,9 @@ namespace CalcApp.ViewModels
         private static readonly Func<double, double> CosFunc = Math.Cos;
         private static readonly Func<double, double> TanFunc = Math.Tan;
 
+        /// <summary>
+        /// Inicializálja a CalculatorViewModel új példányát.
+        /// </summary>
         public CalculatorViewModel()
         {
             DigitCommand = new RelayCommand(p => ProcessDigit(p?.ToString()));
@@ -100,16 +133,26 @@ namespace CalcApp.ViewModels
             InitializeMemory();
         }
 
+        /// <summary>
+        /// Beállítja a turbó módot.
+        /// </summary>
+        /// <param name="isEnabled">Igaz, ha a turbó mód engedélyezve van, egyébként hamis.</param>
         public void SetTurboMode(bool isEnabled)
         {
             IsTurboEnabled = isEnabled;
         }
 
+        /// <summary>
+        /// Inicializálja a memória állapotát.
+        /// </summary>
         private void InitializeMemory()
         {
             UpdateMemoryDisplay();
         }
 
+        /// <summary>
+        /// Frissíti a memória kijelzőjét.
+        /// </summary>
         private void UpdateMemoryDisplay()
         {
             try
@@ -139,6 +182,10 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Feldolgoz egy számjegyet.
+        /// </summary>
+        /// <param name="digit">A feldolgozandó számjegy.</param>
         private void ProcessDigit(string? digit)
         {
             if (string.IsNullOrEmpty(digit)) return;
@@ -159,6 +206,10 @@ namespace CalcApp.ViewModels
             _shouldResetDisplay = false;
         }
 
+        /// <summary>
+        /// Feldolgoz egy operátort.
+        /// </summary>
+        /// <param name="operatorSymbol">A feldolgozandó operátor.</param>
         private void ProcessOperator(string? operatorSymbol)
         {
             if (string.IsNullOrWhiteSpace(operatorSymbol) ||
@@ -182,6 +233,12 @@ namespace CalcApp.ViewModels
             _shouldResetDisplay = true;
         }
 
+        /// <summary>
+        /// Végrehajt egy műveletet.
+        /// </summary>
+        /// <param name="left">A bal oldali operandus.</param>
+        /// <param name="right">A jobb oldali operandus.</param>
+        /// <param name="op">Az operátor.</param>
         private void ExecuteOperation(double left, double right, string op)
         {
             try
@@ -213,6 +270,9 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Feldolgozza a tizedesjelet.
+        /// </summary>
         private void ProcessDecimal()
         {
             if (_shouldResetDisplay || Display == "Error")
@@ -230,6 +290,9 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Visszaállítja a számológép állapotát.
+        /// </summary>
         private void ResetCalculatorState()
         {
             Display = "0";
@@ -239,6 +302,9 @@ namespace CalcApp.ViewModels
             _lastOperationDescription = null;
         }
 
+        /// <summary>
+        /// Feldolgozza az előjelváltást.
+        /// </summary>
         private void ProcessSign()
         {
             if (!TryGetDisplayValue(out var value)) return;
@@ -248,6 +314,9 @@ namespace CalcApp.ViewModels
             _lastOperationDescription = null;
         }
 
+        /// <summary>
+        /// Feldolgozza a százalékszámítást.
+        /// </summary>
         private void ProcessPercent()
         {
             if (!TryGetDisplayValue(out var value)) return;
@@ -288,6 +357,9 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Feldolgozza a törlés műveletet.
+        /// </summary>
         private void ProcessDelete()
         {
             if (_shouldResetDisplay || Display == "Error")
@@ -301,6 +373,9 @@ namespace CalcApp.ViewModels
             _lastOperationDescription = null;
         }
 
+        /// <summary>
+        /// Feldolgozza az egyenlőségjel műveletet.
+        /// </summary>
         private void ProcessEquals()
         {
             if (_pendingOperator != null)
@@ -330,6 +405,13 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Egyváltozós függvényt alkalmaz a kijelzőn lévő értékre.
+        /// </summary>
+        /// <param name="func">Az alkalmazandó függvény.</param>
+        /// <param name="operationName">A művelet neve.</param>
+        /// <param name="degrees">Fokokban számoljon-e.</param>
+        /// <param name="validateTan">Érvényesítse-e a tangens függvényt.</param>
         private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
         {
             if (func == null || string.IsNullOrWhiteSpace(operationName)) return;
@@ -374,6 +456,9 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Feldolgozza a négyzetgyök műveletet.
+        /// </summary>
         private void ProcessSqrt()
         {
             if (!TryGetDisplayValue(out var value)) return;
@@ -396,6 +481,9 @@ namespace CalcApp.ViewModels
             RecordOperation($"sqrt({FormatNumber(value)})", result);
         }
 
+        /// <summary>
+        /// Feldolgozza a faktoriális műveletet.
+        /// </summary>
         private void ProcessFactorial()
         {
             if (!TryGetDisplayValue(out var value)) return;
@@ -439,6 +527,9 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Feldolgozza a memória hozzáadás műveletet.
+        /// </summary>
         private void ProcessMemoryAdd()
         {
             if (!TryGetDisplayValue(out var value)) return;
@@ -465,6 +556,9 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Feldolgozza a memória kivonás műveletet.
+        /// </summary>
         private void ProcessMemorySubtract()
         {
             if (!TryGetDisplayValue(out var value)) return;
@@ -491,6 +585,9 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Feldolgozza a memória előhívás műveletet.
+        /// </summary>
         private void ProcessMemoryRecall()
         {
             SetDisplayValue(_memoryValue);
@@ -504,6 +601,9 @@ namespace CalcApp.ViewModels
             _lastOperationDescription = null;
         }
 
+        /// <summary>
+        /// Visszaállítja a memória állapotát.
+        /// </summary>
         private void ResetMemory()
         {
             _memoryValue = 0;
@@ -512,6 +612,9 @@ namespace CalcApp.ViewModels
             UpdateMemoryDisplay();
         }
 
+        /// <summary>
+        /// Megnyitja a naplófájlok mappáját.
+        /// </summary>
         private void ProcessOpenLogs()
         {
             try
@@ -535,6 +638,11 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Megpróbálja lekérni a kijelzőn lévő értéket.
+        /// </summary>
+        /// <param name="value">A kijelzőn lévő érték.</param>
+        /// <returns>Igaz, ha a lekérés sikeres, egyébként hamis.</returns>
         private bool TryGetDisplayValue(out double value)
         {
             var text = Display;
@@ -560,6 +668,10 @@ namespace CalcApp.ViewModels
             return true;
         }
 
+        /// <summary>
+        /// Beállítja a kijelzőn lévő értéket.
+        /// </summary>
+        /// <param name="value">A beállítandó érték.</param>
         private void SetDisplayValue(double value)
         {
             var formatted = FormatNumber(value);
@@ -568,6 +680,9 @@ namespace CalcApp.ViewModels
             Display = formatted;
         }
 
+        /// <summary>
+        /// Hibát jelez a kijelzőn.
+        /// </summary>
         private void ShowError()
         {
             Display = "Error";
@@ -577,6 +692,11 @@ namespace CalcApp.ViewModels
             _lastOperationDescription = null;
         }
 
+        /// <summary>
+        /// Nyomon követi a memóriaműveleteket.
+        /// </summary>
+        /// <param name="value">A műveletben szereplő érték.</param>
+        /// <param name="isAddition">Igaz, ha hozzáadásról van szó, egyébként hamis.</param>
         private void TrackMemoryOperation(double value, bool isAddition)
         {
             var description = _lastOperationDescription ?? FormatNumber(value);
@@ -590,6 +710,9 @@ namespace CalcApp.ViewModels
             UpdateMemoryDisplay();
         }
 
+        /// <summary>
+        /// Frissíti a memóriaelőzmények szövegét.
+        /// </summary>
         private void UpdateMemoryHistoryText()
         {
             if (_memoryHistoryEntries.Count == 0)
@@ -622,6 +745,11 @@ namespace CalcApp.ViewModels
             _memoryHistoryText = builder.ToString();
         }
 
+        /// <summary>
+        /// Rögzíti a végrehajtott műveletet.
+        /// </summary>
+        /// <param name="description">A művelet leírása.</param>
+        /// <param name="result">A művelet eredménye.</param>
         private void RecordOperation(string description, double result)
         {
             var formattedResult = FormatNumber(result);
@@ -634,6 +762,11 @@ namespace CalcApp.ViewModels
             _lastOperationDescription = $"{description}={formattedResult}";
         }
 
+        /// <summary>
+        /// Formáz egy számot a kijelzőn való megjelenítéshez.
+        /// </summary>
+        /// <param name="value">A formázandó szám.</param>
+        /// <returns>A formázott szám.</returns>
         private static string FormatNumber(double value)
         {
             if (!IsFinite(value)) return "Error";
@@ -661,9 +794,21 @@ namespace CalcApp.ViewModels
             return formatted.Length > 0 ? formatted : "0";
         }
 
+        /// <summary>
+        /// Ellenőrzi, hogy egy szám véges-e.
+        /// </summary>
+        /// <param name="value">Az ellenőrizendő szám.</param>
+        /// <returns>Igaz, ha a szám véges, egyébként hamis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
+        /// <summary>
+        /// Megpróbálja kiértékelni a műveletet, és hibakezeléssel látja el.
+        /// </summary>
+        /// <param name="left">A bal oldali operandus.</param>
+        /// <param name="right">A jobb oldali operandus.</param>
+        /// <param name="operatorSymbol">Az operátor.</param>
+        /// <returns>A művelet eredménye, vagy NaN hiba esetén.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static double TryEvaluate(double left, double right, string operatorSymbol)
         {
@@ -685,6 +830,13 @@ namespace CalcApp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Kiértékel egy műveletet.
+        /// </summary>
+        /// <param name="left">A bal oldali operandus.</param>
+        /// <param name="right">A jobb oldali operandus.</param>
+        /// <param name="operatorSymbol">Az operátor.</param>
+        /// <returns>A művelet eredménye.</returns>
         private static double Evaluate(double left, double right, string operatorSymbol)
         {
             if (!IsFinite(left) || !IsFinite(right))
@@ -709,6 +861,10 @@ namespace CalcApp.ViewModels
             return result;
         }
 
+        /// <summary>
+        /// Létrehozza a faktoriális gyorsítótárat.
+        /// </summary>
+        /// <returns>A faktoriális gyorsítótár.</returns>
         private static double[] CreateFactorialCache()
         {
             var cache = new double[MaxFactorial + 1];
@@ -730,6 +886,11 @@ namespace CalcApp.ViewModels
             return cache;
         }
 
+        /// <summary>
+        /// Kiszámítja egy szám faktoriálisát.
+        /// </summary>
+        /// <param name="value">A szám, amelynek a faktoriálisát ki kell számítani.</param>
+        /// <returns>A faktoriális eredménye.</returns>
         private static double Factorial(int value)
         {
             if (value < 0) throw new OverflowException("Factorial is not defined for negative numbers");

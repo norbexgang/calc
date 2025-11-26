@@ -5,6 +5,9 @@
 ## Leírás
 Prémium WPF számológép alkalmazás C# nyelven írva modern gradiens dizájnnal és smooth animációkkal. Az alkalmazás támogatja az alap aritmetikai műveleteket, tudományos funkciókat és memória műveleteket.
 
+## Dokumentáció
+A teljes kódbázis magyar nyelven, C# XML dokumentációs megjegyzésekkel van dokumentálva, hogy egy új fejlesztő számára a lehető legkönnyebb legyen a kód megértése és a fejlesztésbe való bekapcsolódás.
+
 ## ✨ Új a 2.2 verzióban (Visual Refresh)
 - 🎨 **Gradiens témák** - Gyönyörű színátmenetek dark és light módban
 - 🔘 **Még kerekebb gombok** - 16px corner radius élénk árnyékokkal
@@ -72,23 +75,30 @@ Prémium WPF számológép alkalmazás C# nyelven írva modern gradiens dizájnn
 - ✅ Bounds checking (faktoriális, string length)
 
 ## Fejlesztés
-A projekt fejlesztésében **GitHub Copilot**, **ChatGPT és a Codex Agentje** és a **Jetbrains AI** AI asszisztensek közreműködött a kód optimalizálásában és a fejlesztési folyamat gyorsításában.
+A projekt fejlesztésében **GitHub Copilot**, **ChatGPT és a Codex Agentje** és a **Jetbrains AI** AI asszisztensek közreműködött a kód optimalizálásában és a fejlesztési folyamat gyorsításában. A kód most már teljesen dokumentált, ami megkönnyíti a további fejlesztéseket.
 
 **v2.1 Optimalizálás**: GitHub Copilot által végzett kód egyszerűsítés és teljesítmény javítás.  
 **v2.2 Visual Refresh**: GitHub Copilot által tervezett modern gradiens dizájn és enhanced UI effektek.
 
-## 📸 Kinézet
-- 🌙 **Sötét Téma**: Mély purple-blue gradiens, cián szöveg, vibráló lila-kék accent
-- ☀️ **Világos Téma**: Tiszta grey-blue gradiens, sötét szöveg, friss kék-zöld accent
-- 💎 **Prémium**: Mindkét téma profi, modern és elegáns dizájnnal
+## Használat
 
-## Indítás
+### Indítás
 ```bash
 cd CalcApp
 dotnet run
 ```
 
-## Build
+### Buildelés
 ```bash
 dotnet build
 ```
+
+### Tesztek futtatása
+```bash
+dotnet test
+```
+
+## 📸 Kinézet
+- 🌙 **Sötét Téma**: Mély purple-blue gradiens, cián szöveg, vibráló lila-kék accent
+- ☀️ **Világos Téma**: Tiszta grey-blue gradiens, sötét szöveg, friss kék-zöld accent
+- 💎 **Prémium**: Mindkét téma profi, modern és elegáns dizájnnal

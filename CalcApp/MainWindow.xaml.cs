@@ -15,6 +15,9 @@ using Serilog;
 
 namespace CalcApp
 {
+    /// <summary>
+    /// A MainWindow.xaml interakciós logikája.
+    /// </summary>
     public partial class MainWindow : Window
     {
         private Button? _themeToggle;
@@ -46,7 +49,9 @@ namespace CalcApp
         private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270 };
         private readonly DropShadowEffect _defaultButtonHoverShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270 };
 
-
+        /// <summary>
+        /// Inicializálja a MainWindow új példányát.
+        /// </summary>
         public MainWindow()
         {
             LoadComponentFromXaml();
@@ -85,6 +90,9 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Az ablak betöltésekor lefutó eseménykezelő.
+        /// </summary>
         private void OnLoaded(object? sender, RoutedEventArgs e)
         {
             if (_themeToggle == null && FindName("ThemeToggle") is Button btn) _themeToggle = btn;
@@ -98,6 +106,9 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Az ablak bezárásakor lefutó eseménykezelő.
+        /// </summary>
         private void OnUnloaded(object? sender, RoutedEventArgs e)
         {
             Loaded -= OnLoaded;
@@ -122,6 +133,9 @@ namespace CalcApp
             _themeToggle = null;
         }
 
+        /// <summary>
+        /// Betölti a komponenst a XAML-ből.
+        /// </summary>
         private void LoadComponentFromXaml()
         {
             try
@@ -154,18 +168,28 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// A beszédvezérlés bekapcsolásakor lefutó eseménykezelő.
+        /// </summary>
         private void SpeechToggle_Checked(object sender, RoutedEventArgs e)
         {
             EnableSpeech(true);
             if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Be";
         }
 
+        /// <summary>
+        /// A beszédvezérlés kikapcsolásakor lefutó eseménykezelő.
+        /// </summary>
         private void SpeechToggle_Unchecked(object sender, RoutedEventArgs e)
         {
             EnableSpeech(false);
             if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Ki";
         }
 
+        /// <summary>
+        /// Engedélyezi vagy letiltja a beszédvezérlést.
+        /// </summary>
+        /// <param name="enable">Igaz, ha engedélyezni kell, egyébként hamis.</param>
         private void EnableSpeech(bool enable)
         {
             _speechEnabled = enable;
@@ -201,6 +225,10 @@ namespace CalcApp
         }
 
         private static bool? _hasHungarianRecognizer;
+        /// <summary>
+        /// Ellenőrzi, hogy van-e telepítve magyar beszédfelismerő.
+        /// </summary>
+        /// <returns>Igaz, ha van, egyébként hamis.</returns>
         private static bool HasHungarianRecognizer()
         {
             if (_hasHungarianRecognizer.HasValue) return _hasHungarianRecognizer.Value;
@@ -221,6 +249,9 @@ namespace CalcApp
 
         private Button ThemeToggleButton => _themeToggle ??= FindRequiredControl<Button>("ThemeToggle");
 
+        /// <summary>
+        /// "Befagyasztja" az erőforrás-szótárakat a teljesítmény javítása érdekében.
+        /// </summary>
         private void FreezeResourceDictionaries()
         {
             try
@@ -242,6 +273,12 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Megkeres egy kötelező vezérlőt a név alapján.
+        /// </summary>
+        /// <typeparam name="T">A vezérlő típusa.</typeparam>
+        /// <param name="name">A vezérlő neve.</param>
+        /// <returns>A megtalált vezérlő.</returns>
         private T FindRequiredControl<T>(string name) where T : class
         {
             if (FindName(name) is T control)
@@ -252,12 +289,18 @@ namespace CalcApp
             throw new InvalidOperationException($"Could not find control '{name}'.");
         }
 
+        /// <summary>
+        /// Inicializálja a témát.
+        /// </summary>
         private void InitializeTheme()
         {
             ApplyTheme();
             UpdateThemeToggleButton();
         }
 
+        /// <summary>
+        /// A témaváltó gomb kattintásakor lefutó eseménykezelő.
+        /// </summary>
         private async void ThemeToggle_Click(object sender, RoutedEventArgs e)
         {
             if (_isAnimating) return;
@@ -312,6 +355,9 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Alkalmazza a kiválasztott témát.
+        /// </summary>
         private void ApplyTheme()
         {
             var dictionaries = Resources.MergedDictionaries;
@@ -343,12 +389,18 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Frissíti a témaváltó gomb szövegét.
+        /// </summary>
         private void UpdateThemeToggleButton()
         {
             var button = ThemeToggleButton;
             button.Content = _isDarkMode ? "Light mode" : "Dark mode";
         }
 
+        /// <summary>
+        /// A kísérleti téma váltó gomb kattintásakor lefutó eseménykezelő.
+        /// </summary>
         private void ExperimentalToggle_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleButton tb)
@@ -358,6 +410,9 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// A turbó mód váltó gomb kattintásakor lefutó eseménykezelő.
+        /// </summary>
         private void TurboToggle_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleButton tb)
@@ -371,6 +426,9 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Frissíti az árnyék erőforrásokat.
+        /// </summary>
         private void UpdateShadowResources()
         {
             if (_isTurbo)
@@ -389,6 +447,9 @@ namespace CalcApp
 
         private readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = new();
 
+        /// <summary>
+        /// Inicializálja a billentyűleképezéseket.
+        /// </summary>
         private void InitializeKeyMappings()
         {
             // Digits 0-9
@@ -422,6 +483,9 @@ namespace CalcApp
             _keyMappings[Key.Oem5] = vm => vm.PercentCommand.Execute(null); // Backslash / Pipe often used for percent in some layouts or just mapped
         }
 
+        /// <summary>
+        /// A billentyűlenyomások kezelése.
+        /// </summary>
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e == null) return;
@@ -487,6 +551,11 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Biztosítja, hogy a gombkattintás animáció gyorsítótárazva legyen.
+        /// </summary>
+        /// <param name="scaleTransform">A skálázási transzformáció.</param>
+        /// <returns>A storyboard.</returns>
         private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransform)
         {
             if (_cachedButtonClickStoryboard != null) return _cachedButtonClickStoryboard;
@@ -517,6 +586,9 @@ namespace CalcApp
             return storyboard;
         }
 
+        /// <summary>
+        /// Animálja a gombkattintást.
+        /// </summary>
         private async Task AnimateButtonClick()
         {
             if (!_animationsEnabled || _isTurbo) return;
@@ -544,6 +616,9 @@ namespace CalcApp
             await tcs.Task.ConfigureAwait(true);
         }
 
+        /// <summary>
+        /// Elhalványítja az ablakot.
+        /// </summary>
         private async Task FadeOutWindow()
         {
             if (!_animationsEnabled || _isTurbo) return;
@@ -551,6 +626,9 @@ namespace CalcApp
             await FadeOpacity(1.0, 0.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseOut });
         }
 
+        /// <summary>
+        /// Beúsztatja az ablakot.
+        /// </summary>
         private async Task FadeInWindow()
         {
             if (_isTurbo) return;
@@ -558,6 +636,13 @@ namespace CalcApp
             await FadeOpacity(0.0, 1.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseIn });
         }
 
+        /// <summary>
+        /// Elhalványítja az ablakot egy adott átlátszóságra.
+        /// </summary>
+        /// <param name="from">A kiinduló átlátszóság.</param>
+        /// <param name="to">A cél átlátszóság.</param>
+        /// <param name="duration">Az animáció időtartama.</param>
+        /// <param name="easing">A gyorsítási függvény.</param>
         private async Task FadeOpacity(double from, double to, TimeSpan duration, IEasingFunction? easing = null)
         {
             var animation = new DoubleAnimation(from, to, duration) { EasingFunction = easing };
@@ -580,6 +665,11 @@ namespace CalcApp
             await tcs.Task.ConfigureAwait(true);
         }
 
+        /// <summary>
+        /// Létrehoz egy téma erőforrás-szótárat.
+        /// </summary>
+        /// <param name="relativePath">A relatív elérési út.</param>
+        /// <returns>Az erőforrás-szótár.</returns>
         private static ResourceDictionary CreateThemeDictionary(string relativePath)
         {
             try
@@ -593,6 +683,11 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// Megkeresi a téma erőforrás-szótár indexét.
+        /// </summary>
+        /// <param name="dictionaries">Az erőforrás-szótárak listája.</param>
+        /// <returns>Az index, vagy -1, ha nem található.</returns>
         private static int FindThemeDictionaryIndex(IList<ResourceDictionary> dictionaries)
         {
             for (var i = 0; i < dictionaries.Count; i++)
