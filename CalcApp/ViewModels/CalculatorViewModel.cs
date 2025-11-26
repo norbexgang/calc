@@ -253,17 +253,39 @@ namespace CalcApp.ViewModels
             if (!TryGetDisplayValue(out var value)) return;
 
             var originalValue = value;
-            value /= 100.0;
-            if (!IsFinite(value))
+            double result;
+
+            if (_leftOperand.HasValue && !string.IsNullOrEmpty(_pendingOperator))
+            {
+                if (_pendingOperator == "+" || _pendingOperator == "-")
+                {
+                    result = _leftOperand.Value * value / 100.0;
+                }
+                else // Assume * or /
+                {
+                    result = value / 100.0;
+                }
+            }
+            else
+            {
+                result = value / 100.0;
+            }
+
+            if (!IsFinite(result))
             {
                 ShowError();
                 return;
             }
 
-            SetDisplayValue(value);
+            SetDisplayValue(result);
             if (Display == "Error") return;
             _shouldResetDisplay = true;
-            RecordOperation($"{FormatNumber(originalValue)}%", value);
+
+            // Only record the operation if it's a standalone percent calculation
+            if (!_leftOperand.HasValue)
+            {
+                RecordOperation($"{FormatNumber(originalValue)}%", result);
+            }
         }
 
         private void ProcessDelete()
