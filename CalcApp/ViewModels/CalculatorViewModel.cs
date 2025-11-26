@@ -213,7 +213,7 @@ namespace CalcApp.ViewModels
         private void ProcessOperator(string? operatorSymbol)
         {
             if (string.IsNullOrWhiteSpace(operatorSymbol) ||
-                (operatorSymbol != "+" && operatorSymbol != "-" && operatorSymbol != "*" && operatorSymbol != "/"))
+                (operatorSymbol != "+" && operatorSymbol != "-" && operatorSymbol != "*" && operatorSymbol != "/" && operatorSymbol != "^"))
             {
                 return;
             }
@@ -858,6 +858,7 @@ namespace CalcApp.ViewModels
                 "*" => left * right,
                 "/" when Math.Abs(right) >= double.Epsilon => left / right,
                 "/" => throw new DivideByZeroException(),
+                "^" => Math.Pow(left, right),
                 _ => throw new InvalidOperationException($"Unknown operator: {operatorSymbol}"),
             };
 
