@@ -8,6 +8,9 @@ using CalcApp.ViewModels;
 
 namespace CalcApp
 {
+    /// <summary>
+    /// A beszédvezérlést kezelő osztály.
+    /// </summary>
     public class SpeechControl : IDisposable
     {
         private const string CultureCode = "hu-HU";
@@ -15,12 +18,19 @@ namespace CalcApp
         private readonly CalculatorViewModel _viewModel;
         private SpeechRecognitionEngine? _sr;
 
+        /// <summary>
+        /// Inicializálja a SpeechControl új példányát.
+        /// </summary>
+        /// <param name="viewModel">A számológép nézetmodellje.</param>
         public SpeechControl(CalculatorViewModel viewModel)
         {
             _viewModel = viewModel;
             InitSpeech();
         }
 
+        /// <summary>
+        /// Inicializálja a beszédfelismerőt.
+        /// </summary>
         private void InitSpeech()
         {
             try
@@ -60,6 +70,9 @@ namespace CalcApp
             }
         }
 
+        /// <summary>
+        /// A beszédfelismerés eseménykezelője.
+        /// </summary>
         private void OnSpeechRecognized(object? sender, SpeechRecognizedEventArgs e)
         {
             if (e.Result.Confidence < ConfidenceThreshold) return;
@@ -104,6 +117,9 @@ namespace CalcApp
             });
         }
 
+        /// <summary>
+        /// Felszabadítja az erőforrásokat.
+        /// </summary>
         public void Dispose()
         {
             try { _sr?.RecognizeAsyncCancel(); _sr?.Dispose(); } catch { }
