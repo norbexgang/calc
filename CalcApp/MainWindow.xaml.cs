@@ -24,11 +24,11 @@ namespace CalcApp
         // Theme toggle removed
         private readonly bool _animationsEnabled = true;
 
-        private int _themeDictionaryIndex = -1;
+
 
         private const string ExperimentalDarkThemePath = "Themes/ExperimentalDark.xaml";
 
-        private readonly ResourceDictionary _experimentalDarkThemeDictionary = CreateThemeDictionary(ExperimentalDarkThemePath);
+
 
         private bool _isTurbo = false;
 
@@ -274,34 +274,7 @@ namespace CalcApp
             ApplyTheme();
         }
 
-        /// <summary>
-        /// Alkalmazza a kiválasztott témát.
-        /// </summary>
-        private void ApplyTheme()
-        {
-            var dictionaries = Resources.MergedDictionaries;
-            ResourceDictionary targetDictionary;
 
-            // Always use experimental themes
-            // Always use experimental dark theme
-            targetDictionary = _experimentalDarkThemeDictionary;
-
-            if (_themeDictionaryIndex < 0 || _themeDictionaryIndex >= dictionaries.Count)
-            {
-                _themeDictionaryIndex = FindThemeDictionaryIndex(dictionaries);
-                if (_themeDictionaryIndex < 0)
-                {
-                    dictionaries.Add(targetDictionary);
-                    _themeDictionaryIndex = dictionaries.Count - 1;
-                    return;
-                }
-            }
-
-            if (!ReferenceEquals(dictionaries[_themeDictionaryIndex], targetDictionary))
-            {
-                dictionaries[_themeDictionaryIndex] = targetDictionary;
-            }
-        }
 
         // ExperimentalToggle_Click removed
 
@@ -558,40 +531,34 @@ namespace CalcApp
         }
 
         /// <summary>
-        /// Létrehoz egy téma erőforrás-szótárat.
+        /// Alkalmazza a témát.
         /// </summary>
-        /// <param name="relativePath">A relatív elérési út.</param>
-        /// <returns>Az erőforrás-szótár.</returns>
-        private static ResourceDictionary CreateThemeDictionary(string relativePath)
+        private void ApplyTheme()
         {
-            try
-            {
-                return new ResourceDictionary { Source = new Uri(relativePath, UriKind.Relative) };
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load theme dictionary '{RelativePath}'", relativePath);
-                return [];
-            }
-        }
+            // Enforce experimental dark theme
+            var dict = new ResourceDictionary { Source = new Uri(ExperimentalDarkThemePath, UriKind.Relative) };
 
-        /// <summary>
-        /// Megkeresi a téma erőforrás-szótár indexét.
-        /// </summary>
-        /// <param name="dictionaries">Az erőforrás-szótárak listája.</param>
-        /// <returns>Az index, vagy -1, ha nem található.</returns>
-        private static int FindThemeDictionaryIndex(System.Collections.ObjectModel.Collection<ResourceDictionary> dictionaries)
-        {
-            for (var i = 0; i < dictionaries.Count; i++)
+            // Remove old theme dictionaries if present (simplified logic)
+            var mergedDicts = Application.Current.Resources.MergedDictionaries;
+            var existingIndex = -1;
+
+            for (int i = 0; i < mergedDicts.Count; i++)
             {
-                var source = dictionaries[i].Source?.OriginalString;
-                if (string.Equals(source, ExperimentalDarkThemePath, StringComparison.Ordinal))
+                if (mergedDicts[i].Source?.OriginalString.Contains("Theme") == true)
                 {
-                    return i;
+                    existingIndex = i;
+                    break;
                 }
             }
 
-            return -1;
+            if (existingIndex >= 0)
+            {
+                mergedDicts[existingIndex] = dict;
+            }
+            else
+            {
+                mergedDicts.Add(dict);
+            }
         }
     }
 }

@@ -1,14 +1,12 @@
 using System;
-using System.Diagnostics;
-using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Windows;
 using System.Windows.Input;
 using Serilog;
 
@@ -19,18 +17,17 @@ namespace CalcApp.ViewModels
     /// </summary>
     public class CalculatorViewModel : BaseViewModel
     {
-        private double? _leftOperand;
-        private string? _pendingOperator;
-        private bool _shouldResetDisplay;
-        private double _memoryValue;
-        private readonly Queue<(bool IsAddition, string Description)> _memoryHistoryEntries = new();
-        private string _memoryHistoryText = string.Empty;
-
-        private string? _lastOperationDescription;
-        private double? _lastRightOperand;
-        private string? _lastOperator;
-
         private string _display = "0";
+        private string _memoryHistoryText = string.Empty;
+        private string? _lastOperationDescription = string.Empty;
+        private double? _leftOperand = null;
+        private string? _pendingOperator = null;
+        private bool _shouldResetDisplay = true;
+        private double _memoryValue = 0;
+        private double? _lastRightOperand = null;
+        private string? _lastOperator = null;
+        private readonly Queue<(bool, string)> _memoryHistoryEntries = new();
+
         /// <summary>
         /// Megadja, hogy a turbó mód engedélyezve van-e.
         /// </summary>
@@ -99,6 +96,7 @@ namespace CalcApp.ViewModels
         private const int MaxFactorial = 170; // 170! fits in double, 171! overflows
         private const int MaxDisplayLength = 64; // protect against extremely long input/overflow UI
         private const int MaxMemoryHistoryLength = 1024; // bound memory history to avoid unbounded growth
+        private const int MemoryHistoryDisplayCount = 50; // number of items to show in history text
         private static readonly double[] _factorialCache = CreateFactorialCache();
 
         private static readonly Func<double, double> SinFunc = Math.Sin;
@@ -125,7 +123,6 @@ namespace CalcApp.ViewModels
             FactorialCommand = new RelayCommand(_ => ProcessFactorial());
             MemoryAddCommand = new RelayCommand(_ => ProcessMemoryAdd());
             MemorySubtractCommand = new RelayCommand(_ => ProcessMemorySubtract());
-            MemoryRecallCommand = new RelayCommand(_ => ProcessMemoryRecall());
             MemoryRecallCommand = new RelayCommand(_ => ProcessMemoryRecall());
             MemoryClearCommand = new RelayCommand(_ => ResetMemory());
             OpenLogsCommand = new RelayCommand(_ => ProcessOpenLogs());
@@ -727,12 +724,11 @@ namespace CalcApp.ViewModels
                 return;
             }
 
-            // Simplified logic: Just show the last N items that fit, or just the last few.
-            // The previous logic was very complex trying to fit exactly MaxMemoryHistoryLength characters.
-            // Let's simplify to just taking the last 20 entries or so, or building it up until it's too long.
+            // Simplified logic: Just show the last N items that fit.
+            // We use MemoryHistoryDisplayCount to limit the number of items shown.
 
             var builder = new StringBuilder();
-            var entries = _memoryHistoryEntries.Skip(Math.Max(0, _memoryHistoryEntries.Count - 50)).ToList();
+            var entries = _memoryHistoryEntries.Skip(Math.Max(0, _memoryHistoryEntries.Count - MemoryHistoryDisplayCount)).ToList();
 
             bool isFirst = true;
             foreach (var (isAddition, description) in entries)
@@ -743,7 +739,7 @@ namespace CalcApp.ViewModels
                 isFirst = false;
             }
 
-            if (_memoryHistoryEntries.Count > 50)
+            if (_memoryHistoryEntries.Count > MemoryHistoryDisplayCount)
             {
                 builder.Insert(0, "...; ");
             }
