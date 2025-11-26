@@ -37,7 +37,6 @@ namespace CalcApp
         private readonly ResourceDictionary _experimentalDarkThemeDictionary = CreateThemeDictionary(ExperimentalDarkThemePath);
         private readonly ResourceDictionary _experimentalLightThemeDictionary = CreateThemeDictionary(ExperimentalLightThemePath);
 
-        private bool _isExperimental = false;
         private bool _isTurbo = false;
 
         private Storyboard? _cachedButtonClickStoryboard;
@@ -96,10 +95,7 @@ namespace CalcApp
         private void OnLoaded(object? sender, RoutedEventArgs e)
         {
             if (_themeToggle == null && FindName("ThemeToggle") is Button btn) _themeToggle = btn;
-            if (FindName("ExperimentalToggle") is ToggleButton expBtn)
-            {
-                expBtn.IsChecked = _isExperimental;
-            }
+            // Experimental toggle removed
             if (FindName("TurboToggle") is ToggleButton turboBtn)
             {
                 turboBtn.IsChecked = _isTurbo;
@@ -363,14 +359,8 @@ namespace CalcApp
             var dictionaries = Resources.MergedDictionaries;
             ResourceDictionary targetDictionary;
 
-            if (_isExperimental)
-            {
-                targetDictionary = _isDarkMode ? _experimentalDarkThemeDictionary : _experimentalLightThemeDictionary;
-            }
-            else
-            {
-                targetDictionary = _isDarkMode ? _darkThemeDictionary : _lightThemeDictionary;
-            }
+            // Always use experimental themes
+            targetDictionary = _isDarkMode ? _experimentalDarkThemeDictionary : _experimentalLightThemeDictionary;
 
             if (_themeDictionaryIndex < 0 || _themeDictionaryIndex >= dictionaries.Count)
             {
@@ -398,17 +388,7 @@ namespace CalcApp
             button.Content = _isDarkMode ? "Light mode" : "Dark mode";
         }
 
-        /// <summary>
-        /// A kísérleti téma váltó gomb kattintásakor lefutó eseménykezelő.
-        /// </summary>
-        private void ExperimentalToggle_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleButton tb)
-            {
-                _isExperimental = tb.IsChecked == true;
-                ApplyTheme();
-            }
-        }
+        // ExperimentalToggle_Click removed
 
         /// <summary>
         /// A turbó mód váltó gomb kattintásakor lefutó eseménykezelő.
@@ -561,13 +541,13 @@ namespace CalcApp
             if (_cachedButtonClickStoryboard != null) return _cachedButtonClickStoryboard;
 
             var storyboard = new Storyboard();
-            // Smoother easing: CubicEase instead of default linear/quadratic mix
-            var easing = new CubicEase { EasingMode = EasingMode.EaseInOut };
+            // Smoother easing: QuinticEase for premium feel
+            var easing = new QuinticEase { EasingMode = EasingMode.EaseInOut };
 
-            var scaleXDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(150)) { EasingFunction = easing };
-            var scaleYDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(150)) { EasingFunction = easing };
-            var scaleXUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(150)) { BeginTime = TimeSpan.FromMilliseconds(150), EasingFunction = easing };
-            var scaleYUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(150)) { BeginTime = TimeSpan.FromMilliseconds(150), EasingFunction = easing };
+            var scaleXDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(200)) { EasingFunction = easing };
+            var scaleYDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(200)) { EasingFunction = easing };
+            var scaleXUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(200)) { BeginTime = TimeSpan.FromMilliseconds(200), EasingFunction = easing };
+            var scaleYUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(200)) { BeginTime = TimeSpan.FromMilliseconds(200), EasingFunction = easing };
 
             Storyboard.SetTarget(scaleXDown, scaleTransform);
             Storyboard.SetTargetProperty(scaleXDown, new PropertyPath("ScaleX"));
@@ -623,7 +603,7 @@ namespace CalcApp
         {
             if (!_animationsEnabled || _isTurbo) return;
             // Smoother fade out
-            await FadeOpacity(1.0, 0.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseOut });
+            await FadeOpacity(1.0, 0.0, TimeSpan.FromMilliseconds(400), new QuinticEase { EasingMode = EasingMode.EaseOut });
         }
 
         /// <summary>
@@ -633,7 +613,7 @@ namespace CalcApp
         {
             if (_isTurbo) return;
             // Smoother fade in
-            await FadeOpacity(0.0, 1.0, TimeSpan.FromMilliseconds(300), new CubicEase { EasingMode = EasingMode.EaseIn });
+            await FadeOpacity(0.0, 1.0, TimeSpan.FromMilliseconds(400), new QuinticEase { EasingMode = EasingMode.EaseIn });
         }
 
         /// <summary>

@@ -71,22 +71,6 @@
                     </EventTrigger>
                 </Button.Triggers>
             </Button>
-
-            <!-- Speech toggle -->
-            <ToggleButton x:Name="SpeechToggle" Width="120" Height="36" VerticalAlignment="Top"
-                          Content="🎤 Beszéd: Be" FontSize="12" FontWeight="Normal" Cursor="Hand"
-                          Checked="SpeechToggle_Checked" Unchecked="SpeechToggle_Unchecked" />
-
-            <!-- Experimental toggle -->
-            <ToggleButton x:Name="ExperimentalToggle" Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
-                          Content="🧪 Exp." FontSize="12" FontWeight="Normal" Cursor="Hand"
-                          Click="ExperimentalToggle_Click" />
-
-            <!-- Turbo toggle -->
-            <ToggleButton x:Name="TurboToggle" Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
-                          Content="🚀 Turbo" FontSize="12" FontWeight="Normal" Cursor="Hand"
-                          Click="TurboToggle_Click" />
-
             <!-- Logs button -->
             <Button Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
                     Content="📂 Logs" FontSize="12" FontWeight="Normal" Cursor="Hand"
