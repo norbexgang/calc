@@ -31,7 +31,10 @@
 
         <!-- Top controls: Logs button -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,8">
-            <!-- Theme toggle removed -->
+            <!-- Turbo Mode Toggle -->
+            <ToggleButton x:Name="TurboToggle" Width="80" Height="36" Margin="0,0,0,0" VerticalAlignment="Top"
+                          Content="🚀 Turbo" FontSize="12" FontWeight="Normal" Cursor="Hand"
+                          Click="TurboToggle_Click" />
             <!-- Logs button -->
             <Button Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
                     Content="📂 Logs" FontSize="12" FontWeight="Normal" Cursor="Hand"

@@ -55,7 +55,7 @@ namespace CalcApp.ViewModels
         /// <summary>
         /// A memóriaelőzmények elemeit tartalmazó gyűjtemény.
         /// </summary>
-        public ObservableCollection<string> MemoryItems { get; } = new();
+        public ObservableCollection<string> MemoryItems { get; } = [];
 
         /// <summary> Parancs egy számjegy feldolgozásához. </summary>
         public ICommand DigitCommand { get; }
@@ -615,7 +615,7 @@ namespace CalcApp.ViewModels
         /// <summary>
         /// Megnyitja a naplófájlok mappáját.
         /// </summary>
-        private void ProcessOpenLogs()
+        private static void ProcessOpenLogs()
         {
             try
             {
@@ -706,6 +706,12 @@ namespace CalcApp.ViewModels
             }
 
             _memoryHistoryEntries.Enqueue((isAddition, description));
+
+            while (_memoryHistoryEntries.Count > MaxMemoryHistoryLength)
+            {
+                _memoryHistoryEntries.Dequeue();
+            }
+
             UpdateMemoryHistoryText();
             UpdateMemoryDisplay();
         }
@@ -726,14 +732,14 @@ namespace CalcApp.ViewModels
             // Let's simplify to just taking the last 20 entries or so, or building it up until it's too long.
 
             var builder = new StringBuilder();
-            var entries = _memoryHistoryEntries.Reverse().Take(50).Reverse().ToList(); // Take last 50
+            var entries = _memoryHistoryEntries.Skip(Math.Max(0, _memoryHistoryEntries.Count - 50)).ToList();
 
             bool isFirst = true;
-            foreach (var entry in entries)
+            foreach (var (isAddition, description) in entries)
             {
                 if (!isFirst) builder.Append("; ");
-                if (entry.IsAddition) builder.Append("+ "); else builder.Append("- ");
-                builder.Append(entry.Description);
+                if (isAddition) builder.Append("+ "); else builder.Append("- ");
+                builder.Append(description);
                 isFirst = false;
             }
 
@@ -776,7 +782,7 @@ namespace CalcApp.ViewModels
             if (value.TryFormat(buffer, out int written, "G12", Culture))
             {
                 var s = new string(buffer[..written]);
-                if (s.IndexOf('E') >= 0)
+                if (s.Contains('E'))
                     return s.Length <= MaxDisplayLength ? s : value.ToString("E6", Culture);
 
                 if (s.Contains('.'))
@@ -789,7 +795,7 @@ namespace CalcApp.ViewModels
             }
 
             var formatted = value.ToString("G12", Culture);
-            if (formatted.IndexOf('E') >= 0)
+            if (formatted.Contains('E'))
                 return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
 
             if (formatted.Contains('.'))

@@ -36,6 +36,7 @@ namespace CalcApp
         private Storyboard? _cachedFadeStoryboard;
         private SpeechControl? _speech;
         private bool _speechEnabled = true;
+        private bool _wasSpeechEnabledBeforeTurbo = true;
 
         private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270 };
         private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270 };
@@ -307,6 +308,9 @@ namespace CalcApp
         /// <summary>
         /// A turbó mód váltó gomb kattintásakor lefutó eseménykezelő.
         /// </summary>
+        /// <summary>
+        /// A turbó mód váltó gomb kattintásakor lefutó eseménykezelő.
+        /// </summary>
         private void TurboToggle_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleButton tb)
@@ -317,6 +321,30 @@ namespace CalcApp
                     vm.SetTurboMode(_isTurbo);
                 }
                 UpdateShadowResources();
+
+                // Handle Speech
+                if (FindName("SpeechToggle") is ToggleButton speechBtn)
+                {
+                    speechBtn.IsEnabled = !_isTurbo;
+                }
+
+                if (_isTurbo)
+                {
+                    _wasSpeechEnabledBeforeTurbo = _speechEnabled;
+                    EnableSpeech(false);
+                }
+                else
+                {
+                    if (_wasSpeechEnabledBeforeTurbo)
+                    {
+                        EnableSpeech(true);
+                        if (FindName("SpeechToggle") is ToggleButton speechBtnRestore)
+                        {
+                            speechBtnRestore.IsChecked = true;
+                            speechBtnRestore.Content = "🎤 Beszéd: Be";
+                        }
+                    }
+                }
             }
         }
 
@@ -543,7 +571,7 @@ namespace CalcApp
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load theme dictionary '{RelativePath}'", relativePath);
-                return new ResourceDictionary();
+                return [];
             }
         }
 

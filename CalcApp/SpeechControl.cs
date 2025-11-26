@@ -18,6 +18,14 @@ namespace CalcApp
         private readonly CalculatorViewModel _viewModel;
         private SpeechRecognitionEngine? _sr;
 
+        private static readonly string[] Numbers = ["nulla", "egy", "kettő", "három", "négy", "öt", "hat", "hét", "nyolc", "kilenc"];
+        private static readonly string[] Ops = [
+            "plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza",
+            "szinusz", "koszinusz", "tangens", "gyök", "faktoriális",
+            "memória hozzáad", "memória kivon", "memória előhív", "memória törlés",
+            "napló"
+        ];
+
         /// <summary>
         /// Inicializálja a SpeechControl új példányát.
         /// </summary>
@@ -47,13 +55,8 @@ namespace CalcApp
 
                 _sr = new SpeechRecognitionEngine(recognizerInfo);
 
-                var numbers = new Choices(new string[] { "nulla", "egy", "kettő", "három", "négy", "öt", "hat", "hét", "nyolc", "kilenc" });
-                var ops = new Choices(new string[] {
-                    "plusz", "mínusz", "szor", "oszt", "egyenlő", "pont", "törlés", "vissza",
-                    "szinusz", "koszinusz", "tangens", "gyök", "faktoriális",
-                    "memória hozzáad", "memória kivon", "memória előhív", "memória törlés",
-                    "napló"
-                });
+                var numbers = new Choices(Numbers);
+                var ops = new Choices(Ops);
 
                 var gb = new GrammarBuilder { Culture = culture };
                 gb.Append(new Choices(numbers, ops));
@@ -122,7 +125,17 @@ namespace CalcApp
         /// </summary>
         public void Dispose()
         {
-            try { _sr?.RecognizeAsyncCancel(); _sr?.Dispose(); } catch { }
+            try
+            {
+                if (_sr != null)
+                {
+                    _sr.SpeechRecognized -= OnSpeechRecognized;
+                    _sr.RecognizeAsyncCancel();
+                    _sr.Dispose();
+                }
+            }
+            catch { }
+            GC.SuppressFinalize(this);
         }
     }
 }
