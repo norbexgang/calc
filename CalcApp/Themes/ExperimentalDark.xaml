@@ -10,17 +10,17 @@
     
     <!-- Display Background - Glassy Surface -->
     <LinearGradientBrush x:Key="BorderBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#1AFFFFFF" Offset="0.0"/>
+        <GradientStop Color="#10FFFFFF" Offset="0.0"/>
         <GradientStop Color="#05FFFFFF" Offset="1.0"/>
     </LinearGradientBrush>
     
     <!-- Display Text - Neon Cyan -->
     <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FF22D3EE" /> <!-- Cyan 400 -->
     
-    <!-- Button Background - Frosted Glass -->
+    <!-- Button Background - Frosted Glass (More Transparent) -->
     <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#1FFFFFFF" Offset="0.0"/>
-        <GradientStop Color="#0AFFFFFF" Offset="1.0"/>
+        <GradientStop Color="#15FFFFFF" Offset="0.0"/>
+        <GradientStop Color="#05FFFFFF" Offset="1.0"/>
     </LinearGradientBrush>
     
     <!-- Button Text - Soft White -->
@@ -28,12 +28,12 @@
     
     <!-- Accent Button (Equals) - Vibrant Gradient -->
     <LinearGradientBrush x:Key="AccentButtonBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#FF6366F1" Offset="0.0"/> <!-- Indigo 500 -->
-        <GradientStop Color="#FFEC4899" Offset="1.0"/> <!-- Pink 500 -->
+        <GradientStop Color="#CC6366F1" Offset="0.0"/> <!-- Indigo 500 (80%) -->
+        <GradientStop Color="#CCEC4899" Offset="1.0"/> <!-- Pink 500 (80%) -->
     </LinearGradientBrush>
     
     <!-- Hover Effect Color -->
-    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#25FFFFFF" />
     
     <!-- Glow/Shadow Color -->
     <Color x:Key="GlowColor">#806366F1</Color>
@@ -49,8 +49,8 @@
         <Setter Property="BorderBrush">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#33FFFFFF" Offset="0"/>
-                    <GradientStop Color="#11FFFFFF" Offset="1"/>
+                    <GradientStop Color="#40FFFFFF" Offset="0"/>
+                    <GradientStop Color="#10FFFFFF" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
@@ -67,16 +67,16 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}">
                             <Border.Effect>
-                                <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="10" ShadowDepth="4" Direction="270" />
+                                <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="15" ShadowDepth="5" Direction="270" />
                             </Border.Effect>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
                         </Border>
                         
-                        <!-- Inner Shine/Highlight -->
-                        <Border x:Name="ShineBorder" CornerRadius="24" IsHitTestVisible="False" Opacity="0">
+                        <!-- Inner Shine/Highlight (Stronger) -->
+                        <Border x:Name="ShineBorder" CornerRadius="24" IsHitTestVisible="False" Opacity="0.1">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#20FFFFFF" Offset="0"/>
+                                    <GradientStop Color="#60FFFFFF" Offset="0"/>
                                     <GradientStop Color="Transparent" Offset="0.5"/>
                                 </LinearGradientBrush>
                             </Border.Background>
@@ -85,7 +85,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource ButtonHoverBrush}" />
-                            <Setter TargetName="ShineBorder" Property="Opacity" Value="1" />
+                            <Setter TargetName="ShineBorder" Property="Opacity" Value="0.3" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.8" />

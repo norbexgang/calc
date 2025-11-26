@@ -20,22 +20,15 @@ namespace CalcApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Button? _themeToggle;
-        private bool _animationsEnabled = true;
-        private bool _isAnimating = false;
-        private bool _isDarkMode = false;
+        // Theme toggle removed
+        // Theme toggle removed
+        private readonly bool _animationsEnabled = true;
 
         private int _themeDictionaryIndex = -1;
 
-        private const string DarkThemePath = "Themes/MaterialTheme.xaml";
-        private const string LightThemePath = "Themes/ClassicTheme.xaml";
         private const string ExperimentalDarkThemePath = "Themes/ExperimentalDark.xaml";
-        private const string ExperimentalLightThemePath = "Themes/ExperimentalLight.xaml";
 
-        private readonly ResourceDictionary _darkThemeDictionary = CreateThemeDictionary(DarkThemePath);
-        private readonly ResourceDictionary _lightThemeDictionary = CreateThemeDictionary(LightThemePath);
         private readonly ResourceDictionary _experimentalDarkThemeDictionary = CreateThemeDictionary(ExperimentalDarkThemePath);
-        private readonly ResourceDictionary _experimentalLightThemeDictionary = CreateThemeDictionary(ExperimentalLightThemePath);
 
         private bool _isTurbo = false;
 
@@ -94,7 +87,7 @@ namespace CalcApp
         /// </summary>
         private void OnLoaded(object? sender, RoutedEventArgs e)
         {
-            if (_themeToggle == null && FindName("ThemeToggle") is Button btn) _themeToggle = btn;
+            // Theme toggle removed
             // Experimental toggle removed
             if (FindName("TurboToggle") is ToggleButton turboBtn)
             {
@@ -111,22 +104,10 @@ namespace CalcApp
             Unloaded -= OnUnloaded;
 
 #if DEBUG
-            if (_themeToggle != null && FindName("ThemeToggle") is Button btn)
-            {
-                _themeToggle = btn;
-                _cachedButtonClickStoryboard ??= TryFindResource("ButtonClickAnimation") as Storyboard;
-                _cachedFadeStoryboard ??= TryFindResource("FadeOutAnimation") as Storyboard;
-
-                try
-                {
-                    _themeToggle.Click -= ThemeToggle_Click;
-                }
-                catch { }
-            }
+            // Debug cleanup if needed
 #endif
             try { _speech?.Dispose(); } catch { }
             _speech = null;
-            _themeToggle = null;
         }
 
         /// <summary>
@@ -243,7 +224,6 @@ namespace CalcApp
             return _hasHungarianRecognizer.Value;
         }
 
-        private Button ThemeToggleButton => _themeToggle ??= FindRequiredControl<Button>("ThemeToggle");
 
         /// <summary>
         /// "Befagyasztja" az erőforrás-szótárakat a teljesítmény javítása érdekében.
@@ -291,64 +271,6 @@ namespace CalcApp
         private void InitializeTheme()
         {
             ApplyTheme();
-            UpdateThemeToggleButton();
-        }
-
-        /// <summary>
-        /// A témaváltó gomb kattintásakor lefutó eseménykezelő.
-        /// </summary>
-        private async void ThemeToggle_Click(object sender, RoutedEventArgs e)
-        {
-            if (_isAnimating) return;
-
-            _isAnimating = true;
-            var previousMode = _isDarkMode;
-            var nextMode = !previousMode;
-
-            try
-            {
-                await AnimateButtonClick().ConfigureAwait(true);
-                await FadeOutWindow().ConfigureAwait(true);
-
-                _isDarkMode = nextMode;
-                ApplyTheme();
-                UpdateThemeToggleButton();
-
-                await FadeInWindow().ConfigureAwait(true);
-            }
-            catch (OperationCanceledException)
-            {
-                _isDarkMode = previousMode;
-                try
-                {
-                    ApplyTheme();
-                    UpdateThemeToggleButton();
-                }
-                catch { }
-                Opacity = 1.0;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Theme toggle failed");
-                _isDarkMode = previousMode;
-                try
-                {
-                    ApplyTheme();
-                    UpdateThemeToggleButton();
-                }
-                catch (Exception innerEx)
-                {
-                    Log.Error(innerEx, "Failed to restore previous theme");
-                }
-
-                Opacity = 1.0;
-                MessageBox.Show("Theme switch failed. The previous theme has been restored.", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-            finally
-            {
-                _isAnimating = false;
-                Opacity = 1.0;
-            }
         }
 
         /// <summary>
@@ -360,7 +282,8 @@ namespace CalcApp
             ResourceDictionary targetDictionary;
 
             // Always use experimental themes
-            targetDictionary = _isDarkMode ? _experimentalDarkThemeDictionary : _experimentalLightThemeDictionary;
+            // Always use experimental dark theme
+            targetDictionary = _experimentalDarkThemeDictionary;
 
             if (_themeDictionaryIndex < 0 || _themeDictionaryIndex >= dictionaries.Count)
             {
@@ -377,15 +300,6 @@ namespace CalcApp
             {
                 dictionaries[_themeDictionaryIndex] = targetDictionary;
             }
-        }
-
-        /// <summary>
-        /// Frissíti a témaváltó gomb szövegét.
-        /// </summary>
-        private void UpdateThemeToggleButton()
-        {
-            var button = ThemeToggleButton;
-            button.Content = _isDarkMode ? "Light mode" : "Dark mode";
         }
 
         // ExperimentalToggle_Click removed
@@ -425,7 +339,7 @@ namespace CalcApp
             }
         }
 
-        private readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = new();
+        private readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = [];
 
         /// <summary>
         /// Inicializálja a billentyűleképezéseket.
@@ -567,36 +481,6 @@ namespace CalcApp
         }
 
         /// <summary>
-        /// Animálja a gombkattintást.
-        /// </summary>
-        private async Task AnimateButtonClick()
-        {
-            if (!_animationsEnabled || _isTurbo) return;
-            var button = ThemeToggleButton;
-
-            if (button.RenderTransform is not System.Windows.Media.ScaleTransform scaleTransform)
-            {
-                scaleTransform = new System.Windows.Media.ScaleTransform(1.0, 1.0);
-                button.RenderTransform = scaleTransform;
-            }
-
-            var storyboard = EnsureCachedButtonClickStoryboard(scaleTransform);
-
-            var tcs = new TaskCompletionSource<bool>();
-            EventHandler handler = null!;
-            handler = (s, e) =>
-            {
-                storyboard.Completed -= handler;
-                tcs.TrySetResult(true);
-            };
-
-            storyboard.Completed += handler;
-
-            storyboard.Begin();
-            await tcs.Task.ConfigureAwait(true);
-        }
-
-        /// <summary>
         /// Elhalványítja az ablakot.
         /// </summary>
         private async Task FadeOutWindow()
@@ -668,15 +552,12 @@ namespace CalcApp
         /// </summary>
         /// <param name="dictionaries">Az erőforrás-szótárak listája.</param>
         /// <returns>Az index, vagy -1, ha nem található.</returns>
-        private static int FindThemeDictionaryIndex(IList<ResourceDictionary> dictionaries)
+        private static int FindThemeDictionaryIndex(System.Collections.ObjectModel.Collection<ResourceDictionary> dictionaries)
         {
             for (var i = 0; i < dictionaries.Count; i++)
             {
                 var source = dictionaries[i].Source?.OriginalString;
-                if (string.Equals(source, DarkThemePath, StringComparison.Ordinal) ||
-                    string.Equals(source, LightThemePath, StringComparison.Ordinal) ||
-                    string.Equals(source, ExperimentalDarkThemePath, StringComparison.Ordinal) ||
-                    string.Equals(source, ExperimentalLightThemePath, StringComparison.Ordinal))
+                if (string.Equals(source, ExperimentalDarkThemePath, StringComparison.Ordinal))
                 {
                     return i;
                 }
@@ -686,4 +567,3 @@ namespace CalcApp
         }
     }
 }
-

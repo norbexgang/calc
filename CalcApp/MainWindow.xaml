@@ -23,54 +23,15 @@
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /> <!-- Top: Theme toggle -->
+            <RowDefinition Height="Auto" /> <!-- Top: Logs button (formerly Theme toggle too) -->
             <RowDefinition Height="Auto" /> <!-- Display -->
             <RowDefinition Height="Auto" /> <!-- Memory area -->
             <RowDefinition Height="*" />    <!-- Keypad -->
         </Grid.RowDefinitions>
 
-        <!-- Top controls: Theme toggle and Speech toggle -->
+        <!-- Top controls: Logs button -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,8">
-            <Button x:Name="ThemeToggle" Width="90" Height="36" Margin="0,0,8,0" Click="ThemeToggle_Click"
-                    Content="🌙 Dark" FontSize="12" FontWeight="Normal" Cursor="Hand">
-                <Button.RenderTransform>
-                    <ScaleTransform x:Name="ThemeButtonScale" ScaleX="1" ScaleY="1" CenterX="45" CenterY="19" />
-                </Button.RenderTransform>
-                <Button.Triggers>
-                    <EventTrigger RoutedEvent="MouseEnter">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleX" To="1.08" Duration="0:0:0.2">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleY" To="1.08" Duration="0:0:0.2">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-                    <EventTrigger RoutedEvent="MouseLeave">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.2">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseIn" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                                <DoubleAnimation Storyboard.TargetName="ThemeButtonScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.2">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseIn" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-                </Button.Triggers>
-            </Button>
+            <!-- Theme toggle removed -->
             <!-- Logs button -->
             <Button Width="80" Height="36" Margin="8,0,0,0" VerticalAlignment="Top"
                     Content="📂 Logs" FontSize="12" FontWeight="Normal" Cursor="Hand"
