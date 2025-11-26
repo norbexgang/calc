@@ -779,7 +779,10 @@ namespace CalcApp.ViewModels
                 if (s.IndexOf('E') >= 0)
                     return s.Length <= MaxDisplayLength ? s : value.ToString("E6", Culture);
 
-                s = s.TrimEnd('0').TrimEnd('.');
+                if (s.Contains('.'))
+                {
+                    s = s.TrimEnd('0').TrimEnd('.');
+                }
                 if (s == "-0") return "0";
                 if (s.Length > MaxDisplayLength) s = value.ToString("E6", Culture);
                 return s.Length > 0 ? s : "0";
@@ -788,7 +791,11 @@ namespace CalcApp.ViewModels
             var formatted = value.ToString("G12", Culture);
             if (formatted.IndexOf('E') >= 0)
                 return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
-            formatted = formatted.TrimEnd('0').TrimEnd('.');
+
+            if (formatted.Contains('.'))
+            {
+                formatted = formatted.TrimEnd('0').TrimEnd('.');
+            }
             if (formatted == "-0") return "0";
             if (formatted.Length > MaxDisplayLength) formatted = value.ToString("E6", Culture);
             return formatted.Length > 0 ? formatted : "0";
