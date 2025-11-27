@@ -1,42 +1,43 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
     <!-- Experimental Dark Theme - Premium Glassmorphism -->
     
     <!-- Background - Deep Midnight Gradient -->
-    <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+    <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1" po:Freeze="True">
         <GradientStop Color="#FF0F172A" Offset="0.0"/> <!-- Slate 900 -->
         <GradientStop Color="#FF1E1B4B" Offset="1.0"/> <!-- Indigo 950 -->
     </LinearGradientBrush>
     
     <!-- Display Background - Glassy Surface -->
-    <LinearGradientBrush x:Key="BorderBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+    <LinearGradientBrush x:Key="BorderBackgroundBrush" StartPoint="0,0" EndPoint="1,1" po:Freeze="True">
         <GradientStop Color="#10FFFFFF" Offset="0.0"/>
         <GradientStop Color="#05FFFFFF" Offset="1.0"/>
     </LinearGradientBrush>
     
     <!-- Display Text - Neon Cyan -->
-    <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FF22D3EE" /> <!-- Cyan 400 -->
+    <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FF22D3EE" po:Freeze="True" /> <!-- Cyan 400 -->
     
     <!-- Button Background - Frosted Glass (More Transparent) -->
-    <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+    <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
         <GradientStop Color="#15FFFFFF" Offset="0.0"/>
         <GradientStop Color="#05FFFFFF" Offset="1.0"/>
     </LinearGradientBrush>
     
     <!-- Button Text - Soft White -->
-    <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#F0F9FF" /> <!-- Sky 50 -->
+    <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#F0F9FF" po:Freeze="True" /> <!-- Sky 50 -->
     
     <!-- Accent Button (Equals) - Vibrant Gradient -->
-    <LinearGradientBrush x:Key="AccentButtonBrush" StartPoint="0,0" EndPoint="1,1">
+    <LinearGradientBrush x:Key="AccentButtonBrush" StartPoint="0,0" EndPoint="1,1" po:Freeze="True">
         <GradientStop Color="#CC6366F1" Offset="0.0"/> <!-- Indigo 500 (80%) -->
         <GradientStop Color="#CCEC4899" Offset="1.0"/> <!-- Pink 500 (80%) -->
     </LinearGradientBrush>
     
     <!-- Hover Effect Color -->
-    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#25FFFFFF" />
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#25FFFFFF" po:Freeze="True" />
     
     <!-- Glow/Shadow Color -->
-    <Color x:Key="GlowColor">#806366F1</Color>
+    <Color x:Key="GlowColor" po:Freeze="True">#806366F1</Color>
 
     <!-- Experimental Button Style Override -->
     <Style TargetType="Button">

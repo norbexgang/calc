@@ -161,16 +161,36 @@ namespace CalcApp.ViewModels
                 }
 
                 var historyText = _memoryHistoryText;
+                var hasHistory = !string.IsNullOrEmpty(historyText);
 
-                MemoryItems.Clear();
-                if (string.IsNullOrEmpty(historyText))
+                // Optimize: Update in place if possible to avoid UI flicker/layout cycles
+                if (hasHistory)
                 {
-                    MemoryItems.Add($"Memory: {value}");
+                    // We need 2 items: "Memory total: ..." and "History: ..."
+                    if (MemoryItems.Count == 2)
+                    {
+                        if (MemoryItems[0] != $"Memory total: {value}") MemoryItems[0] = $"Memory total: {value}";
+                        if (MemoryItems[1] != $"History: {historyText}") MemoryItems[1] = $"History: {historyText}";
+                    }
+                    else
+                    {
+                        MemoryItems.Clear();
+                        MemoryItems.Add($"Memory total: {value}");
+                        MemoryItems.Add($"History: {historyText}");
+                    }
                 }
                 else
                 {
-                    MemoryItems.Add($"Memory total: {value}");
-                    MemoryItems.Add($"History: {historyText}");
+                    // We need 1 item: "Memory: ..."
+                    if (MemoryItems.Count == 1)
+                    {
+                        if (MemoryItems[0] != $"Memory: {value}") MemoryItems[0] = $"Memory: {value}";
+                    }
+                    else
+                    {
+                        MemoryItems.Clear();
+                        MemoryItems.Add($"Memory: {value}");
+                    }
                 }
             }
             catch (Exception ex)
