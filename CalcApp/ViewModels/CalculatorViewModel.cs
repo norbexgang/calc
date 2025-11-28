@@ -670,6 +670,12 @@ namespace CalcApp.ViewModels
                 return false;
             }
 
+            if (text == "-")
+            {
+                value = 0;
+                return true;
+            }
+
             if (!double.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands, Culture, out value))
             {
                 value = 0;
