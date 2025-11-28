@@ -20,20 +20,18 @@ namespace CalcApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        // Theme toggle removed
-        // Theme toggle removed
-        private readonly bool _animationsEnabled = true;
 
 
 
-        private const string ExperimentalDarkThemePath = "Themes/ExperimentalDark.xaml";
+
+
 
 
 
         private bool _isTurbo = false;
 
         private Storyboard? _cachedButtonClickStoryboard;
-        private Storyboard? _cachedFadeStoryboard;
+
         private SpeechControl? _speech;
         private bool _speechEnabled = true;
 
@@ -50,7 +48,7 @@ namespace CalcApp
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
 
-            InitializeTheme();
+            // InitializeTheme(); // Theme is now handled globally in App.xaml
             UpdateShadowResources();
             FreezeResourceDictionaries();
             InitializeKeyMappings();
@@ -87,8 +85,7 @@ namespace CalcApp
         /// </summary>
         private void OnLoaded(object? sender, RoutedEventArgs e)
         {
-            // Theme toggle removed
-            // Experimental toggle removed
+
             if (FindName("TurboToggle") is ToggleButton turboBtn)
             {
                 turboBtn.IsChecked = _isTurbo;
@@ -265,17 +262,11 @@ namespace CalcApp
             throw new InvalidOperationException($"Could not find control '{name}'.");
         }
 
-        /// <summary>
-        /// Inicializálja a témát.
-        /// </summary>
-        private static void InitializeTheme()
-        {
-            ApplyTheme();
-        }
 
 
 
-        // ExperimentalToggle_Click removed
+
+
 
         /// <summary>
         /// A turbó mód váltó gomb kattintásakor lefutó eseménykezelő.
@@ -459,81 +450,8 @@ namespace CalcApp
         /// <summary>
         /// Elhalványítja az ablakot.
         /// </summary>
-        private async Task FadeOutWindow()
-        {
-            if (!_animationsEnabled || _isTurbo) return;
-            // Smoother fade out
-            await FadeOpacity(1.0, 0.0, TimeSpan.FromMilliseconds(400), new QuinticEase { EasingMode = EasingMode.EaseOut });
-        }
 
-        /// <summary>
-        /// Beúsztatja az ablakot.
-        /// </summary>
-        private async Task FadeInWindow()
-        {
-            if (_isTurbo) return;
-            // Smoother fade in
-            await FadeOpacity(0.0, 1.0, TimeSpan.FromMilliseconds(400), new QuinticEase { EasingMode = EasingMode.EaseIn });
-        }
 
-        /// <summary>
-        /// Elhalványítja az ablakot egy adott átlátszóságra.
-        /// </summary>
-        /// <param name="from">A kiinduló átlátszóság.</param>
-        /// <param name="to">A cél átlátszóság.</param>
-        /// <param name="duration">Az animáció időtartama.</param>
-        /// <param name="easing">A gyorsítási függvény.</param>
-        private async Task FadeOpacity(double from, double to, TimeSpan duration, IEasingFunction? easing = null)
-        {
-            var animation = new DoubleAnimation(from, to, duration) { EasingFunction = easing };
-            var storyboard = _cachedFadeStoryboard ??= new Storyboard();
-            storyboard.Children.Clear();
-            Storyboard.SetTarget(animation, this);
-            Storyboard.SetTargetProperty(animation, new PropertyPath("Opacity"));
-            storyboard.Children.Add(animation);
 
-            var tcs = new TaskCompletionSource<bool>();
-            EventHandler handler = null!;
-            handler = (s, e) =>
-            {
-                try { storyboard.Completed -= handler; } catch { }
-                tcs.TrySetResult(true);
-            };
-
-            storyboard.Completed += handler;
-            storyboard.Begin();
-            await tcs.Task.ConfigureAwait(true);
-        }
-
-        /// <summary>
-        /// Alkalmazza a témát.
-        /// </summary>
-        private static void ApplyTheme()
-        {
-            // Enforce experimental dark theme
-            var dict = new ResourceDictionary { Source = new Uri(ExperimentalDarkThemePath, UriKind.Relative) };
-
-            // Remove old theme dictionaries if present (simplified logic)
-            var mergedDicts = Application.Current.Resources.MergedDictionaries;
-            var existingIndex = -1;
-
-            for (int i = 0; i < mergedDicts.Count; i++)
-            {
-                if (mergedDicts[i].Source?.OriginalString.Contains("Theme") == true)
-                {
-                    existingIndex = i;
-                    break;
-                }
-            }
-
-            if (existingIndex >= 0)
-            {
-                mergedDicts[existingIndex] = dict;
-            }
-            else
-            {
-                mergedDicts.Add(dict);
-            }
-        }
     }
 }
