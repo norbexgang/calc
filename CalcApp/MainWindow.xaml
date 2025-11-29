@@ -15,15 +15,16 @@
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /> <RowDefinition Height="Auto" /> <RowDefinition Height="Auto" /> <RowDefinition Height="*" />    </Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,12">
             <ToggleButton x:Name="TurboToggle" Width="100" Height="40" Margin="0,0,0,0" VerticalAlignment="Top"
                           Content="🚀 Turbo" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
                           Click="TurboToggle_Click" />
-            <ToggleButton x:Name="SpeechToggle" Width="120" Height="40" Margin="12,0,0,0" VerticalAlignment="Top"
-                          Content="🎤 Beszéd: Be" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
-                          Checked="SpeechToggle_Checked" Unchecked="SpeechToggle_Unchecked" IsChecked="True"/>
             <Button Width="100" Height="40" Margin="12,0,0,0" VerticalAlignment="Top"
                     Content="📂 Logs" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
                     Command="{Binding OpenLogsCommand}" />

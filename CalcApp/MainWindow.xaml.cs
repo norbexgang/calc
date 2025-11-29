@@ -5,7 +5,6 @@ using System.Windows.Input;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
-using System.Speech.Recognition;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -21,9 +20,7 @@ namespace CalcApp
     public partial class MainWindow : Window
     {
         private bool _isTurbo = false;
-        private Storyboard? _cachedButtonClickStoryboard;
-        private SpeechControl? _speech;
-        private bool _speechEnabled = true;
+
 
         // Shadow resources cached to avoid reallocation
         private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270, RenderingBias = RenderingBias.Performance };
@@ -41,60 +38,11 @@ namespace CalcApp
             InitializeKeyMappings();
         }
 
-        private async void OnLoaded(object? sender, RoutedEventArgs e)
+        private void OnLoaded(object? sender, RoutedEventArgs e)
         {
             if (FindName("TurboToggle") is ToggleButton turboBtn)
             {
                 turboBtn.IsChecked = _isTurbo;
-            }
-
-            // Fire and forget speech init but on background thread
-            await InitializeSpeechAsync();
-        }
-
-        private async Task InitializeSpeechAsync()
-        {
-            try
-            {
-                var speechToggle = FindName("SpeechToggle") as ToggleButton;
-                if (speechToggle != null)
-                {
-                    speechToggle.IsEnabled = false;
-                    speechToggle.Content = "🎤 Betöltés...";
-                }
-
-                bool hasRecognizer = false;
-                await Task.Run(() => { hasRecognizer = HasHungarianRecognizer(); });
-
-                if (speechToggle != null)
-                {
-                    speechToggle.IsEnabled = true;
-                    speechToggle.IsChecked = _speechEnabled && hasRecognizer;
-                    speechToggle.Content = speechToggle.IsChecked == true ? "🎤 Beszéd: Be" : "🎤 Beszéd: Ki";
-                }
-
-                if (_speechEnabled && hasRecognizer)
-                {
-                    if (DataContext is CalculatorViewModel viewModel)
-                    {
-                        await Task.Run(() =>
-                        {
-                            try
-                            {
-                                // SpeechControl creation is relatively heavy, keep off UI thread
-                                _speech = new SpeechControl(viewModel);
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.Error(ex, "Failed to initialize SpeechControl in background");
-                            }
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error during async speech initialization");
             }
         }
 
@@ -102,8 +50,6 @@ namespace CalcApp
         {
             Loaded -= OnLoaded;
             Unloaded -= OnUnloaded;
-            try { _speech?.Dispose(); } catch { }
-            _speech = null;
         }
 
         private void LoadComponentFromXaml()
@@ -119,68 +65,6 @@ namespace CalcApp
                 Log.Fatal(ex, "CRITICAL: Failed to load main window XAML");
                 Application.Current?.Shutdown();
             }
-        }
-
-        private void SpeechToggle_Checked(object sender, RoutedEventArgs e)
-        {
-            EnableSpeech(true);
-            if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Be";
-        }
-
-        private void SpeechToggle_Unchecked(object sender, RoutedEventArgs e)
-        {
-            EnableSpeech(false);
-            if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Ki";
-        }
-
-        private void EnableSpeech(bool enable)
-        {
-            _speechEnabled = enable;
-            if (enable)
-            {
-                if (_speech != null) return;
-                if (!HasHungarianRecognizer())
-                {
-                    MessageBox.Show("Nincs telepítve magyar beszédfelismerő.", "Beszédvezérlés", MessageBoxButton.OK, MessageBoxImage.Information);
-                    if (FindName("SpeechToggle") is ToggleButton tb) { tb.IsChecked = false; tb.Content = "🎤 Beszéd: Ki"; }
-                    _speechEnabled = false;
-                    return;
-                }
-
-                try
-                {
-                    if (DataContext is CalculatorViewModel viewModel)
-                    {
-                        Task.Run(() => _speech = new SpeechControl(viewModel));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Failed to start speech control");
-                }
-            }
-            else
-            {
-                var s = _speech;
-                _speech = null;
-                Task.Run(() => s?.Dispose());
-            }
-        }
-
-        private static bool? _hasHungarianRecognizer;
-        private static bool HasHungarianRecognizer()
-        {
-            if (_hasHungarianRecognizer.HasValue) return _hasHungarianRecognizer.Value;
-            try
-            {
-                var culture = new System.Globalization.CultureInfo("hu-HU");
-                _hasHungarianRecognizer = SpeechRecognitionEngine.InstalledRecognizers().Any(r => r.Culture.Equals(culture));
-            }
-            catch
-            {
-                _hasHungarianRecognizer = false;
-            }
-            return _hasHungarianRecognizer.Value;
         }
 
         private void FreezeResourceDictionaries()
