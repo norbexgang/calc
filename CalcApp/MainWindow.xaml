@@ -15,26 +15,21 @@
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /> <!-- Top: Logs button -->
-            <RowDefinition Height="Auto" /> <!-- Display -->
-            <RowDefinition Height="Auto" /> <!-- Memory area -->
-            <RowDefinition Height="*" />    <!-- Keypad -->
-        </Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /> <RowDefinition Height="Auto" /> <RowDefinition Height="Auto" /> <RowDefinition Height="*" />    </Grid.RowDefinitions>
 
-        <!-- Top controls: Logs button -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,12">
-            <!-- Turbo Mode Toggle -->
             <ToggleButton x:Name="TurboToggle" Width="100" Height="40" Margin="0,0,0,0" VerticalAlignment="Top"
                           Content="🚀 Turbo" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
                           Click="TurboToggle_Click" />
-            <!-- Logs button -->
+            <ToggleButton x:Name="SpeechToggle" Width="120" Height="40" Margin="12,0,0,0" VerticalAlignment="Top"
+                          Content="🎤 Beszéd: Be" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
+                          Checked="SpeechToggle_Checked" Unchecked="SpeechToggle_Unchecked" IsChecked="True"/>
             <Button Width="100" Height="40" Margin="12,0,0,0" VerticalAlignment="Top"
                     Content="📂 Logs" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
                     Command="{Binding OpenLogsCommand}" />
         </StackPanel>
 
-        <!-- Display Area -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" CacheMode="BitmapCache">
             <Border CornerRadius="24" BorderBrush="{DynamicResource ButtonBackgroundBrush}"
                     BorderThickness="1" Padding="16"
                     Background="{DynamicResource BorderBackgroundBrush}"
@@ -49,14 +44,14 @@
             </Border>
         </Grid>
 
-        <!-- Memory Area -->
         <Border Grid.Row="2" Margin="0,16,0,0" Padding="16"
                 Background="{DynamicResource BorderBackgroundBrush}"
                 CornerRadius="20"
                 BorderBrush="{DynamicResource ButtonBackgroundBrush}"
                 BorderThickness="1"
                 SnapsToDevicePixels="True"
-                Effect="{DynamicResource WindowShadowEffect}">
+                Effect="{DynamicResource WindowShadowEffect}"
+                CacheMode="BitmapCache">
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -75,7 +70,6 @@
             </Grid>
         </Border>
 
-        <!-- Keypad -->
         <Grid Grid.Row="3" Margin="0,20,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -94,48 +88,40 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Row 0: functions -->
             <Button Content="sin" Grid.Row="0" Grid.Column="0" Command="{Binding SinCommand}" />
             <Button Content="cos" Grid.Row="0" Grid.Column="1" Command="{Binding CosCommand}" />
             <Button Content="tan" Grid.Row="0" Grid.Column="2" Command="{Binding TanCommand}" />
             <Button Content="√" Grid.Row="0" Grid.Column="3" Command="{Binding SqrtCommand}" />
 
-            <!-- Row 1: memory & factorial -->
             <Button Content="n!" Grid.Row="1" Grid.Column="0" Command="{Binding FactorialCommand}" />
             <Button Content="M+" Grid.Row="1" Grid.Column="1" Command="{Binding MemoryAddCommand}" />
             <Button Content="M-" Grid.Row="1" Grid.Column="2" Command="{Binding MemorySubtractCommand}" />
             <Button Content="MR" Grid.Row="1" Grid.Column="3" Command="{Binding MemoryRecallCommand}" />
 
-            <!-- Row 2: clear / percent -->
             <Button Content="MC" Grid.Row="2" Grid.Column="0" Command="{Binding MemoryClearCommand}" />
             <Button Content="C" Grid.Row="2" Grid.Column="1" Command="{Binding ClearCommand}" Foreground="#FFEF5350" FontWeight="Bold" />
             <Button Content="⌫" Grid.Row="2" Grid.Column="2" Command="{Binding DeleteCommand}" />
             <Button Content="%" Grid.Row="2" Grid.Column="3" Command="{Binding PercentCommand}" />
 
-            <!-- Row 3 -->
             <Button Content="7" Tag="7" Grid.Row="3" Grid.Column="0" Command="{Binding DigitCommand}" CommandParameter="7" />
             <Button Content="8" Tag="8" Grid.Row="3" Grid.Column="1" Command="{Binding DigitCommand}" CommandParameter="8" />
             <Button Content="9" Tag="9" Grid.Row="3" Grid.Column="2" Command="{Binding DigitCommand}" CommandParameter="9" />
             <Button Content="÷" Grid.Row="3" Grid.Column="3" Command="{Binding OperatorCommand}" CommandParameter="/" Foreground="{DynamicResource GlowBrush}" />
 
-            <!-- Row 4 -->
             <Button Content="4" Tag="4" Grid.Row="4" Grid.Column="0" Command="{Binding DigitCommand}" CommandParameter="4" />
             <Button Content="5" Tag="5" Grid.Row="4" Grid.Column="1" Command="{Binding DigitCommand}" CommandParameter="5" />
             <Button Content="6" Tag="6" Grid.Row="4" Grid.Column="2" Command="{Binding DigitCommand}" CommandParameter="6" />
             <Button Content="×" Grid.Row="4" Grid.Column="3" Command="{Binding OperatorCommand}" CommandParameter="*" Foreground="{DynamicResource GlowBrush}" />
 
-            <!-- Row 5 -->
             <Button Content="1" Tag="1" Grid.Row="5" Grid.Column="0" Command="{Binding DigitCommand}" CommandParameter="1" />
             <Button Content="2" Tag="2" Grid.Row="5" Grid.Column="1" Command="{Binding DigitCommand}" CommandParameter="2" />
             <Button Content="3" Tag="3" Grid.Row="5" Grid.Column="2" Command="{Binding DigitCommand}" CommandParameter="3" />
             <Button Content="−" Grid.Row="5" Grid.Column="3" Command="{Binding OperatorCommand}" CommandParameter="-" Foreground="{DynamicResource GlowBrush}" />
 
-            <!-- Row 6 -->
             <Button Content="." Grid.Row="6" Grid.Column="2" Command="{Binding DecimalCommand}" />
             <Button Content="0" Tag="0" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding DigitCommand}" CommandParameter="0" />
             <Button Content="xʸ" Grid.Row="6" Grid.Column="3" Command="{Binding OperatorCommand}" CommandParameter="^" Foreground="{DynamicResource GlowBrush}" />
 
-            <!-- Row 7 -->
             <Button Content="±" Grid.Row="7" Grid.Column="0" Command="{Binding SignCommand}" />
             <Button Content="=" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Command="{Binding EqualsCommand}"
                     Background="{DynamicResource AccentButtonBrush}" FontWeight="Bold" FontSize="24" />

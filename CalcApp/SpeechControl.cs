@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Speech.Recognition;
 using System.Windows;
+using System.Windows.Threading;
 using Serilog;
 using CalcApp.ViewModels;
 
@@ -26,19 +27,12 @@ namespace CalcApp
             "napló"
         ];
 
-        /// <summary>
-        /// Inicializálja a SpeechControl új példányát.
-        /// </summary>
-        /// <param name="viewModel">A számológép nézetmodellje.</param>
         public SpeechControl(CalculatorViewModel viewModel)
         {
             _viewModel = viewModel;
             InitSpeech();
         }
 
-        /// <summary>
-        /// Inicializálja a beszédfelismerőt.
-        /// </summary>
         private void InitSpeech()
         {
             try
@@ -73,15 +67,13 @@ namespace CalcApp
             }
         }
 
-        /// <summary>
-        /// A beszédfelismerés eseménykezelője.
-        /// </summary>
         private void OnSpeechRecognized(object? sender, SpeechRecognizedEventArgs e)
         {
             if (e.Result.Confidence < ConfidenceThreshold) return;
             var text = e.Result.Text.ToLowerInvariant();
 
-            Application.Current.Dispatcher.Invoke(() =>
+            // OPTIMALIZÁCIÓ: InvokeAsync használata, hogy ne blokkolja a Speech szál a UI-t
+            Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 switch (text)
                 {
@@ -117,12 +109,9 @@ namespace CalcApp
                     case "memória törlés": _viewModel.MemoryClearCommand.Execute(null); break;
                     case "napló": _viewModel.OpenLogsCommand.Execute(null); break;
                 }
-            });
+            }, DispatcherPriority.Normal);
         }
 
-        /// <summary>
-        /// Felszabadítja az erőforrásokat.
-        /// </summary>
         public void Dispose()
         {
             try

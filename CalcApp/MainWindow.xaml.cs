@@ -20,53 +20,35 @@ namespace CalcApp
     /// </summary>
     public partial class MainWindow : Window
     {
-
-
-
-
-
-
-
-
         private bool _isTurbo = false;
-
         private Storyboard? _cachedButtonClickStoryboard;
-
         private SpeechControl? _speech;
         private bool _speechEnabled = true;
 
-        private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270 };
-        private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270 };
-        private readonly DropShadowEffect _defaultButtonHoverShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270 };
+        // Shadow resources cached to avoid reallocation
+        private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270, RenderingBias = RenderingBias.Performance };
+        private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
+        private readonly DropShadowEffect _defaultButtonHoverShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
 
-        /// <summary>
-        /// Inicializálja a MainWindow új példányát.
-        /// </summary>
         public MainWindow()
         {
             LoadComponentFromXaml();
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
 
-            // InitializeTheme(); // Theme is now handled globally in App.xaml
             UpdateShadowResources();
             FreezeResourceDictionaries();
             InitializeKeyMappings();
-
-            // Speech initialization is now handled asynchronously in OnLoaded
         }
 
-        /// <summary>
-        /// Az ablak betöltésekor lefutó eseménykezelő.
-        /// </summary>
         private async void OnLoaded(object? sender, RoutedEventArgs e)
         {
-
             if (FindName("TurboToggle") is ToggleButton turboBtn)
             {
                 turboBtn.IsChecked = _isTurbo;
             }
 
+            // Fire and forget speech init but on background thread
             await InitializeSpeechAsync();
         }
 
@@ -74,43 +56,32 @@ namespace CalcApp
         {
             try
             {
-                // Initial UI state for speech toggle (disabled while loading)
-                if (FindName("SpeechToggle") is ToggleButton tb)
+                var speechToggle = FindName("SpeechToggle") as ToggleButton;
+                if (speechToggle != null)
                 {
-                    tb.IsEnabled = false;
-                    tb.Content = "🎤 Betöltés...";
+                    speechToggle.IsEnabled = false;
+                    speechToggle.Content = "🎤 Betöltés...";
                 }
 
                 bool hasRecognizer = false;
+                await Task.Run(() => { hasRecognizer = HasHungarianRecognizer(); });
 
-                // Run heavy initialization on background thread
-                await Task.Run(() =>
+                if (speechToggle != null)
                 {
-                    hasRecognizer = HasHungarianRecognizer();
-                });
-
-                if (FindName("SpeechToggle") is ToggleButton tbUpdated)
-                {
-                    tbUpdated.IsEnabled = true;
-                    tbUpdated.IsChecked = _speechEnabled && hasRecognizer;
-                    tbUpdated.Content = tbUpdated.IsChecked == true ? "🎤 Beszéd: Be" : "🎤 Beszéd: Ki";
+                    speechToggle.IsEnabled = true;
+                    speechToggle.IsChecked = _speechEnabled && hasRecognizer;
+                    speechToggle.Content = speechToggle.IsChecked == true ? "🎤 Beszéd: Be" : "🎤 Beszéd: Ki";
                 }
 
                 if (_speechEnabled && hasRecognizer)
                 {
                     if (DataContext is CalculatorViewModel viewModel)
                     {
-                        // SpeechControl creation might take time too, do it on background if possible, 
-                        // but SpeechControl constructor might access UI thread if it wasn't carefully designed.
-                        // Looking at SpeechControl.cs, it uses Dispatcher for callbacks but constructor seems safe-ish 
-                        // EXCEPT it creates SpeechRecognitionEngine which should be on the thread that uses it?
-                        // Actually SRE can be created anywhere but events fire on thread pool usually unless configured.
-                        // Let's try creating it on background thread.
-
                         await Task.Run(() =>
                         {
                             try
                             {
+                                // SpeechControl creation is relatively heavy, keep off UI thread
                                 _speech = new SpeechControl(viewModel);
                             }
                             catch (Exception ex)
@@ -124,86 +95,44 @@ namespace CalcApp
             catch (Exception ex)
             {
                 Log.Error(ex, "Error during async speech initialization");
-                if (FindName("SpeechToggle") is ToggleButton tb)
-                {
-                    tb.Content = "🎤 Hiba";
-                    tb.IsEnabled = false;
-                }
             }
         }
 
-        /// <summary>
-        /// Az ablak bezárásakor lefutó eseménykezelő.
-        /// </summary>
         private void OnUnloaded(object? sender, RoutedEventArgs e)
         {
             Loaded -= OnLoaded;
             Unloaded -= OnUnloaded;
-
-#if DEBUG
-            // Debug cleanup if needed
-#endif
             try { _speech?.Dispose(); } catch { }
             _speech = null;
         }
 
-        /// <summary>
-        /// Betölti a komponenst a XAML-ből.
-        /// </summary>
         private void LoadComponentFromXaml()
         {
             try
             {
                 var uri = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
                 Application.LoadComponent(this, uri);
-
-                var viewModel = new CalculatorViewModel();
-                DataContext = viewModel;
+                DataContext = new CalculatorViewModel();
             }
             catch (Exception ex)
             {
                 Log.Fatal(ex, "CRITICAL: Failed to load main window XAML");
-
-                try
-                {
-                    MessageBox.Show(
-                        "Failed to initialize application UI. The application will exit.",
-                        "Initialization Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                }
-                catch (Exception logEx)
-                {
-                    Log.Error(logEx, "Failed to show error message box");
-                }
-
                 Application.Current?.Shutdown();
-                Environment.Exit(1);
             }
         }
 
-        /// <summary>
-        /// A beszédvezérlés bekapcsolásakor lefutó eseménykezelő.
-        /// </summary>
         private void SpeechToggle_Checked(object sender, RoutedEventArgs e)
         {
             EnableSpeech(true);
             if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Be";
         }
 
-        /// <summary>
-        /// A beszédvezérlés kikapcsolásakor lefutó eseménykezelő.
-        /// </summary>
         private void SpeechToggle_Unchecked(object sender, RoutedEventArgs e)
         {
             EnableSpeech(false);
             if (sender is ToggleButton tb) tb.Content = "🎤 Beszéd: Ki";
         }
 
-        /// <summary>
-        /// Engedélyezi vagy letiltja a beszédvezérlést.
-        /// </summary>
-        /// <param name="enable">Igaz, ha engedélyezni kell, egyébként hamis.</param>
         private void EnableSpeech(bool enable)
         {
             _speechEnabled = enable;
@@ -212,7 +141,7 @@ namespace CalcApp
                 if (_speech != null) return;
                 if (!HasHungarianRecognizer())
                 {
-                    MessageBox.Show("Nincs telepítve magyar beszédfelismerő; a beszédvezérlés nem elérhető.", "Beszédvezérlés", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Nincs telepítve magyar beszédfelismerő.", "Beszédvezérlés", MessageBoxButton.OK, MessageBoxImage.Information);
                     if (FindName("SpeechToggle") is ToggleButton tb) { tb.IsChecked = false; tb.Content = "🎤 Beszéd: Ki"; }
                     _speechEnabled = false;
                     return;
@@ -222,37 +151,30 @@ namespace CalcApp
                 {
                     if (DataContext is CalculatorViewModel viewModel)
                     {
-                        _speech = new SpeechControl(viewModel);
+                        Task.Run(() => _speech = new SpeechControl(viewModel));
                     }
                 }
                 catch (Exception ex)
                 {
                     Log.Error(ex, "Failed to start speech control");
-                    MessageBox.Show("A beszédvezérlés indítása nem sikerült.", "Beszédvezérlés hiba", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             else
             {
-                try { _speech?.Dispose(); } catch { }
+                var s = _speech;
                 _speech = null;
+                Task.Run(() => s?.Dispose());
             }
         }
 
         private static bool? _hasHungarianRecognizer;
-        /// <summary>
-        /// Ellenőrzi, hogy van-e telepítve magyar beszédfelismerő.
-        /// </summary>
-        /// <returns>Igaz, ha van, egyébként hamis.</returns>
         private static bool HasHungarianRecognizer()
         {
             if (_hasHungarianRecognizer.HasValue) return _hasHungarianRecognizer.Value;
-
             try
             {
                 var culture = new System.Globalization.CultureInfo("hu-HU");
-                var recognizerInfo = SpeechRecognitionEngine.InstalledRecognizers()
-                    .FirstOrDefault(r => r.Culture.Equals(culture));
-                _hasHungarianRecognizer = recognizerInfo != null;
+                _hasHungarianRecognizer = SpeechRecognitionEngine.InstalledRecognizers().Any(r => r.Culture.Equals(culture));
             }
             catch
             {
@@ -261,237 +183,91 @@ namespace CalcApp
             return _hasHungarianRecognizer.Value;
         }
 
-
-        /// <summary>
-        /// "Befagyasztja" az erőforrás-szótárakat a teljesítmény javítása érdekében.
-        /// </summary>
         private void FreezeResourceDictionaries()
         {
-            try
+            foreach (var dict in Resources.MergedDictionaries)
             {
-                foreach (var dict in Resources.MergedDictionaries)
+                foreach (var key in dict.Keys)
                 {
-                    foreach (var key in dict.Keys)
-                    {
-                        if (dict[key] is System.Windows.Freezable f && f.CanFreeze)
-                        {
-                            f.Freeze();
-                        }
-                    }
+                    if (dict[key] is System.Windows.Freezable f && f.CanFreeze) f.Freeze();
                 }
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Freeze resources failed");
-            }
         }
 
-        /// <summary>
-        /// Megkeres egy kötelező vezérlőt a név alapján.
-        /// </summary>
-        /// <typeparam name="T">A vezérlő típusa.</typeparam>
-        /// <param name="name">A vezérlő neve.</param>
-        /// <returns>A megtalált vezérlő.</returns>
-        private T FindRequiredControl<T>(string name) where T : class
-        {
-            if (FindName(name) is T control)
-            {
-                return control;
-            }
-
-            throw new InvalidOperationException($"Could not find control '{name}'.");
-        }
-
-
-
-
-
-
-
-        /// <summary>
-        /// A turbó mód váltó gomb kattintásakor lefutó eseménykezelő.
-        /// </summary>
         private void TurboToggle_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleButton tb)
             {
                 _isTurbo = tb.IsChecked == true;
-                if (DataContext is CalculatorViewModel vm)
-                {
-                    vm.SetTurboMode(_isTurbo);
-                }
+                if (DataContext is CalculatorViewModel vm) vm.SetTurboMode(_isTurbo);
                 UpdateShadowResources();
-
-                // Speech is NO LONGER disabled in Turbo Mode to preserve features.
-                // We only disable expensive visual effects.
             }
         }
 
-        /// <summary>
-        /// Frissíti az árnyék erőforrásokat.
-        /// </summary>
         private void UpdateShadowResources()
         {
+            // Direct dictionary manipulation is faster than reloading XAML
             if (_isTurbo)
             {
                 Resources["WindowShadowEffect"] = null;
                 Resources["ButtonShadowEffect"] = null;
                 Resources["ButtonHoverShadowEffect"] = null;
+                Resources["NeonBorderEffect"] = null;
+                Resources["NeonTextEffect"] = null;
             }
             else
             {
                 Resources["WindowShadowEffect"] = _defaultWindowShadow;
                 Resources["ButtonShadowEffect"] = _defaultButtonShadow;
                 Resources["ButtonHoverShadowEffect"] = _defaultButtonHoverShadow;
+                Resources["NeonBorderEffect"] = FindResource("NeonBorderEffectDefault"); // Needs to be in resource dict or handled
+                Resources["NeonTextEffect"] = FindResource("NeonTextEffectDefault");
             }
         }
 
         private readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = [];
 
-        /// <summary>
-        /// Inicializálja a billentyűleképezéseket.
-        /// </summary>
         private void InitializeKeyMappings()
         {
-            // Digits 0-9
-            for (var k = Key.D0; k <= Key.D9; k++)
-            {
-                var digit = (char)('0' + (k - Key.D0));
-                _keyMappings[k] = vm => vm.DigitCommand.Execute(digit.ToString());
-            }
-            for (var k = Key.NumPad0; k <= Key.NumPad9; k++)
-            {
-                var digit = (char)('0' + (k - Key.NumPad0));
-                _keyMappings[k] = vm => vm.DigitCommand.Execute(digit.ToString());
-            }
+            void Map(Key k, Action<CalculatorViewModel> a) => _keyMappings[k] = a;
 
-            // Operators
-            _keyMappings[Key.Add] = vm => vm.OperatorCommand.Execute("+");
-            _keyMappings[Key.OemPlus] = vm => vm.OperatorCommand.Execute("+");
-            _keyMappings[Key.Subtract] = vm => vm.OperatorCommand.Execute("-");
-            _keyMappings[Key.OemMinus] = vm => vm.OperatorCommand.Execute("-");
-            _keyMappings[Key.Multiply] = vm => vm.OperatorCommand.Execute("*");
-            _keyMappings[Key.Divide] = vm => vm.OperatorCommand.Execute("/");
-            _keyMappings[Key.Oem2] = vm => vm.OperatorCommand.Execute("/"); // Question mark / slash
+            for (var k = Key.D0; k <= Key.D9; k++) Map(k, vm => vm.DigitCommand.Execute(((char)('0' + (k - Key.D0))).ToString()));
+            for (var k = Key.NumPad0; k <= Key.NumPad9; k++) Map(k, vm => vm.DigitCommand.Execute(((char)('0' + (k - Key.NumPad0))).ToString()));
 
-            // Others
-            _keyMappings[Key.Decimal] = vm => vm.DecimalCommand.Execute(null);
-            _keyMappings[Key.OemPeriod] = vm => vm.DecimalCommand.Execute(null);
-            _keyMappings[Key.Return] = vm => vm.EqualsCommand.Execute(null);
-            _keyMappings[Key.Enter] = vm => vm.EqualsCommand.Execute(null);
-            _keyMappings[Key.Back] = vm => vm.DeleteCommand.Execute(null);
-            _keyMappings[Key.Escape] = vm => vm.ClearCommand.Execute(null);
-            _keyMappings[Key.Oem5] = vm => vm.PercentCommand.Execute(null); // Backslash / Pipe often used for percent in some layouts or just mapped
+            Map(Key.Add, vm => vm.OperatorCommand.Execute("+"));
+            Map(Key.OemPlus, vm => vm.OperatorCommand.Execute("+"));
+            Map(Key.Subtract, vm => vm.OperatorCommand.Execute("-"));
+            Map(Key.OemMinus, vm => vm.OperatorCommand.Execute("-"));
+            Map(Key.Multiply, vm => vm.OperatorCommand.Execute("*"));
+            Map(Key.Divide, vm => vm.OperatorCommand.Execute("/"));
+            Map(Key.Oem2, vm => vm.OperatorCommand.Execute("/"));
+            Map(Key.Decimal, vm => vm.DecimalCommand.Execute(null));
+            Map(Key.OemPeriod, vm => vm.DecimalCommand.Execute(null));
+            Map(Key.Return, vm => vm.EqualsCommand.Execute(null));
+            Map(Key.Enter, vm => vm.EqualsCommand.Execute(null));
+            Map(Key.Back, vm => vm.DeleteCommand.Execute(null));
+            Map(Key.Escape, vm => vm.ClearCommand.Execute(null));
+            Map(Key.Oem5, vm => vm.PercentCommand.Execute(null));
         }
 
-        /// <summary>
-        /// A billentyűlenyomások kezelése.
-        /// </summary>
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e == null) return;
+            if (DataContext is not CalculatorViewModel viewModel) return;
 
-            try
+            var key = e.Key;
+            var modifiers = Keyboard.Modifiers;
+
+            if (modifiers == ModifierKeys.Control)
             {
-                if (DataContext is CalculatorViewModel viewModel)
-                {
-                    var key = e.Key;
-                    var modifiers = Keyboard.Modifiers;
-
-                    // Handle special combinations first
-                    if (modifiers == ModifierKeys.Control)
-                    {
-                        if (key == Key.C)
-                        {
-                            viewModel.ClearCommand.Execute(null);
-                            e.Handled = true;
-                            return;
-                        }
-                        if (key == Key.M)
-                        {
-                            viewModel.MemoryClearCommand.Execute(null);
-                            e.Handled = true;
-                            return;
-                        }
-                    }
-
-                    if (modifiers == ModifierKeys.None || modifiers == ModifierKeys.Shift) // Shift often used for symbols
-                    {
-                        if (_keyMappings.TryGetValue(key, out var action))
-                        {
-                            // Special check for OemPlus (Shift+= is +) vs (= is usually unshifted for equals, but here we treat OemPlus as +)
-                            // Let's stick to the original logic's intent but cleaner.
-                            // Original: Key.Add || (Key.OemPlus && NoModifiers) -> +
-
-                            // Refined check for OemPlus to match original logic strictly if needed, 
-                            // but usually OemPlus is + or =. 
-                            // The original code: if (key == Key.Add || (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None))
-
-                            if (key == Key.OemPlus && modifiers != ModifierKeys.None)
-                            {
-                                // If shift is pressed on OemPlus, it might be + on some layouts, or just + on others.
-                                // Original logic only allowed OemPlus with NO modifiers for +. 
-                                // Wait, standard US layout: = is unshifted, + is shifted.
-                                // Original code: (key == Key.OemPlus && Keyboard.Modifiers == ModifierKeys.None) -> Execute("+")
-                                // This seems backwards for US layout (+ is shift+=), but maybe it's for numpad +? No, Key.Add is numpad.
-                                // Let's assume the user wants the original behavior.
-
-                                // Actually, let's just use the map.
-                            }
-
-                            // Execute mapped action
-                            action(viewModel);
-                            e.Handled = true;
-                        }
-                    }
-                }
+                if (key == Key.C) { viewModel.ClearCommand.Execute(null); e.Handled = true; return; }
+                if (key == Key.M) { viewModel.MemoryClearCommand.Execute(null); e.Handled = true; return; }
             }
-            catch (Exception ex)
+
+            if ((modifiers == ModifierKeys.None || modifiers == ModifierKeys.Shift) && _keyMappings.TryGetValue(key, out var action))
             {
-                Log.Error(ex, "Error in keyboard handler");
+                action(viewModel);
+                e.Handled = true;
             }
         }
-
-        /// <summary>
-        /// Biztosítja, hogy a gombkattintás animáció gyorsítótárazva legyen.
-        /// </summary>
-        /// <param name="scaleTransform">A skálázási transzformáció.</param>
-        /// <returns>A storyboard.</returns>
-        private Storyboard EnsureCachedButtonClickStoryboard(ScaleTransform scaleTransform)
-        {
-            if (_cachedButtonClickStoryboard != null) return _cachedButtonClickStoryboard;
-
-            var storyboard = new Storyboard();
-            // Smoother easing: QuinticEase for premium feel
-            var easing = new QuinticEase { EasingMode = EasingMode.EaseInOut };
-
-            var scaleXDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(200)) { EasingFunction = easing };
-            var scaleYDown = new DoubleAnimation(1.0, 0.90, TimeSpan.FromMilliseconds(200)) { EasingFunction = easing };
-            var scaleXUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(200)) { BeginTime = TimeSpan.FromMilliseconds(200), EasingFunction = easing };
-            var scaleYUp = new DoubleAnimation(0.90, 1.0, TimeSpan.FromMilliseconds(200)) { BeginTime = TimeSpan.FromMilliseconds(200), EasingFunction = easing };
-
-            Storyboard.SetTarget(scaleXDown, scaleTransform);
-            Storyboard.SetTargetProperty(scaleXDown, new PropertyPath("ScaleX"));
-            Storyboard.SetTarget(scaleYDown, scaleTransform);
-            Storyboard.SetTargetProperty(scaleYDown, new PropertyPath("ScaleY"));
-            Storyboard.SetTarget(scaleXUp, scaleTransform);
-            Storyboard.SetTargetProperty(scaleXUp, new PropertyPath("ScaleX"));
-            Storyboard.SetTarget(scaleYUp, scaleTransform);
-            Storyboard.SetTargetProperty(scaleYUp, new PropertyPath("ScaleY"));
-
-            storyboard.Children.Add(scaleXDown);
-            storyboard.Children.Add(scaleYDown);
-            storyboard.Children.Add(scaleXUp);
-            storyboard.Children.Add(scaleYUp);
-            _cachedButtonClickStoryboard = storyboard;
-            return storyboard;
-        }
-
-        /// <summary>
-        /// Elhalványítja az ablakot.
-        /// </summary>
-
-
-
     }
 }
