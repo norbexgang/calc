@@ -53,42 +53,82 @@ namespace CalcApp
             FreezeResourceDictionaries();
             InitializeKeyMappings();
 
+            // Speech initialization is now handled asynchronously in OnLoaded
+        }
+
+        /// <summary>
+        /// Az ablak betöltésekor lefutó eseménykezelő.
+        /// </summary>
+        private async void OnLoaded(object? sender, RoutedEventArgs e)
+        {
+
+            if (FindName("TurboToggle") is ToggleButton turboBtn)
+            {
+                turboBtn.IsChecked = _isTurbo;
+            }
+
+            await InitializeSpeechAsync();
+        }
+
+        private async Task InitializeSpeechAsync()
+        {
             try
             {
-                var hasRecognizer = HasHungarianRecognizer();
+                // Initial UI state for speech toggle (disabled while loading)
                 if (FindName("SpeechToggle") is ToggleButton tb)
                 {
-                    tb.IsChecked = _speechEnabled && hasRecognizer;
-                    tb.Content = tb.IsChecked == true ? "🎤 Beszéd: Be" : "🎤 Beszéd: Ki";
+                    tb.IsEnabled = false;
+                    tb.Content = "🎤 Betöltés...";
+                }
+
+                bool hasRecognizer = false;
+
+                // Run heavy initialization on background thread
+                await Task.Run(() =>
+                {
+                    hasRecognizer = HasHungarianRecognizer();
+                });
+
+                if (FindName("SpeechToggle") is ToggleButton tbUpdated)
+                {
+                    tbUpdated.IsEnabled = true;
+                    tbUpdated.IsChecked = _speechEnabled && hasRecognizer;
+                    tbUpdated.Content = tbUpdated.IsChecked == true ? "🎤 Beszéd: Be" : "🎤 Beszéd: Ki";
                 }
 
                 if (_speechEnabled && hasRecognizer)
                 {
                     if (DataContext is CalculatorViewModel viewModel)
                     {
-                        _speech = new SpeechControl(viewModel);
+                        // SpeechControl creation might take time too, do it on background if possible, 
+                        // but SpeechControl constructor might access UI thread if it wasn't carefully designed.
+                        // Looking at SpeechControl.cs, it uses Dispatcher for callbacks but constructor seems safe-ish 
+                        // EXCEPT it creates SpeechRecognitionEngine which should be on the thread that uses it?
+                        // Actually SRE can be created anywhere but events fire on thread pool usually unless configured.
+                        // Let's try creating it on background thread.
+
+                        await Task.Run(() =>
+                        {
+                            try
+                            {
+                                _speech = new SpeechControl(viewModel);
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error(ex, "Failed to initialize SpeechControl in background");
+                            }
+                        });
                     }
                 }
-                else if (!hasRecognizer)
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error during async speech initialization");
+                if (FindName("SpeechToggle") is ToggleButton tb)
                 {
-                    // System.Diagnostics.Debug.WriteLine("No Hungarian speech recognizer installed; speech control disabled.");
+                    tb.Content = "🎤 Hiba";
+                    tb.IsEnabled = false;
                 }
-            }
-            catch (Exception)
-            {
-                // System.Diagnostics.Debug.WriteLine($"Speech init failed in MainWindow ctor: {ex}");
-            }
-        }
-
-        /// <summary>
-        /// Az ablak betöltésekor lefutó eseménykezelő.
-        /// </summary>
-        private void OnLoaded(object? sender, RoutedEventArgs e)
-        {
-
-            if (FindName("TurboToggle") is ToggleButton turboBtn)
-            {
-                turboBtn.IsChecked = _isTurbo;
             }
         }
 
