@@ -428,6 +428,7 @@ namespace CalcApp.ViewModels
         /// <param name="operationName">A művelet neve.</param>
         /// <param name="degrees">Fokokban számoljon-e.</param>
         /// <param name="validateTan">Érvényesítse-e a tangens függvényt.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
         {
             if (func == null || string.IsNullOrWhiteSpace(operationName)) return;
@@ -659,6 +660,7 @@ namespace CalcApp.ViewModels
         /// </summary>
         /// <param name="value">A kijelzőn lévő érték.</param>
         /// <returns>Igaz, ha a lekérés sikeres, egyébként hamis.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryGetDisplayValue(out double value)
         {
             var text = Display;
@@ -694,6 +696,7 @@ namespace CalcApp.ViewModels
         /// Beállítja a kijelzőn lévő értéket.
         /// </summary>
         /// <param name="value">A beállítandó érték.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetDisplayValue(double value)
         {
             var formatted = FormatNumber(value);
