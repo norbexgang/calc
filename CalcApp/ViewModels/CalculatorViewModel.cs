@@ -27,6 +27,7 @@ namespace CalcApp.ViewModels
         private double? _lastRightOperand = null;
         private string? _lastOperator = null;
         private readonly Queue<(bool, string)> _memoryHistoryEntries = new();
+        private readonly StringBuilder _memoryHistoryBuilder = new(256);
 
         /// <summary>
         /// Megadja, hogy a turbó mód engedélyezve van-e.
@@ -750,27 +751,31 @@ namespace CalcApp.ViewModels
                 return;
             }
 
-            // Simplified logic: Just show the last N items that fit.
-            // We use MemoryHistoryDisplayCount to limit the number of items shown.
+            var entryCount = _memoryHistoryEntries.Count;
+            var skip = entryCount > MemoryHistoryDisplayCount ? entryCount - MemoryHistoryDisplayCount : 0;
+            var expectedItems = entryCount - skip;
 
-            var builder = new StringBuilder();
-            var entries = _memoryHistoryEntries.Skip(Math.Max(0, _memoryHistoryEntries.Count - MemoryHistoryDisplayCount)).ToList();
+            _memoryHistoryBuilder.Clear();
+            _memoryHistoryBuilder.EnsureCapacity(Math.Max(_memoryHistoryBuilder.Capacity, expectedItems * 8));
 
-            bool isFirst = true;
-            foreach (var (isAddition, description) in entries)
+            var index = 0;
+            var hasContent = false;
+            foreach (var (isAddition, description) in _memoryHistoryEntries)
             {
-                if (!isFirst) builder.Append("; ");
-                if (isAddition) builder.Append("+ "); else builder.Append("- ");
-                builder.Append(description);
-                isFirst = false;
+                if (index++ < skip) continue;
+
+                if (hasContent) _memoryHistoryBuilder.Append("; ");
+                _memoryHistoryBuilder.Append(isAddition ? "+ " : "- ");
+                _memoryHistoryBuilder.Append(description);
+                hasContent = true;
             }
 
-            if (_memoryHistoryEntries.Count > MemoryHistoryDisplayCount)
+            if (skip > 0)
             {
-                builder.Insert(0, "...; ");
+                _memoryHistoryBuilder.Insert(0, "...; ");
             }
 
-            _memoryHistoryText = builder.ToString();
+            _memoryHistoryText = _memoryHistoryBuilder.ToString();
         }
 
         /// <summary>
@@ -800,7 +805,7 @@ namespace CalcApp.ViewModels
             if (!IsFinite(value)) return "Error";
             if (value == 0.0 || Math.Abs(value) < double.Epsilon) return "0";
 
-            Span<char> buffer = stackalloc char[32];
+            Span<char> buffer = stackalloc char[64];
             if (value.TryFormat(buffer, out int written, "G12", Culture))
             {
                 var s = new string(buffer[..written]);

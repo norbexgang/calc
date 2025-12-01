@@ -1,14 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media.Animation;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
-using System.Linq;
 using CalcApp.ViewModels;
 using Serilog;
 
@@ -26,6 +22,8 @@ namespace CalcApp
         private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270, RenderingBias = RenderingBias.Performance };
         private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
         private readonly DropShadowEffect _defaultButtonHoverShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
+        private readonly DropShadowEffect? _neonBorderEffectDefault;
+        private readonly DropShadowEffect? _neonTextEffectDefault;
 
         public MainWindow()
         {
@@ -33,6 +31,8 @@ namespace CalcApp
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
 
+            _neonBorderEffectDefault = TryFindResource("NeonBorderEffectDefault") as DropShadowEffect;
+            _neonTextEffectDefault = TryFindResource("NeonTextEffectDefault") as DropShadowEffect;
             UpdateShadowResources();
             FreezeResourceDictionaries();
             InitializeKeyMappings();
@@ -58,7 +58,7 @@ namespace CalcApp
             {
                 var uri = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
                 Application.LoadComponent(this, uri);
-                DataContext = new CalculatorViewModel();
+                DataContext ??= new CalculatorViewModel();
             }
             catch (Exception ex)
             {
@@ -82,7 +82,10 @@ namespace CalcApp
         {
             if (sender is ToggleButton tb)
             {
-                _isTurbo = tb.IsChecked == true;
+                var newTurboState = tb.IsChecked == true;
+                if (_isTurbo == newTurboState) return;
+
+                _isTurbo = newTurboState;
                 if (DataContext is CalculatorViewModel vm) vm.SetTurboMode(_isTurbo);
                 UpdateShadowResources();
             }
@@ -104,8 +107,8 @@ namespace CalcApp
                 Resources["WindowShadowEffect"] = _defaultWindowShadow;
                 Resources["ButtonShadowEffect"] = _defaultButtonShadow;
                 Resources["ButtonHoverShadowEffect"] = _defaultButtonHoverShadow;
-                Resources["NeonBorderEffect"] = FindResource("NeonBorderEffectDefault"); // Needs to be in resource dict or handled
-                Resources["NeonTextEffect"] = FindResource("NeonTextEffectDefault");
+                if (_neonBorderEffectDefault != null) Resources["NeonBorderEffect"] = _neonBorderEffectDefault;
+                if (_neonTextEffectDefault != null) Resources["NeonTextEffect"] = _neonTextEffectDefault;
             }
         }
 
