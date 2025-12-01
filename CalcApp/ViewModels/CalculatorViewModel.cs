@@ -29,11 +29,6 @@ namespace CalcApp.ViewModels
         private readonly StringBuilder _memoryHistoryBuilder = new(256);
 
         /// <summary>
-        /// Megadja, hogy a turbó mód engedélyezve van-e.
-        /// </summary>
-        public bool IsTurboEnabled { get; private set; }
-
-        /// <summary>
         /// A számológép kijelzőjének aktuális értéke.
         /// </summary>
         public string Display
@@ -128,15 +123,6 @@ namespace CalcApp.ViewModels
             OpenLogsCommand = new RelayCommand(_ => ProcessOpenLogs());
 
             InitializeMemory();
-        }
-
-        /// <summary>
-        /// Beállítja a turbó módot.
-        /// </summary>
-        /// <param name="isEnabled">Igaz, ha a turbó mód engedélyezve van, egyébként hamis.</param>
-        public void SetTurboMode(bool isEnabled)
-        {
-            IsTurboEnabled = isEnabled;
         }
 
         /// <summary>
@@ -260,7 +246,7 @@ namespace CalcApp.ViewModels
         {
             try
             {
-                var result = IsTurboEnabled ? TryEvaluate(left, right, op) : Evaluate(left, right, op);
+                var result = Evaluate(left, right, op);
                 if (!IsFinite(result))
                 {
                     ShowError();
@@ -843,34 +829,6 @@ namespace CalcApp.ViewModels
         /// <returns>Igaz, ha a szám véges, egyébként hamis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
-
-        /// <summary>
-        /// Megpróbálja kiértékelni a műveletet, és hibakezeléssel látja el.
-        /// </summary>
-        /// <param name="left">A bal oldali operandus.</param>
-        /// <param name="right">A jobb oldali operandus.</param>
-        /// <param name="operatorSymbol">Az operátor.</param>
-        /// <returns>A művelet eredménye, vagy NaN hiba esetén.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double TryEvaluate(double left, double right, string operatorSymbol)
-        {
-            try
-            {
-                return Evaluate(left, right, operatorSymbol);
-            }
-            catch (DivideByZeroException)
-            {
-                return double.NaN;
-            }
-            catch (InvalidOperationException)
-            {
-                return double.NaN;
-            }
-            catch (OverflowException)
-            {
-                return double.NaN;
-            }
-        }
 
         /// <summary>
         /// Kiértékel egy műveletet.

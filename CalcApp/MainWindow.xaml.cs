@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 using System.Windows;
-using System.Windows.Controls.Primitives;
-using System.Windows.Media;
-using System.Windows.Media.Effects;
 using CalcApp.ViewModels;
 using Serilog;
 
@@ -15,41 +12,11 @@ namespace CalcApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private bool _isTurbo = false;
-
-
-        // Shadow resources cached to avoid reallocation
-        private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270, RenderingBias = RenderingBias.Performance };
-        private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
-        private readonly DropShadowEffect _defaultButtonHoverShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
-        private readonly DropShadowEffect? _neonBorderEffectDefault;
-        private readonly DropShadowEffect? _neonTextEffectDefault;
-
         public MainWindow()
         {
             LoadComponentFromXaml();
-            Loaded += OnLoaded;
-            Unloaded += OnUnloaded;
-
-            _neonBorderEffectDefault = TryFindResource("NeonBorderEffectDefault") as DropShadowEffect;
-            _neonTextEffectDefault = TryFindResource("NeonTextEffectDefault") as DropShadowEffect;
-            UpdateShadowResources();
             FreezeResourceDictionaries();
             InitializeKeyMappings();
-        }
-
-        private void OnLoaded(object? sender, RoutedEventArgs e)
-        {
-            if (FindName("TurboToggle") is ToggleButton turboBtn)
-            {
-                turboBtn.IsChecked = _isTurbo;
-            }
-        }
-
-        private void OnUnloaded(object? sender, RoutedEventArgs e)
-        {
-            Loaded -= OnLoaded;
-            Unloaded -= OnUnloaded;
         }
 
         private void LoadComponentFromXaml()
@@ -75,40 +42,6 @@ namespace CalcApp
                 {
                     if (dict[key] is System.Windows.Freezable f && f.CanFreeze) f.Freeze();
                 }
-            }
-        }
-
-        private void TurboToggle_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleButton tb)
-            {
-                var newTurboState = tb.IsChecked == true;
-                if (_isTurbo == newTurboState) return;
-
-                _isTurbo = newTurboState;
-                if (DataContext is CalculatorViewModel vm) vm.SetTurboMode(_isTurbo);
-                UpdateShadowResources();
-            }
-        }
-
-        private void UpdateShadowResources()
-        {
-            // Direct dictionary manipulation is faster than reloading XAML
-            if (_isTurbo)
-            {
-                Resources["WindowShadowEffect"] = null;
-                Resources["ButtonShadowEffect"] = null;
-                Resources["ButtonHoverShadowEffect"] = null;
-                Resources["NeonBorderEffect"] = null;
-                Resources["NeonTextEffect"] = null;
-            }
-            else
-            {
-                Resources["WindowShadowEffect"] = _defaultWindowShadow;
-                Resources["ButtonShadowEffect"] = _defaultButtonShadow;
-                Resources["ButtonHoverShadowEffect"] = _defaultButtonHoverShadow;
-                if (_neonBorderEffectDefault != null) Resources["NeonBorderEffect"] = _neonBorderEffectDefault;
-                if (_neonTextEffectDefault != null) Resources["NeonTextEffect"] = _neonTextEffectDefault;
             }
         }
 

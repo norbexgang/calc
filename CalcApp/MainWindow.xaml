@@ -17,20 +17,10 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,12">
-            <ToggleButton x:Name="TurboToggle" Width="100" Height="40" Margin="0,0,0,0" VerticalAlignment="Top"
-                          Content="🚀 Turbo" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
-                          Click="TurboToggle_Click" />
-            <Button Width="100" Height="40" Margin="12,0,0,0" VerticalAlignment="Top"
-                    Content="📂 Logs" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
-                    Command="{Binding OpenLogsCommand}" />
-        </StackPanel>
-
-        <Grid Grid.Row="1" CacheMode="BitmapCache">
+        <Grid Grid.Row="0" CacheMode="BitmapCache">
             <Border CornerRadius="24" BorderBrush="{DynamicResource ButtonBackgroundBrush}"
                     BorderThickness="1" Padding="16"
                     Background="{DynamicResource BorderBackgroundBrush}"
@@ -45,7 +35,7 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="2" Margin="0,16,0,0" Padding="16"
+        <Border Grid.Row="1" Margin="0,16,0,0" Padding="16"
                 Background="{DynamicResource BorderBackgroundBrush}"
                 CornerRadius="20"
                 BorderBrush="{DynamicResource ButtonBackgroundBrush}"
@@ -71,7 +61,7 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="3" Margin="0,20,0,0">
+        <Grid Grid.Row="2" Margin="0,20,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
