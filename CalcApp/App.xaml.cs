@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows;
 using Serilog;
@@ -8,23 +10,28 @@ namespace CalcApp;
 public partial class App : Application
 {
     public App()
-    { 
-            var loggerConfig = new LoggerConfiguration()
+    {
+        var loggerConfig = new LoggerConfiguration()
 #if DEBUG
-             .MinimumLevel.Debug()
+         .MinimumLevel.Debug()
 #else
              .MinimumLevel.Warning()
 #endif
-             .Enrich.WithThreadId()
-             .Enrich.FromLogContext()
-             .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day));
+         .Enrich.WithThreadId()
+         .Enrich.FromLogContext()
+         .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day));
 
-      Log.Logger = loggerConfig.CreateLogger();
+        Log.Logger = loggerConfig.CreateLogger();
 
-            
+
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        var profileRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CalcApp");
+        Directory.CreateDirectory(profileRoot);
+        ProfileOptimization.SetProfileRoot(profileRoot);
+        ProfileOptimization.StartProfile("Startup.profile");
     }
 
     private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)

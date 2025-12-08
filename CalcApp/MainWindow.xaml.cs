@@ -32,7 +32,7 @@ namespace CalcApp
             _neonBorderEffectDefault = TryFindResource("NeonBorderEffectDefault") as DropShadowEffect;
             _neonTextEffectDefault = TryFindResource("NeonTextEffectDefault") as DropShadowEffect;
             UpdateShadowResources();
-            FreezeResourceDictionaries();
+            // FreezeResourceDictionaries(); // Removed: Resources are already frozen in XAML
             InitializeKeyMappings();
         }
 
@@ -48,17 +48,6 @@ namespace CalcApp
             {
                 Log.Fatal(ex, "CRITICAL: Failed to load main window XAML");
                 Application.Current?.Shutdown();
-            }
-        }
-
-        private void FreezeResourceDictionaries()
-        {
-            foreach (var dict in Resources.MergedDictionaries)
-            {
-                foreach (var key in dict.Keys)
-                {
-                    if (dict[key] is System.Windows.Freezable f && f.CanFreeze) f.Freeze();
-                }
             }
         }
 
