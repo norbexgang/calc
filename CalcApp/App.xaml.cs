@@ -9,11 +9,17 @@ public partial class App : Application
 {
     public App()
     { 
-      Log.Logger = new LoggerConfiguration()
+            var loggerConfig = new LoggerConfiguration()
+#if DEBUG
+             .MinimumLevel.Debug()
+#else
+             .MinimumLevel.Warning()
+#endif
              .Enrich.WithThreadId()
              .Enrich.FromLogContext()
-             .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day))
-             .CreateLogger();
+             .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day));
+
+      Log.Logger = loggerConfig.CreateLogger();
 
             
         DispatcherUnhandledException += OnDispatcherUnhandledException;

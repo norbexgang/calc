@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Input;
@@ -27,6 +25,7 @@ namespace CalcApp.ViewModels
         private double? _lastRightOperand = null;
         private string? _lastOperator = null;
         private readonly Queue<(bool, string)> _memoryHistoryEntries = new();
+        private readonly StringBuilder _memoryHistoryBuilder = new(256);
 
         /// <summary>
         /// Megadja, hogy a turbó mód engedélyezve van-e.
@@ -429,6 +428,7 @@ namespace CalcApp.ViewModels
         /// <param name="operationName">A művelet neve.</param>
         /// <param name="degrees">Fokokban számoljon-e.</param>
         /// <param name="validateTan">Érvényesítse-e a tangens függvényt.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ApplyUnaryFunction(Func<double, double> func, string operationName, bool degrees = false, bool validateTan = false)
         {
             if (func == null || string.IsNullOrWhiteSpace(operationName)) return;
@@ -660,6 +660,7 @@ namespace CalcApp.ViewModels
         /// </summary>
         /// <param name="value">A kijelzőn lévő érték.</param>
         /// <returns>Igaz, ha a lekérés sikeres, egyébként hamis.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryGetDisplayValue(out double value)
         {
             var text = Display;
@@ -695,6 +696,7 @@ namespace CalcApp.ViewModels
         /// Beállítja a kijelzőn lévő értéket.
         /// </summary>
         /// <param name="value">A beállítandó érték.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetDisplayValue(double value)
         {
             var formatted = FormatNumber(value);
@@ -750,27 +752,31 @@ namespace CalcApp.ViewModels
                 return;
             }
 
-            // Simplified logic: Just show the last N items that fit.
-            // We use MemoryHistoryDisplayCount to limit the number of items shown.
+            var entryCount = _memoryHistoryEntries.Count;
+            var skip = entryCount > MemoryHistoryDisplayCount ? entryCount - MemoryHistoryDisplayCount : 0;
+            var expectedItems = entryCount - skip;
 
-            var builder = new StringBuilder();
-            var entries = _memoryHistoryEntries.Skip(Math.Max(0, _memoryHistoryEntries.Count - MemoryHistoryDisplayCount)).ToList();
+            _memoryHistoryBuilder.Clear();
+            _memoryHistoryBuilder.EnsureCapacity(Math.Max(_memoryHistoryBuilder.Capacity, expectedItems * 8));
 
-            bool isFirst = true;
-            foreach (var (isAddition, description) in entries)
+            var index = 0;
+            var hasContent = false;
+            foreach (var (isAddition, description) in _memoryHistoryEntries)
             {
-                if (!isFirst) builder.Append("; ");
-                if (isAddition) builder.Append("+ "); else builder.Append("- ");
-                builder.Append(description);
-                isFirst = false;
+                if (index++ < skip) continue;
+
+                if (hasContent) _memoryHistoryBuilder.Append("; ");
+                _memoryHistoryBuilder.Append(isAddition ? "+ " : "- ");
+                _memoryHistoryBuilder.Append(description);
+                hasContent = true;
             }
 
-            if (_memoryHistoryEntries.Count > MemoryHistoryDisplayCount)
+            if (skip > 0)
             {
-                builder.Insert(0, "...; ");
+                _memoryHistoryBuilder.Insert(0, "...; ");
             }
 
-            _memoryHistoryText = builder.ToString();
+            _memoryHistoryText = _memoryHistoryBuilder.ToString();
         }
 
         /// <summary>
@@ -800,7 +806,7 @@ namespace CalcApp.ViewModels
             if (!IsFinite(value)) return "Error";
             if (value == 0.0 || Math.Abs(value) < double.Epsilon) return "0";
 
-            Span<char> buffer = stackalloc char[32];
+            Span<char> buffer = stackalloc char[64];
             if (value.TryFormat(buffer, out int written, "G12", Culture))
             {
                 var s = new string(buffer[..written]);
