@@ -20,6 +20,7 @@
     <PublishReadyToRun>true</PublishReadyToRun>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 
    <ItemGroup>

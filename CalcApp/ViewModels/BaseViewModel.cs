@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -8,6 +9,9 @@ namespace CalcApp.ViewModels
     /// </summary>
     public class BaseViewModel : INotifyPropertyChanged
     {
+        // Cache PropertyChangedEventArgs to reduce GC pressure
+        private static readonly ConcurrentDictionary<string, PropertyChangedEventArgs> _propertyChangedCache = new();
+
         /// <summary>
         /// Esemény, amely akkor következik be, ha egy tulajdonság értéke megváltozik.
         /// </summary>
@@ -19,7 +23,9 @@ namespace CalcApp.ViewModels
         /// <param name="propertyName">A megváltozott tulajdonság neve. Automatikusan kitöltődik a hívó nevével.</param>
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (propertyName == null) return;
+            var args = _propertyChangedCache.GetOrAdd(propertyName, static name => new PropertyChangedEventArgs(name));
+            PropertyChanged?.Invoke(this, args);
         }
     }
 }

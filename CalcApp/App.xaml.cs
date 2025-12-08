@@ -11,19 +11,6 @@ public partial class App : Application
 {
     public App()
     {
-        var loggerConfig = new LoggerConfiguration()
-#if DEBUG
-         .MinimumLevel.Debug()
-#else
-             .MinimumLevel.Warning()
-#endif
-         .Enrich.WithThreadId()
-         .Enrich.FromLogContext()
-         .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day));
-
-        Log.Logger = loggerConfig.CreateLogger();
-
-
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
@@ -77,6 +64,19 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Initialize logger after profile optimization but before UI
+        var loggerConfig = new LoggerConfiguration()
+#if DEBUG
+             .MinimumLevel.Debug()
+#else
+             .MinimumLevel.Warning()
+#endif
+             .Enrich.WithThreadId()
+             .Enrich.FromLogContext()
+             .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day));
+
+        Log.Logger = loggerConfig.CreateLogger();
+
         base.OnStartup(e);
     }
 }
