@@ -108,6 +108,14 @@ namespace CalcApp.ViewModels
         private static readonly Func<double, double> TanFunc = Math.Tan;
 
         /// <summary>
+        /// Inicializálja a CalculatorViewModel új példányát alapértelmezett beállításokkal.
+        /// Ezt a XAML példányosításhoz használjuk.
+        /// </summary>
+        public CalculatorViewModel() : this(null, null)
+        {
+        }
+
+        /// <summary>
         /// Inicializálja a CalculatorViewModel új példányát.
         /// </summary>
         public CalculatorViewModel(Func<string>? logPathProvider = null, Action<string>? logDirectoryOpener = null)
