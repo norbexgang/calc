@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Input;
@@ -31,6 +32,9 @@ namespace CalcApp.ViewModels
         /// Megadja, hogy a turbó mód engedélyezve van-e.
         /// </summary>
         public bool IsTurboEnabled { get; private set; }
+
+        private readonly Func<string> _logPathProvider;
+        private readonly Action<string> _logDirectoryOpener;
 
         /// <summary>
         /// A számológép kijelzőjének aktuális értéke.
@@ -96,6 +100,7 @@ namespace CalcApp.ViewModels
         private const int MaxDisplayLength = 64; // protect against extremely long input/overflow UI
         private const int MaxMemoryHistoryLength = 1024; // bound memory history to avoid unbounded growth
         private const int MemoryHistoryDisplayCount = 50; // number of items to show in history text
+        private const double IntegerTolerance = 1e-7; // tolerance for treating values as integers
         private static readonly double[] _factorialCache = CreateFactorialCache();
 
         private static readonly Func<double, double> SinFunc = Math.Sin;
@@ -105,8 +110,10 @@ namespace CalcApp.ViewModels
         /// <summary>
         /// Inicializálja a CalculatorViewModel új példányát.
         /// </summary>
-        public CalculatorViewModel()
+        public CalculatorViewModel(Func<string>? logPathProvider = null, Action<string>? logDirectoryOpener = null)
         {
+            _logPathProvider = logPathProvider ?? DefaultLogPathProvider;
+            _logDirectoryOpener = logDirectoryOpener ?? DefaultLogDirectoryOpener;
             DigitCommand = new RelayCommand(p => ProcessDigit(p?.ToString()));
             OperatorCommand = new RelayCommand(p => ProcessOperator(p?.ToString()));
             DecimalCommand = new RelayCommand(_ => ProcessDecimal());
@@ -127,15 +134,6 @@ namespace CalcApp.ViewModels
             OpenLogsCommand = new RelayCommand(_ => ProcessOpenLogs());
 
             InitializeMemory();
-        }
-
-        /// <summary>
-        /// Beállítja a turbó módot.
-        /// </summary>
-        /// <param name="isEnabled">Igaz, ha a turbó mód engedélyezve van, egyébként hamis.</param>
-        public void SetTurboMode(bool isEnabled)
-        {
-            IsTurboEnabled = isEnabled;
         }
 
         /// <summary>
@@ -259,7 +257,7 @@ namespace CalcApp.ViewModels
         {
             try
             {
-                var result = IsTurboEnabled ? TryEvaluate(left, right, op) : Evaluate(left, right, op);
+                var result = Evaluate(left, right, op);
                 if (!IsFinite(result))
                 {
                     ShowError();
@@ -316,6 +314,19 @@ namespace CalcApp.ViewModels
             _pendingOperator = null;
             _shouldResetDisplay = false;
             _lastOperationDescription = null;
+        }
+
+        /// <summary>
+        /// Beállítja a turbó módot.
+        /// </summary>
+        /// <param name="enabled">Engedélyezve legyen-e a turbó mód.</param>
+        public void SetTurboMode(bool enabled)
+        {
+            if (IsTurboEnabled != enabled)
+            {
+                IsTurboEnabled = enabled;
+                OnPropertyChanged(nameof(IsTurboEnabled));
+            }
         }
 
         /// <summary>
@@ -511,7 +522,7 @@ namespace CalcApp.ViewModels
                 return;
             }
 
-            if (Math.Abs(value - Math.Round(value)) > double.Epsilon)
+            if (!IsApproximatelyInteger(value))
             {
                 ShowError();
                 return;
@@ -632,27 +643,34 @@ namespace CalcApp.ViewModels
         /// <summary>
         /// Megnyitja a naplófájlok mappáját.
         /// </summary>
-        private static void ProcessOpenLogs()
+        private void ProcessOpenLogs()
         {
             try
             {
-                var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+                var logPath = _logPathProvider();
                 if (!Directory.Exists(logPath))
                 {
                     Directory.CreateDirectory(logPath);
                 }
 
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = logPath,
-                    UseShellExecute = true,
-                    Verb = "open"
-                });
+                _logDirectoryOpener(logPath);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to open logs folder");
             }
+        }
+
+        private static string DefaultLogPathProvider() => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+
+        private static void DefaultLogDirectoryOpener(string logPath)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = logPath,
+                UseShellExecute = true,
+                Verb = "open"
+            });
         }
 
         /// <summary>
@@ -844,31 +862,16 @@ namespace CalcApp.ViewModels
         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
         /// <summary>
-        /// Megpróbálja kiértékelni a műveletet, és hibakezeléssel látja el.
+        /// Ellen�'rzi, hogy egy �crt�ck k�zel �cszathet�' eg�csnek tekinthet�'-e (lebeg�cszaj toleranci�val).
         /// </summary>
-        /// <param name="left">A bal oldali operandus.</param>
-        /// <param name="right">A jobb oldali operandus.</param>
-        /// <param name="operatorSymbol">Az operátor.</param>
-        /// <returns>A művelet eredménye, vagy NaN hiba esetén.</returns>
+        /// <param name="value">Az ellen�'rizend�' �crt�ck.</param>
+        /// <returns>Igaz, ha eg�csnek tekinthet�', egy�cbk�cnt hamis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double TryEvaluate(double left, double right, string operatorSymbol)
+        private static bool IsApproximatelyInteger(double value)
         {
-            try
-            {
-                return Evaluate(left, right, operatorSymbol);
-            }
-            catch (DivideByZeroException)
-            {
-                return double.NaN;
-            }
-            catch (InvalidOperationException)
-            {
-                return double.NaN;
-            }
-            catch (OverflowException)
-            {
-                return double.NaN;
-            }
+            if (!IsFinite(value)) return false;
+            var rounded = Math.Round(value);
+            return Math.Abs(value - rounded) <= IntegerTolerance;
         }
 
         /// <summary>

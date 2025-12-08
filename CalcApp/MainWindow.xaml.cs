@@ -28,28 +28,12 @@ namespace CalcApp
         public MainWindow()
         {
             LoadComponentFromXaml();
-            Loaded += OnLoaded;
-            Unloaded += OnUnloaded;
 
             _neonBorderEffectDefault = TryFindResource("NeonBorderEffectDefault") as DropShadowEffect;
             _neonTextEffectDefault = TryFindResource("NeonTextEffectDefault") as DropShadowEffect;
             UpdateShadowResources();
             FreezeResourceDictionaries();
             InitializeKeyMappings();
-        }
-
-        private void OnLoaded(object? sender, RoutedEventArgs e)
-        {
-            if (FindName("TurboToggle") is ToggleButton turboBtn)
-            {
-                turboBtn.IsChecked = _isTurbo;
-            }
-        }
-
-        private void OnUnloaded(object? sender, RoutedEventArgs e)
-        {
-            Loaded -= OnLoaded;
-            Unloaded -= OnUnloaded;
         }
 
         private void LoadComponentFromXaml()
@@ -111,7 +95,6 @@ namespace CalcApp
                 if (_neonTextEffectDefault != null) Resources["NeonTextEffect"] = _neonTextEffectDefault;
             }
         }
-
         private readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = [];
 
         private void InitializeKeyMappings()
@@ -122,7 +105,6 @@ namespace CalcApp
             for (var k = Key.NumPad0; k <= Key.NumPad9; k++) Map(k, vm => vm.DigitCommand.Execute(((char)('0' + (k - Key.NumPad0))).ToString()));
 
             Map(Key.Add, vm => vm.OperatorCommand.Execute("+"));
-            Map(Key.OemPlus, vm => vm.OperatorCommand.Execute("+"));
             Map(Key.Subtract, vm => vm.OperatorCommand.Execute("-"));
             Map(Key.OemMinus, vm => vm.OperatorCommand.Execute("-"));
             Map(Key.Multiply, vm => vm.OperatorCommand.Execute("*"));
@@ -148,6 +130,20 @@ namespace CalcApp
             {
                 if (key == Key.C) { viewModel.ClearCommand.Execute(null); e.Handled = true; return; }
                 if (key == Key.M) { viewModel.MemoryClearCommand.Execute(null); e.Handled = true; return; }
+            }
+
+            if (key == Key.OemPlus)
+            {
+                if (modifiers == ModifierKeys.Shift)
+                {
+                    viewModel.OperatorCommand.Execute("+");
+                }
+                else if (modifiers == ModifierKeys.None)
+                {
+                    viewModel.EqualsCommand.Execute(null);
+                }
+                e.Handled = true;
+                return;
             }
 
             if ((modifiers == ModifierKeys.None || modifiers == ModifierKeys.Shift) && _keyMappings.TryGetValue(key, out var action))

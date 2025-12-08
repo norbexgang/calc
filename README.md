@@ -1,90 +1,71 @@
-# 🧮 Modern Kalkulátor
+# ŐR Modern Kalkulátor
 
-**Verzió**: 2.2 - Modernizált Kinézet + Optimalizált Teljesítmény
+**Verzió**: 2.2 - Modern megjelenés és optimalizált teljesítmény
 
 ## Leírás
-Prémium WPF számológép alkalmazás C# nyelven írva modern gradiens dizájnnal és smooth animációkkal. Az alkalmazás támogatja az alap aritmetikai műveleteket, tudományos funkciókat és memória műveleteket.
+Prémium WPF kalkulátor modern gradiens dizájnnal, kényelmes billentyűzetkezeléssel és gondosan optimalizált számítással. Támogatja a klasszikus aritmetikai műveleteket, tudományos függvényeket és memóriagombokat, miközben kifinomult animációval mutatja a váltásokat.
 
 ## Dokumentáció
-A teljes kódbázis magyar nyelven, C# XML dokumentációs megjegyzésekkel van dokumentálva, hogy egy új fejlesztő számára a lehető legkönnyebb legyen a kód megértése és a fejlesztésbe való bekapcsolódás.
+A kódbázis teljes terjedelmében magyar nyelvű XML dokumentációval van ellátva, hogy az új fejlesztők könnyedén megértsék a logikát és könnyen beszállhassanak a fejlesztésbe.
 
-## ✨ Új a 2.2 verzióban (Visual Refresh)
-- 🎨 **Gradiens témák** - Gyönyörű színátmenetek dark és light módban
-- 🔘 **Még kerekebb gombok** - 16px corner radius élénk árnyékokkal
-- 💫 **Enhanced effektek** - DropShadow minden elemen
-- 📱 **Nagyobb betűk** - 20px gombok, 40px display, bold típusok
-- 🖼️ **Professzionális UI** - Modern, prémium megjelenés
-- ⚡ **Megtartott sebesség** - Minden optimalizálás megmaradt!
+## Mi újság a 2.2-es verzióban (Visual Refresh)
+- Teljes vizuális frissítés: smooth gradiens hátterek, nagyobb betűk és homogén, 16px-es lekerekítésű gombok.
+- Drop shadow és neon hatások minden felületen, hogy a UI hű maradjon a prémium hangulathoz.
+- Animált témaváltás, fade in/out és button bounce-effektek a folyékony élményért.
+- Középpontban a tiszta, letisztult tipográfia, hogy a számjegyek és gombok egyaránt jól olvashatók legyenek minden méretben.
 
-## ✨ Új a 2.1 verzióban (Performance)
-- ⚡ **50-60% gyorsabb számítások** - egyszerűsített ProcessEquals()
-- 💾 **~200 byte memória megtakarítás** műveleteként
-- 📉 **~8% kisebb kód** (~100 sor eltávolítva)
-- 🎯 **Egyszerűbb UI** - zárójel gombok eltávolítva
-- 🔒 **Biztonságosabb** - kevesebb komplexitás
+## Mi újság a 2.1-es verzióban (Teljesítmény)
+- 50–60%-kal gyorsabb számítási útvonal a ProcessEquals logikában.
+- ~200 byte megtakarítás a memóriahasználatban per művelet (kevesebb doboz, kevesebb allokáció).
+- ~8%-kal rövidebb forráskód (kb. 100 sor eltávolítva) a tisztább vezérlésért.
+- Egyszerűsített UI: a zárójelek el lettek távolítva a könnyebb használat miatt.
+- Csökkentett komplexitás a biztonságosabb működés érdekében.
 
 ## Funkciók
-- **Alap műveletek**: összeadás, kivonás, szorzás, osztás
-- **Tudományos funkciók**: sin, cos, tan, négyzetgyök, faktoriális
-- **Memória műveletek**: M+, M-, MR, MC
-- **Animált témaváltás**: 🎬 smooth animációkkal
-  - 🌙 **Dark Mode**: Sötét Material Design téma
-  - ☀️ **Light Mode**: Világos Classic téma  
-  - **Animációs effektek**: fade transitions, button hover effects, click animations
-- **További funkciók**: százalék számítás, előjel váltás, törlés, visszalépés
-- ~~**Zárójelek**~~ - *eltávolítva v2.1-ben az egyszerűség érdekében*
+- **Alapműveletek**: összeadás, kivonás, szorzás, osztás, hatványozás.
+- **Tudományos függvények**: sin, cos, tan (fokban értelmezve), négyzetgyök, faktoriális.
+- **Memóriagombok**: M+, M-, MR, MC teljes előzménykezeléssel.
+- **Animációs élmény**: soft fade transzíciók, gombanimációk, hover effektek.
+- **Extra eszközök**: törlés, előjelváltás, százalékszámítás, ismétlődő egyenlőség logika és napló megnyitása.
 
-## 🎨 Vizuális Rendszer (v2.2)
-- **Gradiens Témák**: LinearGradientBrush beautiful color transitions
-- **DropShadow Effects**: GPU-gyorsított árnyékok minden elemen
-- **16px Rounded Corners**: Extra kerek gombok modern megjelenéssel
-- **Hover Feedback**: Opacity változás + fehér overlay effekt
-- **Bold Typography**: SemiBold/Bold betűk professzionális kinézetért
-- **Nagyobb Elemek**: 20px gombok, 40px display jobb olvashatóságért
+## Vizuális rendszer (v2.2)
+- Gradiens átmenetek a háttérben a dark és light témák között.
+- Drop shadow effekt minden panelen és gombon hardveresen gyorsított módon.
+- 16px-es lekerekítésű, kerekített gombok konzisztens színvilággal.
+- Hover visszajelzések opacitásváltozással és fehér overlay réteggel.
+- Félkövér tipográfia a kiemelt vezérlőkön, nagyobb elemek a jobb olvashatóságért.
 
-## ✨ Animációs Rendszer
-- **Fade Transitions**: 250ms smooth átmenetek témaváltáskor
-- **Button Animations**: hover és click effektek
-- **Scale Effects**: 1.08x zoom téma gombon
-- **Easing Functions**: QuadraticEase természetes mozgásért
-- **Async Animation**: nem blokkoló, fluid animációk
-- **GPU Accelerated**: Hardware gyorsított effektek
+## Animációs rendszer
+- Fade in/out tranzíciók 250 ms alatt.
+- Gombok hover és click animációi (scale, easing) a visszajelzésért.
+- Opacitás és skála effektek a gombokon és a display felületen.
+- Quadratic / Cubic easing funkciók a természetes mozgásélményért.
+- GPU gyorsítás és aszinkron animációk a fluid élményhez.
 
 ## Technológiai stack
-- **Framework**: .NET 8.0 Windows
-- **UI**: WPF (Windows Presentation Foundation) + Storyboard animációk
-- **Nyelv**: C# 12
-- **Témák**: Material Design és Classic témák
-- **Animációs Engine**: WPF Storyboard és DoubleAnimation
+- **Framework**: .NET 8.0 (net8.0-windows) WPF alkalmazás.
+- **UI**: WPF + Storyboard és DoubleAnimation technológiák.
+- **Nyelv**: C# 12, Nullable és implicit usings engedélyezve.
+- **Naplózás**: Serilog + asynchronous fájlíró sink.
 
-## 🚀 Optimalizálások (v2.0 - v2.1)
-
-### Teljesítmény:
-- ✅ String műveletek optimalizálása (IndexOf vs Contains)
-- ✅ Billentyűzet input branch prediction optimalizálás
-- ✅ Faktoriális cache double-checked locking
-- ✅ UI control caching (kevesebb XAML lookup)
-- ✅ StringBuilder kapacitás korlát
-- ✅ Zárójel stack eltávolítása (v2.1)
-
-### Biztonság:
-- ✅ Input validáció (whitelist operátorok)
-- ✅ Overflow detektálás minden műveletben
-- ✅ Exception handling minden kritikus ponton
-- ✅ Resource cleanup és memory leak prevention
-- ✅ Bounds checking (faktoriális, string length)
+## Optimalizálások (v2.0–v2.1)
+- Sztringműveletek gyorsítása (Contains helyett IndexOf, kevesebb másolás).
+- Billentyűzet input branch prediction optimalizálás.
+- Faktoriális cache dupla ellenőrzéssel.
+- UI resource dizájn cache-elés, kevesebb XAML lookup.
+- StringBuilder kapacitás ellenőrzés a túlcsordulás ellen.
+- Zárójel-stack eltávolítása, kevesebb felesleges logika.
+- Input validáció (operátor whitelist), overflow és exception kezelések minden kritikus ponton.
 
 ## Fejlesztés
-A projekt fejlesztésében **GitHub Copilot**, **ChatGPT és a Codex Agentje** és a **Jetbrains AI** AI asszisztensek közreműködött a kód optimalizálásában és a fejlesztési folyamat gyorsításában. A kód most már teljesen dokumentált, ami megkönnyíti a további fejlesztéseket.
-
-**v2.1 Optimalizálás**: GitHub Copilot által végzett kód egyszerűsítés és teljesítmény javítás.  
-**v2.2 Visual Refresh**: GitHub Copilot által tervezett modern gradiens dizájn és enhanced UI effektek.
+A projekt fejlesztésében segített a GitHub Copilot, ChatGPT és a JetBrains AI asszisztense.
+A kódbázis teljes egészében dokumentált, így gyorsan életbe léphet bármely új fejlesztő.
 
 ## Használat
-
 ### Indítás
 ```bash
 cd CalcApp
+
 dotnet run
 ```
 
@@ -93,12 +74,12 @@ dotnet run
 dotnet build
 ```
 
-### Tesztek futtatása
+### Tesztek
 ```bash
 dotnet test
 ```
 
-## 📸 Kinézet
-- 🌙 **Sötét Téma**: Mély purple-blue gradiens, cián szöveg, vibráló lila-kék accent
-- ☀️ **Világos Téma**: Tiszta grey-blue gradiens, sötét szöveg, friss kék-zöld accent
-- 💎 **Prémium**: Mindkét téma profi, modern és elegáns dizájnnal
+## Téma
+- **Sötét téma**: mély lila-kék gradiens, élénk kék-zöld kiemelőkkel.
+- **Világos téma**: letisztult szürke-kék átmenetek, friss árnyalatú accentekkel.
+- **Prémium dizájn**: mindkét téma modern, elegáns és intuitív megjelenést biztosít.
