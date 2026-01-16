@@ -1,9 +1,9 @@
-# ŐR Modern Kalkulátor
+# Modern Számológép
 
 **Verzió**: 2.2 - Modern megjelenés és optimalizált teljesítmény
 
 ## Leírás
-Prémium WPF kalkulátor modern gradiens dizájnnal, kényelmes billentyűzetkezeléssel és gondosan optimalizált számítással. Támogatja a klasszikus aritmetikai műveleteket, tudományos függvényeket és memóriagombokat, miközben kifinomult animációval mutatja a váltásokat.
+Prémium WPF számológép modern gradiens dizájnnal, kényelmes billentyűzetkezeléssel és gondosan optimalizált számítással. Támogatja a klasszikus aritmetikai műveleteket, tudományos függvényeket és memóriagombokat, miközben kifinomult animációval mutatja a váltásokat.
 
 ## Dokumentáció
 A kódbázis teljes terjedelmében magyar nyelvű XML dokumentációval van ellátva, hogy az új fejlesztők könnyedén megértsék a logikát és könnyen beszállhassanak a fejlesztésbe.
@@ -58,7 +58,7 @@ A kódbázis teljes terjedelmében magyar nyelvű XML dokumentációval van ell�
 - Input validáció (operátor whitelist), overflow és exception kezelések minden kritikus ponton.
 
 ## Fejlesztés
-A projekt fejlesztésében segített a GitHub Copilot, ChatGPT és a JetBrains AI asszisztense.
+A projekt kezdeti fázisaiban több AI (GitHub Copilot, ChatGPT) is közreműködött, azonban a továbbiakban a fejlesztés kizárólag a **JetBrains AI** segítségével történik.
 A kódbázis teljes egészében dokumentált, így gyorsan életbe léphet bármely új fejlesztő.
 
 ## Használat
