@@ -20,14 +20,13 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" CacheMode="BitmapCache">
+        <Grid Grid.Row="0">
             <Border CornerRadius="24" BorderBrush="{DynamicResource ButtonBackgroundBrush}"
                     BorderThickness="1" Padding="16"
-                    Background="{DynamicResource BorderBackgroundBrush}"
-                    Effect="{DynamicResource NeonBorderEffect}">
+                    Background="{DynamicResource BorderBackgroundBrush}">
                 <TextBox x:Name="Display" FontSize="48" FontWeight="Light"
                          HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                         Text="{Binding Display, Mode=TwoWay}" TextAlignment="Right" IsReadOnly="True" BorderThickness="0"
+                         Text="{Binding Display, Mode=OneWay}" TextAlignment="Right" IsReadOnly="True" BorderThickness="0"
                          Background="Transparent" Foreground="{DynamicResource BorderForegroundBrush}"
                          Effect="{DynamicResource NeonTextEffect}"
                          UseLayoutRounding="True" SnapsToDevicePixels="True"
@@ -40,9 +39,7 @@
                 CornerRadius="20"
                 BorderBrush="{DynamicResource ButtonBackgroundBrush}"
                 BorderThickness="1"
-                SnapsToDevicePixels="True"
-                Effect="{DynamicResource WindowShadowEffect}"
-                CacheMode="BitmapCache">
+                SnapsToDevicePixels="True">
 
             <Grid>
                 <Grid.RowDefinitions>

@@ -21,9 +21,6 @@
                                 CornerRadius="20"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}">
-                             <Border.Effect>
-                                <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="10" ShadowDepth="4" Direction="270" RenderingBias="Performance" po:Freeze="True" />
-                            </Border.Effect>
                         </Border>
                         
                         <Border x:Name="HighlightBorder" CornerRadius="20" Background="{DynamicResource ButtonHoverBrush}" Opacity="0" IsHitTestVisible="False" />
@@ -33,11 +30,6 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#80FFFFFF" />
-                            <Setter TargetName="ButtonBorder" Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect Color="{StaticResource GlowColor}" BlurRadius="15" ShadowDepth="0" Opacity="0.4" RenderingBias="Performance" po:Freeze="True"/>
-                                </Setter.Value>
-                            </Setter>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.8" />

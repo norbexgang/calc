@@ -172,29 +172,33 @@ namespace CalcApp.ViewModels
                 if (hasHistory)
                 {
                     // We need 2 items: "Memory total: ..." and "History: ..."
+                    string total = "Memory total: " + value;
+                    string history = "History: " + historyText;
+
                     if (MemoryItems.Count == 2)
                     {
-                        if (MemoryItems[0] != $"Memory total: {value}") MemoryItems[0] = $"Memory total: {value}";
-                        if (MemoryItems[1] != $"History: {historyText}") MemoryItems[1] = $"History: {historyText}";
+                        if (MemoryItems[0] != total) MemoryItems[0] = total;
+                        if (MemoryItems[1] != history) MemoryItems[1] = history;
                     }
                     else
                     {
                         MemoryItems.Clear();
-                        MemoryItems.Add($"Memory total: {value}");
-                        MemoryItems.Add($"History: {historyText}");
+                        MemoryItems.Add(total);
+                        MemoryItems.Add(history);
                     }
                 }
                 else
                 {
                     // We need 1 item: "Memory: ..."
+                    string mem = "Memory: " + value;
                     if (MemoryItems.Count == 1)
                     {
-                        if (MemoryItems[0] != $"Memory: {value}") MemoryItems[0] = $"Memory: {value}";
+                        if (MemoryItems[0] != mem) MemoryItems[0] = mem;
                     }
                     else
                     {
                         MemoryItems.Clear();
-                        MemoryItems.Add($"Memory: {value}");
+                        MemoryItems.Add(mem);
                     }
                 }
             }
@@ -832,33 +836,33 @@ namespace CalcApp.ViewModels
             if (!IsFinite(value)) return "Error";
             if (value == 0.0 || Math.Abs(value) < double.Epsilon) return "0";
 
-            Span<char> buffer = stackalloc char[64];
-            if (value.TryFormat(buffer, out int written, "G12", Culture))
+            // Gyors út egészekhez
+            if (IsApproximatelyInteger(value) && value is >= -1e14 and <= 1e14)
             {
-                var s = new string(buffer[..written]);
-                if (s.Contains('E'))
-                    return s.Length <= MaxDisplayLength ? s : value.ToString("E6", Culture);
-
-                if (s.Contains('.'))
-                {
-                    s = s.TrimEnd('0').TrimEnd('.');
-                }
+                var roundedValue = Math.Round(value);
+                // G formátum InvariantCulture-rel nem rak felesleges .0-át
+                var s = roundedValue.ToString("G", Culture);
                 if (s == "-0") return "0";
-                if (s.Length > MaxDisplayLength) s = value.ToString("E6", Culture);
-                return s.Length > 0 ? s : "0";
+                return s.Length > MaxDisplayLength ? value.ToString("E6", Culture) : s;
             }
 
             var formatted = value.ToString("G12", Culture);
-            if (formatted.Contains('E'))
-                return formatted.Length <= MaxDisplayLength ? formatted : value.ToString("E6", Culture);
-
-            if (formatted.Contains('.'))
+            
+            // Ha van benne tizedesjel és nem exponenciális, levágjuk a felesleges nullákat
+            var dotIndex = formatted.IndexOf('.');
+            if (dotIndex != -1 && formatted.IndexOf('E') == -1)
             {
-                formatted = formatted.TrimEnd('0').TrimEnd('.');
+                int end = formatted.Length - 1;
+                while (end > dotIndex && formatted[end] == '0')
+                {
+                    end--;
+                }
+                if (end == dotIndex) end--;
+                formatted = formatted.Substring(0, end + 1);
             }
+
             if (formatted == "-0") return "0";
-            if (formatted.Length > MaxDisplayLength) formatted = value.ToString("E6", Culture);
-            return formatted.Length > 0 ? formatted : "0";
+            return formatted.Length > MaxDisplayLength ? value.ToString("E6", Culture) : (formatted.Length > 0 ? formatted : "0");
         }
 
         /// <summary>
