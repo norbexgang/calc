@@ -311,7 +311,14 @@ namespace CalcApp.ViewModels
 
             if (!Display.Contains('.') && Display.Length + 1 <= MaxDisplayLength)
             {
-                Display += ".";
+                if (Display == "-")
+                {
+                    Display = "-0.";
+                }
+                else
+                {
+                    Display += ".";
+                }
                 _lastOperationDescription = null;
             }
         }
@@ -408,7 +415,15 @@ namespace CalcApp.ViewModels
                 _lastOperationDescription = null;
                 return;
             }
-            Display = Display.Length <= 1 ? "0" : Display[..^1];
+            
+            if (Display.Length <= 1 || (Display.Length == 2 && Display.StartsWith('-')))
+            {
+                Display = "0";
+            }
+            else
+            {
+                Display = Display[..^1];
+            }
             _lastOperationDescription = null;
         }
 
