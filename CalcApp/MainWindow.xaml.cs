@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows;
 using System.Windows.Controls.Primitives;
@@ -40,9 +41,8 @@ namespace CalcApp
         {
             try
             {
-                var uri = new Uri("/CalcApp;component/MainWindow.xaml", UriKind.Relative);
-                Application.LoadComponent(this, uri);
-                DataContext ??= new CalculatorViewModel();
+                // Direct InitializeComponent() is faster than LoadComponent with URI
+                InitializeComponent();
             }
             catch (Exception ex)
             {
@@ -88,6 +88,8 @@ namespace CalcApp
 
         private void InitializeKeyMappings()
         {
+            // Inline helper with AggressiveInlining for best performance
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void Map(Key k, Action<CalculatorViewModel> a) => _keyMappings[k] = a;
 
             for (var k = Key.D0; k <= Key.D9; k++) Map(k, vm => vm.DigitCommand.Execute(((char)('0' + (k - Key.D0))).ToString()));

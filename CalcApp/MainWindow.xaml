@@ -23,14 +23,16 @@
         <Grid Grid.Row="0">
             <Border CornerRadius="24" BorderBrush="{DynamicResource ButtonBackgroundBrush}"
                     BorderThickness="1" Padding="16"
-                    Background="{DynamicResource BorderBackgroundBrush}">
+                    Background="{DynamicResource BorderBackgroundBrush}"
+                    UseLayoutRounding="True" SnapsToDevicePixels="True">
                 <TextBox x:Name="Display" FontSize="48" FontWeight="Light"
                          HorizontalAlignment="Stretch" VerticalAlignment="Center"
                          Text="{Binding Display, Mode=OneWay}" TextAlignment="Right" IsReadOnly="True" BorderThickness="0"
                          Background="Transparent" Foreground="{DynamicResource BorderForegroundBrush}"
                          Effect="{DynamicResource NeonTextEffect}"
                          UseLayoutRounding="True" SnapsToDevicePixels="True"
-                         TextOptions.TextFormattingMode="Display" />
+                         TextOptions.TextFormattingMode="Display"
+                         CacheMode="BitmapCache" />
             </Border>
         </Grid>
 
@@ -53,8 +55,11 @@
                          Background="Transparent" BorderThickness="0"
                          FontSize="14" FontWeight="Normal"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.CanContentScroll="True"
                          VirtualizingPanel.IsVirtualizing="True"
-                         VirtualizingPanel.VirtualizationMode="Recycling" />
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         VirtualizingPanel.CacheLength="2,2"
+                         VirtualizingPanel.CacheLengthUnit="Page" />
             </Grid>
         </Border>
 

@@ -27,6 +27,7 @@ namespace CalcApp.ViewModels
         private string? _lastOperator = null;
         private readonly Queue<(bool, string)> _memoryHistoryEntries = new();
         private readonly StringBuilder _memoryHistoryBuilder = new(256);
+        private bool _isDisplayUpdatePending = false;
 
         /// <summary>
         /// Megadja, hogy a turbó mód engedélyezve van-e.
@@ -47,7 +48,16 @@ namespace CalcApp.ViewModels
                 if (_display != value)
                 {
                     _display = value;
-                    OnPropertyChanged();
+                    // Defer UI update to reduce overhead during rapid operations
+                    if (!_isDisplayUpdatePending)
+                    {
+                        _isDisplayUpdatePending = true;
+                        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                        {
+                            _isDisplayUpdatePending = false;
+                            OnPropertyChanged();
+                        }, System.Windows.Threading.DispatcherPriority.Render);
+                    }
                 }
             }
         }
@@ -106,6 +116,18 @@ namespace CalcApp.ViewModels
         private static readonly Func<double, double> SinFunc = Math.Sin;
         private static readonly Func<double, double> CosFunc = Math.Cos;
         private static readonly Func<double, double> TanFunc = Math.Tan;
+        
+        // String constants to avoid allocations
+        private const string ErrorString = "Error";
+        private const string ZeroString = "0";
+        private const string MinusZeroString = "-0";
+        private const string DecimalPointString = ".";
+        private const string MinusString = "-";
+        private const string MinusZeroDecimalString = "-0.";
+        private const string ZeroDecimalString = "0.";
+        private const string MemoryPrefix = "Memory: ";
+        private const string MemoryTotalPrefix = "Memory total: ";
+        private const string HistoryPrefix = "History: ";
 
         /// <summary>
         /// Inicializálja a CalculatorViewModel új példányát alapértelmezett beállításokkal.
@@ -160,9 +182,9 @@ namespace CalcApp.ViewModels
             try
             {
                 var value = FormatNumber(_memoryValue);
-                if (value == "Error")
+                if (value == ErrorString)
                 {
-                    value = "0";
+                    value = ZeroString;
                 }
 
                 var historyText = _memoryHistoryText;
@@ -172,8 +194,8 @@ namespace CalcApp.ViewModels
                 if (hasHistory)
                 {
                     // We need 2 items: "Memory total: ..." and "History: ..."
-                    string total = "Memory total: " + value;
-                    string history = "History: " + historyText;
+                    string total = string.Concat(MemoryTotalPrefix, value);
+                    string history = string.Concat(HistoryPrefix, historyText);
 
                     if (MemoryItems.Count == 2)
                     {
@@ -190,7 +212,7 @@ namespace CalcApp.ViewModels
                 else
                 {
                     // We need 1 item: "Memory: ..."
-                    string mem = "Memory: " + value;
+                    string mem = string.Concat(MemoryPrefix, value);
                     if (MemoryItems.Count == 1)
                     {
                         if (MemoryItems[0] != mem) MemoryItems[0] = mem;
@@ -217,7 +239,7 @@ namespace CalcApp.ViewModels
             if (string.IsNullOrEmpty(digit)) return;
 
             _lastOperationDescription = null;
-            if (_shouldResetDisplay || Display is "0" or "Error")
+            if (_shouldResetDisplay || Display is ZeroString or ErrorString)
             {
                 Display = digit.Length <= MaxDisplayLength ? digit : digit[..MaxDisplayLength];
             }
@@ -226,7 +248,7 @@ namespace CalcApp.ViewModels
                 var newLength = Display.Length + digit.Length;
                 if (newLength <= MaxDisplayLength)
                 {
-                    Display += digit;
+                    Display = string.Concat(Display, digit); // Faster than += for strings
                 }
             }
             _shouldResetDisplay = false;
@@ -301,9 +323,9 @@ namespace CalcApp.ViewModels
         /// </summary>
         private void ProcessDecimal()
         {
-            if (_shouldResetDisplay || Display == "Error")
+            if (_shouldResetDisplay || Display == ErrorString)
             {
-                Display = "0.";
+                Display = ZeroDecimalString;
                 _shouldResetDisplay = false;
                 _lastOperationDescription = null;
                 return;
@@ -311,13 +333,13 @@ namespace CalcApp.ViewModels
 
             if (!Display.Contains('.') && Display.Length + 1 <= MaxDisplayLength)
             {
-                if (Display == "-")
+                if (Display == MinusString)
                 {
-                    Display = "-0.";
+                    Display = MinusZeroDecimalString;
                 }
                 else
                 {
-                    Display += ".";
+                    Display = string.Concat(Display, DecimalPointString); // Faster than +=
                 }
                 _lastOperationDescription = null;
             }
@@ -328,7 +350,7 @@ namespace CalcApp.ViewModels
         /// </summary>
         private void ResetCalculatorState()
         {
-            Display = "0";
+            Display = ZeroString;
             _leftOperand = null;
             _pendingOperator = null;
             _shouldResetDisplay = false;
@@ -408,9 +430,9 @@ namespace CalcApp.ViewModels
         /// </summary>
         private void ProcessDelete()
         {
-            if (_shouldResetDisplay || Display == "Error")
+            if (_shouldResetDisplay || Display == ErrorString)
             {
-                Display = "0";
+                Display = ZeroString;
                 _shouldResetDisplay = false;
                 _lastOperationDescription = null;
                 return;
@@ -418,7 +440,7 @@ namespace CalcApp.ViewModels
             
             if (Display.Length <= 1 || (Display.Length == 2 && Display.StartsWith('-')))
             {
-                Display = "0";
+                Display = ZeroString;
             }
             else
             {
@@ -710,13 +732,13 @@ namespace CalcApp.ViewModels
         {
             var text = Display;
 
-            if (string.IsNullOrEmpty(text) || text.Length > MaxDisplayLength || text == "Error")
+            if (string.IsNullOrEmpty(text) || text.Length > MaxDisplayLength || text == ErrorString)
             {
                 value = 0;
                 return false;
             }
 
-            if (text == "-")
+            if (text == MinusString)
             {
                 value = 0;
                 return true;
@@ -755,7 +777,7 @@ namespace CalcApp.ViewModels
         /// </summary>
         private void ShowError()
         {
-            Display = "Error";
+            Display = ErrorString;
             _leftOperand = null;
             _pendingOperator = null;
             _shouldResetDisplay = true;
@@ -770,9 +792,9 @@ namespace CalcApp.ViewModels
         private void TrackMemoryOperation(double value, bool isAddition)
         {
             var description = _lastOperationDescription ?? FormatNumber(value);
-            if (description == "Error")
+            if (description == ErrorString)
             {
-                description = "0";
+                description = ZeroString;
             }
 
             _memoryHistoryEntries.Enqueue((isAddition, description));
@@ -832,7 +854,7 @@ namespace CalcApp.ViewModels
         private void RecordOperation(string description, double result)
         {
             var formattedResult = FormatNumber(result);
-            if (formattedResult == "Error")
+            if (formattedResult == ErrorString)
             {
                 _lastOperationDescription = null;
                 return;
@@ -848,8 +870,8 @@ namespace CalcApp.ViewModels
         /// <returns>A formázott szám.</returns>
         private static string FormatNumber(double value)
         {
-            if (!IsFinite(value)) return "Error";
-            if (value == 0.0 || Math.Abs(value) < double.Epsilon) return "0";
+            if (!IsFinite(value)) return ErrorString;
+            if (value == 0.0 || Math.Abs(value) < double.Epsilon) return ZeroString;
 
             // Gyors út egészekhez
             if (IsApproximatelyInteger(value) && value is >= -1e14 and <= 1e14)
@@ -857,27 +879,36 @@ namespace CalcApp.ViewModels
                 var roundedValue = Math.Round(value);
                 // G formátum InvariantCulture-rel nem rak felesleges .0-át
                 var s = roundedValue.ToString("G", Culture);
-                if (s == "-0") return "0";
+                if (s == MinusZeroString) return ZeroString;
                 return s.Length > MaxDisplayLength ? value.ToString("E6", Culture) : s;
             }
 
-            var formatted = value.ToString("G12", Culture);
-            
-            // Ha van benne tizedesjel és nem exponenciális, levágjuk a felesleges nullákat
-            var dotIndex = formatted.IndexOf('.');
-            if (dotIndex != -1 && formatted.IndexOf('E') == -1)
+            Span<char> buffer = stackalloc char[64];
+            if (value.TryFormat(buffer, out int charsWritten, "G12", Culture))
             {
-                int end = formatted.Length - 1;
-                while (end > dotIndex && formatted[end] == '0')
+                var formatted = buffer[..charsWritten];
+                
+                // Ha van benne tizedesjel és nem exponenciális, levágjuk a felesleges nullákat
+                var dotIndex = formatted.IndexOf('.');
+                if (dotIndex != -1 && formatted.IndexOf('E') == -1)
                 {
-                    end--;
+                    int end = formatted.Length - 1;
+                    while (end > dotIndex && formatted[end] == '0')
+                    {
+                        end--;
+                    }
+                    if (end == dotIndex) end--;
+                    formatted = formatted[..(end + 1)];
                 }
-                if (end == dotIndex) end--;
-                formatted = formatted.Substring(0, end + 1);
-            }
 
-            if (formatted == "-0") return "0";
-            return formatted.Length > MaxDisplayLength ? value.ToString("E6", Culture) : (formatted.Length > 0 ? formatted : "0");
+                var result = formatted.ToString();
+                if (result == MinusZeroString) return ZeroString;
+                return result.Length > MaxDisplayLength ? value.ToString("E6", Culture) : (result.Length > 0 ? result : ZeroString);
+            }
+            
+            // Fallback to old method if TryFormat fails
+            var fallback = value.ToString("G12", Culture);
+            return fallback.Length > MaxDisplayLength ? value.ToString("E6", Culture) : fallback;
         }
 
         /// <summary>
