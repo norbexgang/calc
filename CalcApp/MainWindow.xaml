@@ -7,7 +7,12 @@
         Background="{DynamicResource WindowBackgroundBrush}"
         KeyDown="Window_KeyDown" Focusable="True"
         WindowStartupLocation="CenterScreen"
-        AllowsTransparency="False">
+        AllowsTransparency="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        RenderOptions.BitmapScalingMode="LowQuality"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
 
     <Window.DataContext>
         <viewModels:CalculatorViewModel />
@@ -32,7 +37,12 @@
                          Effect="{DynamicResource NeonTextEffect}"
                          UseLayoutRounding="True" SnapsToDevicePixels="True"
                          TextOptions.TextFormattingMode="Display"
-                         CacheMode="BitmapCache" />
+                         TextOptions.TextRenderingMode="ClearType"
+                         RenderOptions.ClearTypeHint="Enabled">
+                    <TextBox.CacheMode>
+                        <BitmapCache EnableClearType="True" RenderAtScale="1" SnapsToDevicePixels="True" />
+                    </TextBox.CacheMode>
+                </TextBox>
             </Border>
         </Grid>
 
@@ -43,23 +53,26 @@
                 BorderThickness="1"
                 SnapsToDevicePixels="True">
 
-            <Grid>
+            <Grid SnapsToDevicePixels="True">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <TextBlock Text="Memória" FontSize="14" FontWeight="SemiBold"
-                           Margin="0,0,0,8" Foreground="{DynamicResource BorderForegroundBrush}" Opacity="0.7" />
+                           Margin="0,0,0,8" Foreground="{DynamicResource BorderForegroundBrush}" Opacity="0.7"
+                           TextOptions.TextFormattingMode="Display" />
                 <ListBox x:Name="MemoryList" Grid.Row="1" ItemsSource="{Binding MemoryItems}"
                          Foreground="{DynamicResource BorderForegroundBrush}"
                          Background="Transparent" BorderThickness="0"
                          FontSize="14" FontWeight="Normal"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.IsDeferredScrollingEnabled="True"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
-                         VirtualizingPanel.CacheLength="2,2"
-                         VirtualizingPanel.CacheLengthUnit="Page" />
+                         VirtualizingPanel.CacheLength="1,1"
+                         VirtualizingPanel.CacheLengthUnit="Page"
+                         VirtualizingPanel.ScrollUnit="Pixel" />
             </Grid>
         </Border>
 

@@ -2,6 +2,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
 
+    <!-- Cached frozen brush for border highlight -->
+    <SolidColorBrush x:Key="ButtonBorderHighlightBrush" Color="#80FFFFFF" po:Freeze="True" />
+
     <Style TargetType="Button">
         <Setter Property="Margin" Value="6" />
         <Setter Property="FontSize" Value="20" />
@@ -12,59 +15,59 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="LowQuality" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Grid>
+                    <Grid SnapsToDevicePixels="True" UseLayoutRounding="True">
                         <Border x:Name="ButtonBorder"
                                 Background="{TemplateBinding Background}"
                                 CornerRadius="20"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True"
+                                UseLayoutRounding="True">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="ButtonScaleTransform" ScaleX="1" ScaleY="1" />
+                            </Border.RenderTransform>
+                            <Border.RenderTransformOrigin>
+                                <Point X="0.5" Y="0.5" />
+                            </Border.RenderTransformOrigin>
                         </Border>
                         
-                        <Border x:Name="HighlightBorder" CornerRadius="20" Background="{DynamicResource ButtonHoverBrush}" Opacity="0" IsHitTestVisible="False" />
+                        <Border x:Name="HighlightBorder" CornerRadius="20" Background="{DynamicResource ButtonHoverBrush}" Opacity="0" IsHitTestVisible="False" SnapsToDevicePixels="True" />
                         
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" SnapsToDevicePixels="True" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#80FFFFFF" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ButtonBorderHighlightBrush}" />
+                            <Setter TargetName="HighlightBorder" Property="Opacity" Value="1.0" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.8" />
-                            <Setter TargetName="ButtonBorder" Property="RenderTransform">
-                                <Setter.Value>
-                                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" CenterX="35" CenterY="35" />
-                                </Setter.Value>
-                            </Setter>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScaleTransform" Storyboard.TargetProperty="ScaleX" To="0.95" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScaleTransform" Storyboard.TargetProperty="ScaleY" To="0.95" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScaleTransform" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScaleTransform" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.3" />
                         </Trigger>
-
-                        <EventTrigger RoutedEvent="MouseEnter">
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetName="HighlightBorder" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.2">
-                                        <DoubleAnimation.EasingFunction>
-                                            <CubicEase EasingMode="EaseOut" />
-                                        </DoubleAnimation.EasingFunction>
-                                    </DoubleAnimation>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-                        <EventTrigger RoutedEvent="MouseLeave">
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetName="HighlightBorder" Storyboard.TargetProperty="Opacity" To="0.0" Duration="0:0:0.2">
-                                        <DoubleAnimation.EasingFunction>
-                                            <CubicEase EasingMode="EaseIn" />
-                                        </DoubleAnimation.EasingFunction>
-                                    </DoubleAnimation>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

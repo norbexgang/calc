@@ -19,12 +19,22 @@ namespace CalcApp
         private bool _isTurbo = false;
 
 
-        // Shadow resources cached to avoid reallocation
-        private readonly DropShadowEffect _defaultWindowShadow = new() { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270, RenderingBias = RenderingBias.Performance };
-        private readonly DropShadowEffect _defaultButtonShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
-        private readonly DropShadowEffect _defaultButtonHoverShadow = new() { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
+        // Shadow resources cached and frozen to avoid reallocation and enable GPU caching
+        private static readonly DropShadowEffect _defaultWindowShadow;
+        private static readonly DropShadowEffect _defaultButtonShadow;
+        private static readonly DropShadowEffect _defaultButtonHoverShadow;
         private readonly DropShadowEffect? _neonBorderEffectDefault;
         private readonly DropShadowEffect? _neonTextEffectDefault;
+
+        static MainWindow()
+        {
+            _defaultWindowShadow = new DropShadowEffect { Color = Colors.Black, Opacity = 0.35, BlurRadius = 8, ShadowDepth = 3, Direction = 270, RenderingBias = RenderingBias.Performance };
+            _defaultWindowShadow.Freeze();
+            _defaultButtonShadow = new DropShadowEffect { Color = Color.FromRgb(209, 196, 233), Opacity = 0.4, BlurRadius = 12, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
+            _defaultButtonShadow.Freeze();
+            _defaultButtonHoverShadow = new DropShadowEffect { Color = Color.FromRgb(209, 196, 233), Opacity = 0.6, BlurRadius = 16, ShadowDepth = 4, Direction = 270, RenderingBias = RenderingBias.Performance };
+            _defaultButtonHoverShadow.Freeze();
+        }
 
         public MainWindow()
         {
@@ -84,30 +94,35 @@ namespace CalcApp
                 if (_neonTextEffectDefault != null) Resources["NeonTextEffect"] = _neonTextEffectDefault;
             }
         }
-        private readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = [];
+        private static readonly Dictionary<Key, Action<CalculatorViewModel>> _keyMappings = new(30);
 
-        private void InitializeKeyMappings()
+        private static void InitializeKeyMappings()
         {
-            // Inline helper with AggressiveInlining for best performance
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void Map(Key k, Action<CalculatorViewModel> a) => _keyMappings[k] = a;
+            if (_keyMappings.Count > 0) return; // Already initialized
 
-            for (var k = Key.D0; k <= Key.D9; k++) Map(k, vm => vm.DigitCommand.Execute(((char)('0' + (k - Key.D0))).ToString()));
-            for (var k = Key.NumPad0; k <= Key.NumPad9; k++) Map(k, vm => vm.DigitCommand.Execute(((char)('0' + (k - Key.NumPad0))).ToString()));
+            // Pre-cached digit strings to avoid allocations
+            var digits = new[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
-            Map(Key.Add, vm => vm.OperatorCommand.Execute("+"));
-            Map(Key.Subtract, vm => vm.OperatorCommand.Execute("-"));
-            Map(Key.OemMinus, vm => vm.OperatorCommand.Execute("-"));
-            Map(Key.Multiply, vm => vm.OperatorCommand.Execute("*"));
-            Map(Key.Divide, vm => vm.OperatorCommand.Execute("/"));
-            Map(Key.Oem2, vm => vm.OperatorCommand.Execute("/"));
-            Map(Key.Decimal, vm => vm.DecimalCommand.Execute(null));
-            Map(Key.OemPeriod, vm => vm.DecimalCommand.Execute(null));
-            Map(Key.Return, vm => vm.EqualsCommand.Execute(null));
-            Map(Key.Enter, vm => vm.EqualsCommand.Execute(null));
-            Map(Key.Back, vm => vm.DeleteCommand.Execute(null));
-            Map(Key.Escape, vm => vm.ClearCommand.Execute(null));
-            Map(Key.Oem5, vm => vm.PercentCommand.Execute(null));
+            for (var i = 0; i <= 9; i++)
+            {
+                var digit = digits[i];
+                _keyMappings[Key.D0 + i] = vm => vm.DigitCommand.Execute(digit);
+                _keyMappings[Key.NumPad0 + i] = vm => vm.DigitCommand.Execute(digit);
+            }
+
+            _keyMappings[Key.Add] = vm => vm.OperatorCommand.Execute("+");
+            _keyMappings[Key.Subtract] = vm => vm.OperatorCommand.Execute("-");
+            _keyMappings[Key.OemMinus] = vm => vm.OperatorCommand.Execute("-");
+            _keyMappings[Key.Multiply] = vm => vm.OperatorCommand.Execute("*");
+            _keyMappings[Key.Divide] = vm => vm.OperatorCommand.Execute("/");
+            _keyMappings[Key.Oem2] = vm => vm.OperatorCommand.Execute("/");
+            _keyMappings[Key.Decimal] = vm => vm.DecimalCommand.Execute(null);
+            _keyMappings[Key.OemPeriod] = vm => vm.DecimalCommand.Execute(null);
+            _keyMappings[Key.Return] = vm => vm.EqualsCommand.Execute(null);
+            _keyMappings[Key.Enter] = vm => vm.EqualsCommand.Execute(null);
+            _keyMappings[Key.Back] = vm => vm.DeleteCommand.Execute(null);
+            _keyMappings[Key.Escape] = vm => vm.ClearCommand.Execute(null);
+            _keyMappings[Key.Oem5] = vm => vm.PercentCommand.Execute(null);
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
