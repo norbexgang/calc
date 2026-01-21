@@ -278,6 +278,8 @@ public sealed class CalculatorViewModel : BaseViewModel
         _pendingOperator = null;
         _shouldResetDisplay = true;
         _lastOperationDescription = null;
+        _lastOperator = null;
+        _lastRightOperand = null;
     }
 
     #endregion
@@ -325,9 +327,7 @@ public sealed class CalculatorViewModel : BaseViewModel
     {
         if (_shouldResetDisplay || Display == ErrorString)
         {
-            Display = ZeroString;
-            _shouldResetDisplay = false;
-            _lastOperationDescription = null;
+            ResetCalculatorState();
             return;
         }
 
@@ -340,9 +340,43 @@ public sealed class CalculatorViewModel : BaseViewModel
 
     private void ProcessSign()
     {
-        if (!TryGetDisplayValue(out var value)) return;
+        if (Display == ErrorString) return;
 
-        SetDisplayValue(-value);
+        if (_shouldResetDisplay)
+        {
+            Display = MinusString;
+            _shouldResetDisplay = false;
+            _lastOperationDescription = null;
+            return;
+        }
+
+        if (Display == MinusString)
+        {
+            Display = ZeroString;
+            _lastOperationDescription = null;
+            return;
+        }
+
+        if (Display.StartsWith('-'))
+        {
+            Display = Display[1..];
+        }
+        else
+        {
+            if (Display.Length + 1 > MaxDisplayLength)
+            {
+                if (TryGetDisplayValue(out var value))
+                {
+                    SetDisplayValue(-value);
+                }
+                return;
+            }
+
+            Display = Display == ZeroString
+                ? MinusString
+                : string.Concat(MinusString, Display);
+        }
+
         _lastOperationDescription = null;
     }
 
@@ -479,6 +513,8 @@ public sealed class CalculatorViewModel : BaseViewModel
         _pendingOperator = null;
         _shouldResetDisplay = false;
         _lastOperationDescription = null;
+        _lastOperator = null;
+        _lastRightOperand = null;
     }
 
     #endregion
