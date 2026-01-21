@@ -18,51 +18,51 @@
         gradient stops or opacity values further to taste.
     -->
 
-    <!-- Window background: a semi‑transparent white gradient for a glass effect -->
+    <!-- Window background: deeper aurora‑like gradient for a richer, polished look -->
     <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1" po:Freeze="True">
-        <GradientStop Color="#40FFFFFF" Offset="0.0" />
-        <GradientStop Color="#20FFFFFF" Offset="0.6" />
-        <GradientStop Color="#10FFFFFF" Offset="1.0" />
+        <GradientStop Color="#FF0A0F1E" Offset="0.0" />
+        <GradientStop Color="#FF161B2F" Offset="0.55" />
+        <GradientStop Color="#FF0B0F24" Offset="1.0" />
     </LinearGradientBrush>
 
-    <!-- Panel and memory area background: slightly more opaque than the window -->
+    <!-- Panel and memory area background: refined glass with better contrast -->
     <LinearGradientBrush x:Key="BorderBackgroundBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
-        <GradientStop Color="#66FFFFFF" Offset="0.0" />
-        <GradientStop Color="#33FFFFFF" Offset="1.0" />
+        <GradientStop Color="#26FFFFFF" Offset="0.0" />
+        <GradientStop Color="#12FFFFFF" Offset="1.0" />
     </LinearGradientBrush>
 
-    <!-- Foreground for borders and labels: neon cyan -->
-    <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FF00FFFF" po:Freeze="True" />
+    <!-- Foreground for borders and labels: soft neon cyan -->
+    <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FF7FE9FF" po:Freeze="True" />
 
-    <!-- Button backgrounds: subtle frosted look with white tint -->
+    <!-- Button backgrounds: subtle frosted look with improved depth -->
     <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
-        <GradientStop Color="#55FFFFFF" Offset="0.0" />
-        <GradientStop Color="#25FFFFFF" Offset="1.0" />
+        <GradientStop Color="#32FFFFFF" Offset="0.0" />
+        <GradientStop Color="#18FFFFFF" Offset="1.0" />
     </LinearGradientBrush>
 
     <!-- Text colour on buttons -->
     <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FFFFFFFF" po:Freeze="True" />
 
-    <!-- Accent button gradient: vibrant turquoise and blue -->
+    <!-- Accent button gradient: vivid violet‑to‑cyan for a premium feel -->
     <LinearGradientBrush x:Key="AccentButtonBrush" StartPoint="0,0" EndPoint="1,1" po:Freeze="True">
-        <GradientStop Color="#FF00E5FF" Offset="0.0" />
-        <GradientStop Color="#FF0099FF" Offset="1.0" />
+        <GradientStop Color="#FF7C4DFF" Offset="0.0" />
+        <GradientStop Color="#FF00E5FF" Offset="1.0" />
     </LinearGradientBrush>
 
-    <!-- Hover brush for buttons: translucent white glow -->
-    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#4DFFFFFF" po:Freeze="True" />
+    <!-- Hover brush for buttons: brighter, cleaner glow -->
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#52FFFFFF" po:Freeze="True" />
 
     <!-- Glow colour used for neon effects -->
-    <Color x:Key="GlowColor" po:Freeze="True">#FF00FFFF</Color>
+    <Color x:Key="GlowColor" po:Freeze="True">#FF7C4DFF</Color>
     <SolidColorBrush x:Key="GlowBrush" Color="{StaticResource GlowColor}" po:Freeze="True" />
 
     <!-- Neon drop shadow presets for the text and border glow -->
-    <DropShadowEffect x:Key="NeonTextEffectDefault" Color="#FF00FFFF" BlurRadius="8" ShadowDepth="0" Opacity="0.8" RenderingBias="Performance" po:Freeze="True" />
-    <DropShadowEffect x:Key="NeonBorderEffectDefault" Color="#FF00E5FF" BlurRadius="15" ShadowDepth="0" Opacity="0.5" RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="NeonTextEffectDefault" Color="#FF7FE9FF" BlurRadius="9" ShadowDepth="0" Opacity="0.85" RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="NeonBorderEffectDefault" Color="#FF7C4DFF" BlurRadius="16" ShadowDepth="0" Opacity="0.55" RenderingBias="Performance" po:Freeze="True" />
 
     <!-- Reusable neon drop shadow references consumed by the UI -->
-    <DropShadowEffect x:Key="NeonTextEffect" Color="#FF00FFFF" BlurRadius="8" ShadowDepth="0" Opacity="0.8" RenderingBias="Performance" po:Freeze="True" />
-    <DropShadowEffect x:Key="NeonBorderEffect" Color="#FF00E5FF" BlurRadius="15" ShadowDepth="0" Opacity="0.5" RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="NeonTextEffect" Color="#FF7FE9FF" BlurRadius="9" ShadowDepth="0" Opacity="0.85" RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="NeonBorderEffect" Color="#FF7C4DFF" BlurRadius="16" ShadowDepth="0" Opacity="0.55" RenderingBias="Performance" po:Freeze="True" />
 
     <DropShadowEffect x:Key="WindowShadowEffect" Color="#FF000000" BlurRadius="8" ShadowDepth="3" Direction="270" Opacity="0.35" RenderingBias="Performance" po:Freeze="True" />
 
