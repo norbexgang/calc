@@ -140,6 +140,8 @@ public partial class App : Application
 
     private Serilog.Core.Logger CreateFileLogger()
     {
+        // Ensure the logs directory exists (tests may delete it between runs)
+        Directory.CreateDirectory(_logsPath);
         var logFile = Path.Combine(_logsPath, LogFilePattern);
 
         return new LoggerConfiguration()

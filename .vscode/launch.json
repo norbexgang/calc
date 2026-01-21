@@ -21,6 +21,17 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
+        },
+        {
+            "name": ".NET Tests (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/CalcApp.Tests/bin/Debug/net8.0/CalcApp.Tests.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/CalcApp.Tests",
+            "console": "integratedTerminal",
+            "stopAtEntry": false
         }
     ]
 }
