@@ -1,53 +1,73 @@
 using System;
 using System.Windows.Input;
 
-namespace CalcApp.ViewModels
+namespace CalcApp.ViewModels;
+
+/// <summary>
+/// Parancs implementáció, amely delegáltakra továbbítja a végrehajtási logikát.
+/// Támogatja a végrehajthatóság ellenőrzését és automatikusan frissül a CommandManager-rel.
+/// </summary>
+public sealed class RelayCommand : ICommand
 {
+    #region Fields
+
+    private readonly Action<object?> _execute;
+    private readonly Predicate<object?>? _canExecute;
+
+    #endregion
+
+    #region Constructors
+
     /// <summary>
-    /// Egy parancs, amelynek végrehajtási logikáját delegáltakra továbbítja.
+    /// Létrehoz egy új RelayCommand példányt.
     /// </summary>
-    public class RelayCommand : ICommand
+    /// <param name="execute">A végrehajtási logika.</param>
+    /// <exception cref="ArgumentNullException">Ha az execute paraméter null.</exception>
+    public RelayCommand(Action<object?> execute)
+        : this(execute, canExecute: null)
     {
-        private readonly Action<object?> _execute;
-        private readonly Predicate<object?>? _canExecute;
-
-        /// <summary>
-        /// Létrehoz egy új parancsot.
-        /// </summary>
-        /// <param name="execute">A végrehajtási logika.</param>
-        /// <param name="canExecute">A végrehajtási állapot logikája.</param>
-        public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
-
-        /// <summary>
-        /// Meghatározza, hogy a parancs végrehajtható-e a jelenlegi állapotában.
-        /// </summary>
-        /// <param name="parameter">A parancs által használt adat. Ha a parancs nem igényel adatokat, ez az objektum nullára állítható.</param>
-        /// <returns>igaz, ha ez a parancs végrehajtható; egyébként hamis.</returns>
-        public bool CanExecute(object? parameter)
-        {
-            return _canExecute == null || _canExecute(parameter);
-        }
-
-        /// <summary>
-        /// Végrehajtja a parancsot.
-        /// </summary>
-        /// <param name="parameter">A parancs által használt adat. Ha a parancs nem igényel adatokat, ez az objektum nullára állítható.</param>
-        public void Execute(object? parameter)
-        {
-            _execute(parameter);
-        }
-
-        /// <summary>
-        /// Akkor következik be, amikor a parancs végrehajthatóságát befolyásoló változások történnek.
-        /// </summary>
-        public event EventHandler? CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
     }
+
+    /// <summary>
+    /// Létrehoz egy új RelayCommand példányt végrehajthatósági ellenőrzéssel.
+    /// </summary>
+    /// <param name="execute">A végrehajtási logika.</param>
+    /// <param name="canExecute">A végrehajthatósági feltétel.</param>
+    /// <exception cref="ArgumentNullException">Ha az execute paraméter null.</exception>
+    public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute)
+    {
+        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+        _canExecute = canExecute;
+    }
+
+    #endregion
+
+    #region ICommand Implementation
+
+    /// <inheritdoc />
+    public event EventHandler? CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
+
+    /// <inheritdoc />
+    public bool CanExecute(object? parameter)
+        => _canExecute?.Invoke(parameter) ?? true;
+
+    /// <inheritdoc />
+    public void Execute(object? parameter)
+        => _execute(parameter);
+
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// Értesíti a WPF-et, hogy a parancs végrehajthatósága megváltozhatott.
+    /// </summary>
+    public static void RaiseCanExecuteChanged()
+        => CommandManager.InvalidateRequerySuggested();
+
+    #endregion
 }
