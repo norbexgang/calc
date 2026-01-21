@@ -4,20 +4,23 @@ using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows;
 using Serilog;
+using Serilog.Formatting.Compact;
 
 namespace CalcApp;
 
 public partial class App : Application
 {
+    private readonly string _profileRoot;
+
     public App()
     {
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
-        var profileRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CalcApp");
-        Directory.CreateDirectory(profileRoot);
-        ProfileOptimization.SetProfileRoot(profileRoot);
+        _profileRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CalcApp");
+        Directory.CreateDirectory(_profileRoot);
+        ProfileOptimization.SetProfileRoot(_profileRoot);
         ProfileOptimization.StartProfile("Startup.profile");
     }
 
@@ -65,6 +68,10 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         // Initialize logger after profile optimization but before UI
+        var logsPath = Path.Combine(_profileRoot, "logs");
+        Directory.CreateDirectory(logsPath);
+        var logFile = Path.Combine(logsPath, "log-.json");
+
         var loggerConfig = new LoggerConfiguration()
 #if DEBUG
              .MinimumLevel.Debug()
@@ -73,7 +80,7 @@ public partial class App : Application
 #endif
              .Enrich.WithThreadId()
              .Enrich.FromLogContext()
-             .WriteTo.Async(a => a.File("logs/log.txt", rollingInterval: RollingInterval.Day));
+             .WriteTo.Async(a => a.File(new CompactJsonFormatter(), logFile, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14, shared: true, buffered: true, flushToDiskInterval: TimeSpan.FromSeconds(2)), blockWhenFull: true, bufferSize: 10000);
 
         Log.Logger = loggerConfig.CreateLogger();
 
