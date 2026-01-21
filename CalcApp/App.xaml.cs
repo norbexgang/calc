@@ -11,6 +11,9 @@ namespace CalcApp;
 public partial class App : Application
 {
     private readonly string _profileRoot;
+    public static App? CurrentApp => Current as App;
+
+    public bool IsLoggingEnabled { get; private set; } = true;
 
     public App()
     {
@@ -67,6 +70,29 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        ConfigureLogger(IsLoggingEnabled);
+
+        base.OnStartup(e);
+    }
+
+    public void SetLoggingEnabled(bool enabled)
+    {
+        if (IsLoggingEnabled == enabled) return;
+
+        IsLoggingEnabled = enabled;
+        ConfigureLogger(enabled);
+    }
+
+    private void ConfigureLogger(bool enabled)
+    {
+        Log.CloseAndFlush();
+
+        if (!enabled)
+        {
+            Log.Logger = new LoggerConfiguration().CreateLogger();
+            return;
+        }
+
         // Initialize logger after profile optimization but before UI
         var logsPath = Path.Combine(_profileRoot, "logs");
         Directory.CreateDirectory(logsPath);
@@ -80,10 +106,8 @@ public partial class App : Application
 #endif
              .Enrich.WithThreadId()
              .Enrich.FromLogContext()
-             .WriteTo.Async(a => a.File(new CompactJsonFormatter(), logFile, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14, shared: true, buffered: true, flushToDiskInterval: TimeSpan.FromSeconds(2)), blockWhenFull: true, bufferSize: 10000);
+             .WriteTo.Async(a => a.File(new CompactJsonFormatter(), logFile, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14, shared: true, buffered: false, flushToDiskInterval: TimeSpan.FromSeconds(2)), blockWhenFull: true, bufferSize: 10000);
 
         Log.Logger = loggerConfig.CreateLogger();
-
-        base.OnStartup(e);
     }
 }

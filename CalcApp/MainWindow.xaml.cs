@@ -158,5 +158,15 @@ namespace CalcApp
                 e.Handled = true;
             }
         }
+
+        private void OpenSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new SettingsWindow
+            {
+                Owner = this
+            };
+
+            window.ShowDialog();
+        }
     }
 }
