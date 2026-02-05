@@ -137,8 +137,6 @@ public partial class MainWindow : Window
         KeyMappings[Key.OemMinus] = vm => vm.OperatorCommand.Execute("-");
         KeyMappings[Key.Multiply] = vm => vm.OperatorCommand.Execute("*");
         KeyMappings[Key.Divide] = vm => vm.OperatorCommand.Execute("/");
-        KeyMappings[Key.Oem2] = vm => vm.OperatorCommand.Execute("/");
-        KeyMappings[Key.Oem5] = vm => vm.PercentCommand.Execute(null);
     }
 
     private static void RegisterControlMappings()
@@ -255,6 +253,23 @@ public partial class MainWindow : Window
     {
         var modifiers = Keyboard.Modifiers;
         if (modifiers != ModifierKeys.None && modifiers != ModifierKeys.Shift) return;
+
+        // Magyar billentyűzet: Shift+5 = %, Shift+6 = /
+        if (modifiers == ModifierKeys.Shift)
+        {
+            if (e.Key == Key.D5)
+            {
+                viewModel.PercentCommand.Execute(null);
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.D6)
+            {
+                viewModel.OperatorCommand.Execute("/");
+                e.Handled = true;
+                return;
+            }
+        }
 
         if (KeyMappings.TryGetValue(e.Key, out var action))
         {
