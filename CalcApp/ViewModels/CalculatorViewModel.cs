@@ -678,6 +678,7 @@ public sealed class CalculatorViewModel : BaseViewModel
         _memoryValue = 0;
         _memoryHistoryEntries.Clear();
         _memoryHistoryText = string.Empty;
+        _lastOperationDescription = null;
         UpdateMemoryDisplay();
     }
 
