@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using CalcApp.ViewModels;
 using Xunit;
@@ -10,6 +11,12 @@ namespace CalcApp.Tests;
 /// </summary>
 public class CalculatorViewModelTests
 {
+    private static double ParseDisplay(string displayText)
+        => double.Parse(
+            displayText,
+            NumberStyles.Float | NumberStyles.AllowThousands,
+            CultureInfo.InvariantCulture);
+
     /// <summary>
     /// Teszteli, hogy a százalék hozzáadása helyes eredményt ad-e.
     /// </summary>
@@ -87,6 +94,87 @@ public class CalculatorViewModelTests
     }
 
     [Fact]
+    public void ToggleAngleMode_ShouldSwitchBetweenDegreesAndRadians()
+    {
+        var viewModel = new CalculatorViewModel();
+
+        Assert.False(viewModel.IsRadiansMode);
+        Assert.Equal("DEG", viewModel.AngleModeDisplay);
+
+        viewModel.ToggleAngleModeCommand.Execute(null);
+
+        Assert.True(viewModel.IsRadiansMode);
+        Assert.Equal("RAD", viewModel.AngleModeDisplay);
+    }
+
+    [Fact]
+    public void SinCommand_InRadiansMode_UsesRadians()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "1.5707963267948966"
+        };
+
+        viewModel.ToggleAngleModeCommand.Execute(null);
+        viewModel.SinCommand.Execute(null);
+
+        Assert.Equal("1", viewModel.Display);
+    }
+
+    [Fact]
+    public void AsinCommand_InDegreesMode_ReturnsDegrees()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "0.5"
+        };
+
+        viewModel.AsinCommand.Execute(null);
+
+        Assert.Equal("30", viewModel.Display);
+    }
+
+    [Fact]
+    public void AsinCommand_InRadiansMode_ReturnsRadians()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "0.5"
+        };
+
+        viewModel.ToggleAngleModeCommand.Execute(null);
+        viewModel.AsinCommand.Execute(null);
+
+        Assert.InRange(Math.Abs(ParseDisplay(viewModel.Display) - Math.PI / 6.0), 0, 1e-10);
+    }
+
+    [Fact]
+    public void AcosCommand_OutsideDomain_ShowsError()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "2"
+        };
+
+        viewModel.AcosCommand.Execute(null);
+
+        Assert.Equal("Error", viewModel.Display);
+    }
+
+    [Fact]
+    public void AtanCommand_InDegreesMode_ReturnsExpectedAngle()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "1"
+        };
+
+        viewModel.AtanCommand.Execute(null);
+
+        Assert.Equal("45", viewModel.Display);
+    }
+
+    [Fact]
     public void LnCommand_OfEulerNumber_ReturnsOne()
     {
         var viewModel = new CalculatorViewModel
@@ -126,6 +214,32 @@ public class CalculatorViewModelTests
     }
 
     [Fact]
+    public void ExpCommand_OfOne_ReturnsE()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "1"
+        };
+
+        viewModel.ExpCommand.Execute(null);
+
+        Assert.InRange(Math.Abs(ParseDisplay(viewModel.Display) - Math.E), 0, 1e-10);
+    }
+
+    [Fact]
+    public void Pow10Command_OfThree_ReturnsThousand()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "3"
+        };
+
+        viewModel.Pow10Command.Execute(null);
+
+        Assert.Equal("1000", viewModel.Display);
+    }
+
+    [Fact]
     public void SquareCommand_HandlesNegativeInput()
     {
         var viewModel = new CalculatorViewModel
@@ -139,6 +253,45 @@ public class CalculatorViewModelTests
     }
 
     [Fact]
+    public void CubeCommand_HandlesNegativeInput()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "-3"
+        };
+
+        viewModel.CubeCommand.Execute(null);
+
+        Assert.Equal("-27", viewModel.Display);
+    }
+
+    [Fact]
+    public void CbrtCommand_HandlesNegativeInput()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "-27"
+        };
+
+        viewModel.CbrtCommand.Execute(null);
+
+        Assert.Equal("-3", viewModel.Display);
+    }
+
+    [Fact]
+    public void AbsCommand_ShouldReturnPositiveValue()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "-123.5"
+        };
+
+        viewModel.AbsCommand.Execute(null);
+
+        Assert.Equal("123.5", viewModel.Display);
+    }
+
+    [Fact]
     public void ReciprocalCommand_OfZero_ShowsError()
     {
         var viewModel = new CalculatorViewModel
@@ -147,6 +300,80 @@ public class CalculatorViewModelTests
         };
 
         viewModel.ReciprocalCommand.Execute(null);
+
+        Assert.Equal("Error", viewModel.Display);
+    }
+
+    [Fact]
+    public void PiCommand_SetsPiOnDisplay()
+    {
+        var viewModel = new CalculatorViewModel();
+
+        viewModel.PiCommand.Execute(null);
+
+        Assert.InRange(Math.Abs(ParseDisplay(viewModel.Display) - Math.PI), 0, 1e-10);
+    }
+
+    [Fact]
+    public void PiCommand_ThenDigit_StartsNewInput()
+    {
+        var viewModel = new CalculatorViewModel();
+
+        viewModel.PiCommand.Execute(null);
+        viewModel.DigitCommand.Execute("2");
+
+        Assert.Equal("2", viewModel.Display);
+    }
+
+    [Fact]
+    public void EConstantCommand_SetsEOnDisplay()
+    {
+        var viewModel = new CalculatorViewModel();
+
+        viewModel.EConstantCommand.Execute(null);
+
+        Assert.InRange(Math.Abs(ParseDisplay(viewModel.Display) - Math.E), 0, 1e-10);
+    }
+
+    [Fact]
+    public void EConstantCommand_CanBeUsedInOperation()
+    {
+        var viewModel = new CalculatorViewModel();
+
+        viewModel.EConstantCommand.Execute(null);
+        viewModel.OperatorCommand.Execute("+");
+        viewModel.DigitCommand.Execute("1");
+        viewModel.EqualsCommand.Execute(null);
+
+        Assert.InRange(Math.Abs(ParseDisplay(viewModel.Display) - (Math.E + 1.0)), 0, 1e-10);
+    }
+
+    [Fact]
+    public void ModCommand_ShouldCalculateRemainder()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "10"
+        };
+
+        viewModel.ModCommand.Execute(null);
+        viewModel.Display = "3";
+        viewModel.EqualsCommand.Execute(null);
+
+        Assert.Equal("1", viewModel.Display);
+    }
+
+    [Fact]
+    public void ModCommand_WithZeroRightOperand_ShowsError()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "10"
+        };
+
+        viewModel.ModCommand.Execute(null);
+        viewModel.Display = "0";
+        viewModel.EqualsCommand.Execute(null);
 
         Assert.Equal("Error", viewModel.Display);
     }

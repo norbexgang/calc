@@ -275,6 +275,31 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 return true;
 
+            case Key.R:
+                viewModel.ToggleAngleModeCommand.Execute(null);
+                e.Handled = true;
+                return true;
+
+            case Key.P:
+                viewModel.PiCommand.Execute(null);
+                e.Handled = true;
+                return true;
+
+            case Key.E:
+                viewModel.EConstantCommand.Execute(null);
+                e.Handled = true;
+                return true;
+
+            case Key.L:
+                viewModel.LnCommand.Execute(null);
+                e.Handled = true;
+                return true;
+
+            case Key.G:
+                viewModel.LogCommand.Execute(null);
+                e.Handled = true;
+                return true;
+
             default:
                 return false;
         }

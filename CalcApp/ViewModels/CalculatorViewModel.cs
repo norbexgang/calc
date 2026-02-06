@@ -24,6 +24,7 @@ public sealed class CalculatorViewModel : BaseViewModel
     private const int MemoryHistoryDisplayCount = 50;
     private const double IntegerTolerance = 1e-7;
     private const double DegreesToRadians = Math.PI / 180.0;
+    private const double RadiansToDegrees = 180.0 / Math.PI;
     private const string AppDataFolderName = "CalcApp";
     private const string LogsFolderName = "logs";
 
@@ -76,6 +77,16 @@ public sealed class CalculatorViewModel : BaseViewModel
     /// Megadja, hogy a turbó mód engedélyezve van-e.
     /// </summary>
     public bool IsTurboEnabled { get; private set; }
+
+    /// <summary>
+    /// Megadja, hogy a trigonometrikus műveletek radián módban működnek-e.
+    /// </summary>
+    public bool IsRadiansMode { get; private set; }
+
+    /// <summary>
+    /// A jelenlegi szögmód kijelzett neve.
+    /// </summary>
+    public string AngleModeDisplay => IsRadiansMode ? "RAD" : "DEG";
 
     /// <summary>
     /// A számológép kijelzőjének aktuális értéke.
@@ -134,14 +145,32 @@ public sealed class CalculatorViewModel : BaseViewModel
     /// <summary>Parancs a tangens függvény alkalmazásához.</summary>
     public ICommand TanCommand { get; }
 
+    /// <summary>Parancs az arcszinusz függvény alkalmazásához.</summary>
+    public ICommand AsinCommand { get; }
+
+    /// <summary>Parancs az arccoszinusz függvény alkalmazásához.</summary>
+    public ICommand AcosCommand { get; }
+
+    /// <summary>Parancs az arctangens függvény alkalmazásához.</summary>
+    public ICommand AtanCommand { get; }
+
     /// <summary>Parancs a természetes logaritmus függvény alkalmazásához.</summary>
     public ICommand LnCommand { get; }
 
     /// <summary>Parancs a tízes alapú logaritmus függvény alkalmazásához.</summary>
     public ICommand LogCommand { get; }
 
+    /// <summary>Parancs az e hatványozás (e^x) alkalmazásához.</summary>
+    public ICommand ExpCommand { get; }
+
+    /// <summary>Parancs a tízes hatványozás (10^x) alkalmazásához.</summary>
+    public ICommand Pow10Command { get; }
+
     /// <summary>Parancs a négyzetre emelés alkalmazásához.</summary>
     public ICommand SquareCommand { get; }
+
+    /// <summary>Parancs a köbre emelés alkalmazásához.</summary>
+    public ICommand CubeCommand { get; }
 
     /// <summary>Parancs a reciprok (1/x) művelet alkalmazásához.</summary>
     public ICommand ReciprocalCommand { get; }
@@ -149,8 +178,26 @@ public sealed class CalculatorViewModel : BaseViewModel
     /// <summary>Parancs a négyzetgyök függvény alkalmazásához.</summary>
     public ICommand SqrtCommand { get; }
 
+    /// <summary>Parancs a köbgyök függvény alkalmazásához.</summary>
+    public ICommand CbrtCommand { get; }
+
+    /// <summary>Parancs az abszolútérték alkalmazásához.</summary>
+    public ICommand AbsCommand { get; }
+
     /// <summary>Parancs a faktoriális függvény alkalmazásához.</summary>
     public ICommand FactorialCommand { get; }
+
+    /// <summary>Parancs a modulo operátor beállításához.</summary>
+    public ICommand ModCommand { get; }
+
+    /// <summary>Parancs a PI konstans beillesztéséhez.</summary>
+    public ICommand PiCommand { get; }
+
+    /// <summary>Parancs az Euler-féle e konstans beillesztéséhez.</summary>
+    public ICommand EConstantCommand { get; }
+
+    /// <summary>Parancs a fok/radián mód váltásához.</summary>
+    public ICommand ToggleAngleModeCommand { get; }
 
     /// <summary>Parancs a memória hozzáadásához.</summary>
     public ICommand MemoryAddCommand { get; }
@@ -200,12 +247,24 @@ public sealed class CalculatorViewModel : BaseViewModel
         SinCommand = new RelayCommand(_ => ApplyTrigonometricFunction(SinFunc, "sin"));
         CosCommand = new RelayCommand(_ => ApplyTrigonometricFunction(CosFunc, "cos"));
         TanCommand = new RelayCommand(_ => ApplyTrigonometricFunction(TanFunc, "tan", validateTan: true));
+        AsinCommand = new RelayCommand(_ => ApplyInverseTrigonometricFunction(Math.Asin, "asin", requiresUnitDomain: true));
+        AcosCommand = new RelayCommand(_ => ApplyInverseTrigonometricFunction(Math.Acos, "acos", requiresUnitDomain: true));
+        AtanCommand = new RelayCommand(_ => ApplyInverseTrigonometricFunction(Math.Atan, "atan"));
         LnCommand = new RelayCommand(_ => ProcessNaturalLogarithm());
         LogCommand = new RelayCommand(_ => ProcessBase10Logarithm());
+        ExpCommand = new RelayCommand(_ => ProcessExponential());
+        Pow10Command = new RelayCommand(_ => ProcessPowerOfTen());
         SquareCommand = new RelayCommand(_ => ProcessSquare());
+        CubeCommand = new RelayCommand(_ => ProcessCube());
         ReciprocalCommand = new RelayCommand(_ => ProcessReciprocal());
         SqrtCommand = new RelayCommand(_ => ProcessSqrt());
+        CbrtCommand = new RelayCommand(_ => ProcessCbrt());
+        AbsCommand = new RelayCommand(_ => ProcessAbsolute());
         FactorialCommand = new RelayCommand(_ => ProcessFactorial());
+        ModCommand = new RelayCommand(_ => ProcessOperator("mod"));
+        PiCommand = new RelayCommand(_ => ProcessConstant(Math.PI, "pi"));
+        EConstantCommand = new RelayCommand(_ => ProcessConstant(Math.E, "e"));
+        ToggleAngleModeCommand = new RelayCommand(_ => ToggleAngleMode());
         MemoryAddCommand = new RelayCommand(_ => ProcessMemoryAdd());
         MemorySubtractCommand = new RelayCommand(_ => ProcessMemorySubtract());
         MemoryRecallCommand = new RelayCommand(_ => ProcessMemoryRecall());
@@ -229,6 +288,16 @@ public sealed class CalculatorViewModel : BaseViewModel
 
         IsTurboEnabled = enabled;
         OnPropertyChanged(nameof(IsTurboEnabled));
+    }
+
+    /// <summary>
+    /// Vált a fok és a radián mód között.
+    /// </summary>
+    public void ToggleAngleMode()
+    {
+        IsRadiansMode = !IsRadiansMode;
+        OnPropertyChanged(nameof(IsRadiansMode));
+        OnPropertyChanged(nameof(AngleModeDisplay));
     }
 
     #endregion
@@ -411,7 +480,7 @@ public sealed class CalculatorViewModel : BaseViewModel
     }
 
     private static bool IsValidOperator(string? op)
-        => op is "+" or "-" or "*" or "/" or "^";
+        => op is "+" or "-" or "*" or "/" or "^" or "mod";
 
     private void ExecuteOperation(double left, double right, string op)
     {
@@ -538,9 +607,9 @@ public sealed class CalculatorViewModel : BaseViewModel
         if (!TryGetDisplayValue(out var value)) return;
 
         var originalValue = value;
-        var radians = value * DegreesToRadians;
+        var angle = IsRadiansMode ? value : value * DegreesToRadians;
 
-        if (validateTan && Math.Abs(Math.Cos(radians)) < 1e-12)
+        if (validateTan && Math.Abs(Math.Cos(angle)) < 1e-12)
         {
             ShowError();
             return;
@@ -548,7 +617,7 @@ public sealed class CalculatorViewModel : BaseViewModel
 
         try
         {
-            var result = func(radians);
+            var result = func(angle);
 
             if (!IsFinite(result))
             {
@@ -569,118 +638,142 @@ public sealed class CalculatorViewModel : BaseViewModel
         }
     }
 
-    private void ProcessNaturalLogarithm()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ApplyInverseTrigonometricFunction(
+        Func<double, double> func,
+        string operationName,
+        bool requiresUnitDomain = false)
     {
         if (!TryGetDisplayValue(out var value)) return;
 
-        if (value <= 0)
+        if (requiresUnitDomain && (value < -1 || value > 1))
         {
             ShowError();
             return;
         }
 
-        var result = Math.Log(value);
-        if (!IsFinite(result))
+        try
+        {
+            var radians = func(value);
+            if (!IsFinite(radians))
+            {
+                ShowError();
+                return;
+            }
+
+            var result = IsRadiansMode ? radians : radians * RadiansToDegrees;
+            if (!IsFinite(result))
+            {
+                ShowError();
+                return;
+            }
+
+            SetDisplayValue(result);
+            if (Display == ErrorString) return;
+
+            _shouldResetDisplay = true;
+            RecordOperation($"{operationName}({FormatNumber(value)})", result);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Hiba az {OperationName} függvényben", operationName);
+            ShowError();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ApplyUnaryOperation(
+        Func<double, double> operation,
+        string operationName,
+        Func<double, bool>? validator = null)
+    {
+        if (!TryGetDisplayValue(out var value)) return;
+
+        if (validator is not null && !validator(value))
         {
             ShowError();
             return;
         }
 
-        SetDisplayValue(result);
-        if (Display == ErrorString) return;
+        try
+        {
+            var result = operation(value);
+            if (!IsFinite(result))
+            {
+                ShowError();
+                return;
+            }
 
-        _shouldResetDisplay = true;
-        RecordOperation($"ln({FormatNumber(value)})", result);
+            SetDisplayValue(result);
+            if (Display == ErrorString) return;
+
+            _shouldResetDisplay = true;
+            RecordOperation($"{operationName}({FormatNumber(value)})", result);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Hiba a {OperationName} műveletben", operationName);
+            ShowError();
+        }
+    }
+
+    private void ProcessNaturalLogarithm()
+    {
+        ApplyUnaryOperation(Math.Log, "ln", value => value > 0);
     }
 
     private void ProcessBase10Logarithm()
     {
-        if (!TryGetDisplayValue(out var value)) return;
+        ApplyUnaryOperation(Math.Log10, "log", value => value > 0);
+    }
 
-        if (value <= 0)
-        {
-            ShowError();
-            return;
-        }
+    private void ProcessExponential()
+    {
+        ApplyUnaryOperation(Math.Exp, "exp");
+    }
 
-        var result = Math.Log10(value);
-        if (!IsFinite(result))
-        {
-            ShowError();
-            return;
-        }
-
-        SetDisplayValue(result);
-        if (Display == ErrorString) return;
-
-        _shouldResetDisplay = true;
-        RecordOperation($"log({FormatNumber(value)})", result);
+    private void ProcessPowerOfTen()
+    {
+        ApplyUnaryOperation(value => Math.Pow(10, value), "pow10");
     }
 
     private void ProcessSquare()
     {
-        if (!TryGetDisplayValue(out var value)) return;
+        ApplyUnaryOperation(value => value * value, "sq");
+    }
 
-        var result = value * value;
-        if (!IsFinite(result))
-        {
-            ShowError();
-            return;
-        }
-
-        SetDisplayValue(result);
-        if (Display == ErrorString) return;
-
-        _shouldResetDisplay = true;
-        RecordOperation($"sq({FormatNumber(value)})", result);
+    private void ProcessCube()
+    {
+        ApplyUnaryOperation(value => value * value * value, "cube");
     }
 
     private void ProcessReciprocal()
     {
-        if (!TryGetDisplayValue(out var value)) return;
-
-        if (Math.Abs(value) < double.Epsilon)
-        {
-            ShowError();
-            return;
-        }
-
-        var result = 1.0 / value;
-        if (!IsFinite(result))
-        {
-            ShowError();
-            return;
-        }
-
-        SetDisplayValue(result);
-        if (Display == ErrorString) return;
-
-        _shouldResetDisplay = true;
-        RecordOperation($"1/({FormatNumber(value)})", result);
+        ApplyUnaryOperation(value => 1.0 / value, "1/", value => Math.Abs(value) >= double.Epsilon);
     }
 
     private void ProcessSqrt()
     {
-        if (!TryGetDisplayValue(out var value)) return;
+        ApplyUnaryOperation(Math.Sqrt, "sqrt", value => value >= 0);
+    }
 
-        if (value < 0)
-        {
-            ShowError();
-            return;
-        }
+    private void ProcessCbrt()
+    {
+        ApplyUnaryOperation(Math.Cbrt, "cbrt");
+    }
 
-        var result = Math.Sqrt(value);
-        if (!IsFinite(result))
-        {
-            ShowError();
-            return;
-        }
+    private void ProcessAbsolute()
+    {
+        ApplyUnaryOperation(Math.Abs, "abs");
+    }
 
-        SetDisplayValue(result);
+    private void ProcessConstant(double constantValue, string description)
+    {
+        SetDisplayValue(constantValue);
         if (Display == ErrorString) return;
 
         _shouldResetDisplay = true;
-        RecordOperation($"sqrt({FormatNumber(value)})", result);
+        _lastOperationDescription = description;
     }
 
     private void ProcessFactorial()
@@ -1012,6 +1105,8 @@ public sealed class CalculatorViewModel : BaseViewModel
             "/" when Math.Abs(right) >= double.Epsilon => left / right,
             "/" => throw new DivideByZeroException(),
             "^" => Math.Pow(left, right),
+            "mod" when Math.Abs(right) >= double.Epsilon => left % right,
+            "mod" => throw new DivideByZeroException(),
             _ => throw new InvalidOperationException($"Ismeretlen operátor: {operatorSymbol}"),
         };
 

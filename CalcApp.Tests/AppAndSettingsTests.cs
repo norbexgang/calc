@@ -23,7 +23,7 @@ public class AppAndSettingsTests
             if (Directory.Exists(logsPath)) Directory.Delete(logsPath, true);
 
             app.SetLoggingEnabled(true);
-            Log.Information("Unit test log entry");
+            Log.Warning("Unit test log entry");
             Log.CloseAndFlush();
 
             Assert.True(Directory.Exists(logsPath));
