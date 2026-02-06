@@ -8,7 +8,7 @@ WPF számológép modern gradiens dizájnnal és gyors, pontos számításokkal.
 
 ## Funkciók
 - **Alapműveletek**: összeadás, kivonás, szorzás, osztás, hatványozás.
-- **Tudományos függvények**: sin, cos, tan (fokban értelmezve), négyzetgyök, faktoriális.
+- **Tudományos függvények**: sin, cos, tan (fokban értelmezve), ln, log, négyzetre emelés (x²), reciprok (1/x), négyzetgyök, faktoriális.
 - **Memóriagombok**: M+, M-, MR, MC teljes előzménykezeléssel.
 - **Animációs élmény**: soft fade transzíciók, gombanimációk, hover effektek.
 - **Extra eszközök**: törlés, előjelváltás, százalékszámítás, ismétlődő egyenlőség logika és napló megnyitása.

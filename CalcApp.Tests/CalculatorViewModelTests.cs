@@ -87,6 +87,71 @@ public class CalculatorViewModelTests
     }
 
     [Fact]
+    public void LnCommand_OfEulerNumber_ReturnsOne()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "2.718281828459045"
+        };
+
+        viewModel.LnCommand.Execute(null);
+
+        Assert.Equal("1", viewModel.Display);
+    }
+
+    [Fact]
+    public void LnCommand_OfZero_ShowsError()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "0"
+        };
+
+        viewModel.LnCommand.Execute(null);
+
+        Assert.Equal("Error", viewModel.Display);
+    }
+
+    [Fact]
+    public void LogCommand_OfThousand_ReturnsThree()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "1000"
+        };
+
+        viewModel.LogCommand.Execute(null);
+
+        Assert.Equal("3", viewModel.Display);
+    }
+
+    [Fact]
+    public void SquareCommand_HandlesNegativeInput()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "-12"
+        };
+
+        viewModel.SquareCommand.Execute(null);
+
+        Assert.Equal("144", viewModel.Display);
+    }
+
+    [Fact]
+    public void ReciprocalCommand_OfZero_ShowsError()
+    {
+        var viewModel = new CalculatorViewModel
+        {
+            Display = "0"
+        };
+
+        viewModel.ReciprocalCommand.Execute(null);
+
+        Assert.Equal("Error", viewModel.Display);
+    }
+
+    [Fact]
     public void DivisionByZero_ShowsError()
     {
         var viewModel = new CalculatorViewModel();

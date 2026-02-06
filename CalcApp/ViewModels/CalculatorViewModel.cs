@@ -134,6 +134,18 @@ public sealed class CalculatorViewModel : BaseViewModel
     /// <summary>Parancs a tangens függvény alkalmazásához.</summary>
     public ICommand TanCommand { get; }
 
+    /// <summary>Parancs a természetes logaritmus függvény alkalmazásához.</summary>
+    public ICommand LnCommand { get; }
+
+    /// <summary>Parancs a tízes alapú logaritmus függvény alkalmazásához.</summary>
+    public ICommand LogCommand { get; }
+
+    /// <summary>Parancs a négyzetre emelés alkalmazásához.</summary>
+    public ICommand SquareCommand { get; }
+
+    /// <summary>Parancs a reciprok (1/x) művelet alkalmazásához.</summary>
+    public ICommand ReciprocalCommand { get; }
+
     /// <summary>Parancs a négyzetgyök függvény alkalmazásához.</summary>
     public ICommand SqrtCommand { get; }
 
@@ -188,6 +200,10 @@ public sealed class CalculatorViewModel : BaseViewModel
         SinCommand = new RelayCommand(_ => ApplyTrigonometricFunction(SinFunc, "sin"));
         CosCommand = new RelayCommand(_ => ApplyTrigonometricFunction(CosFunc, "cos"));
         TanCommand = new RelayCommand(_ => ApplyTrigonometricFunction(TanFunc, "tan", validateTan: true));
+        LnCommand = new RelayCommand(_ => ProcessNaturalLogarithm());
+        LogCommand = new RelayCommand(_ => ProcessBase10Logarithm());
+        SquareCommand = new RelayCommand(_ => ProcessSquare());
+        ReciprocalCommand = new RelayCommand(_ => ProcessReciprocal());
         SqrtCommand = new RelayCommand(_ => ProcessSqrt());
         FactorialCommand = new RelayCommand(_ => ProcessFactorial());
         MemoryAddCommand = new RelayCommand(_ => ProcessMemoryAdd());
@@ -511,7 +527,7 @@ public sealed class CalculatorViewModel : BaseViewModel
 
     #endregion
 
-    #region Private Methods - Trigonometric Functions
+    #region Private Methods - Scientific Functions
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ApplyTrigonometricFunction(
@@ -551,6 +567,96 @@ public sealed class CalculatorViewModel : BaseViewModel
             Log.Error(ex, "Hiba a {OperationName} függvényben", operationName);
             ShowError();
         }
+    }
+
+    private void ProcessNaturalLogarithm()
+    {
+        if (!TryGetDisplayValue(out var value)) return;
+
+        if (value <= 0)
+        {
+            ShowError();
+            return;
+        }
+
+        var result = Math.Log(value);
+        if (!IsFinite(result))
+        {
+            ShowError();
+            return;
+        }
+
+        SetDisplayValue(result);
+        if (Display == ErrorString) return;
+
+        _shouldResetDisplay = true;
+        RecordOperation($"ln({FormatNumber(value)})", result);
+    }
+
+    private void ProcessBase10Logarithm()
+    {
+        if (!TryGetDisplayValue(out var value)) return;
+
+        if (value <= 0)
+        {
+            ShowError();
+            return;
+        }
+
+        var result = Math.Log10(value);
+        if (!IsFinite(result))
+        {
+            ShowError();
+            return;
+        }
+
+        SetDisplayValue(result);
+        if (Display == ErrorString) return;
+
+        _shouldResetDisplay = true;
+        RecordOperation($"log({FormatNumber(value)})", result);
+    }
+
+    private void ProcessSquare()
+    {
+        if (!TryGetDisplayValue(out var value)) return;
+
+        var result = value * value;
+        if (!IsFinite(result))
+        {
+            ShowError();
+            return;
+        }
+
+        SetDisplayValue(result);
+        if (Display == ErrorString) return;
+
+        _shouldResetDisplay = true;
+        RecordOperation($"sq({FormatNumber(value)})", result);
+    }
+
+    private void ProcessReciprocal()
+    {
+        if (!TryGetDisplayValue(out var value)) return;
+
+        if (Math.Abs(value) < double.Epsilon)
+        {
+            ShowError();
+            return;
+        }
+
+        var result = 1.0 / value;
+        if (!IsFinite(result))
+        {
+            ShowError();
+            return;
+        }
+
+        SetDisplayValue(result);
+        if (Display == ErrorString) return;
+
+        _shouldResetDisplay = true;
+        RecordOperation($"1/({FormatNumber(value)})", result);
     }
 
     private void ProcessSqrt()
