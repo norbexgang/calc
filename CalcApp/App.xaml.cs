@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -26,8 +28,12 @@ public partial class App : Application
 
     #region Fields
 
+    private static readonly Stopwatch StartupStopwatch;
+
     private readonly string _profileRoot;
     private readonly string _logsPath;
+    private bool _isLoggerConfigured;
+    private string? _startupBenchmarkOutputPath;
 
     #endregion
 
@@ -36,6 +42,21 @@ public partial class App : Application
     public static App? CurrentApp => Current as App;
 
     public bool IsLoggingEnabled { get; private set; } = true;
+
+    internal bool IsStartupBenchmarkMode { get; private set; }
+
+    internal string? StartupBenchmarkOutputPath => _startupBenchmarkOutputPath;
+
+    internal static long StartupElapsedMilliseconds => StartupStopwatch.ElapsedMilliseconds;
+
+    #endregion
+
+    #region Static Constructor
+
+    static App()
+    {
+        StartupStopwatch = Stopwatch.StartNew();
+    }
 
     #endregion
 
@@ -48,7 +69,7 @@ public partial class App : Application
             AppDataFolderName);
         _logsPath = Path.Combine(_profileRoot, LogsFolderName);
 
-        InitializeDirectories();
+        InitializeProfileDirectory();
         InitializeProfileOptimization();
         RegisterExceptionHandlers();
     }
@@ -59,8 +80,14 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        ConfigureLogger(IsLoggingEnabled);
+        ParseStartupArguments(e.Args);
+
+        Log.Logger = CreateEmptyLogger();
         base.OnStartup(e);
+
+        Dispatcher.BeginInvoke(
+            InitializeLoggerAfterStartup,
+            DispatcherPriority.Background);
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -76,7 +103,7 @@ public partial class App : Application
 
     public void SetLoggingEnabled(bool enabled)
     {
-        if (IsLoggingEnabled == enabled) return;
+        if (IsLoggingEnabled == enabled && _isLoggerConfigured) return;
 
         IsLoggingEnabled = enabled;
         ConfigureLogger(enabled);
@@ -86,10 +113,46 @@ public partial class App : Application
 
     #region Private Methods - Initialization
 
-    private void InitializeDirectories()
+    private void ParseStartupArguments(string[] args)
+    {
+        if (args.Length == 0) return;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            var arg = args[i];
+            if (string.Equals(arg, "--startup-benchmark", StringComparison.OrdinalIgnoreCase))
+            {
+                IsStartupBenchmarkMode = true;
+                continue;
+            }
+
+            if (string.Equals(arg, "--startup-benchmark-output", StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Length)
+                {
+                    IsStartupBenchmarkMode = true;
+                    _startupBenchmarkOutputPath = args[++i].Trim('"');
+                }
+                continue;
+            }
+
+            const string outputPrefix = "--startup-benchmark-output=";
+            if (arg.StartsWith(outputPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                IsStartupBenchmarkMode = true;
+                _startupBenchmarkOutputPath = arg[outputPrefix.Length..].Trim('"');
+            }
+        }
+
+        if (IsStartupBenchmarkMode && string.IsNullOrWhiteSpace(_startupBenchmarkOutputPath))
+        {
+            _startupBenchmarkOutputPath = Path.Combine(_profileRoot, "startup-benchmark.csv");
+        }
+    }
+
+    private void InitializeProfileDirectory()
     {
         Directory.CreateDirectory(_profileRoot);
-        Directory.CreateDirectory(_logsPath);
     }
 
     private void InitializeProfileOptimization()
@@ -116,6 +179,11 @@ public partial class App : Application
 
     #region Private Methods - Logging
 
+    private void InitializeLoggerAfterStartup()
+    {
+        ConfigureLogger(IsLoggingEnabled);
+    }
+
     private void ConfigureLogger(bool enabled)
     {
         Log.CloseAndFlush();
@@ -123,6 +191,7 @@ public partial class App : Application
         Log.Logger = enabled
             ? CreateFileLogger()
             : CreateEmptyLogger();
+        _isLoggerConfigured = true;
     }
 
     private static Serilog.Core.Logger CreateEmptyLogger()

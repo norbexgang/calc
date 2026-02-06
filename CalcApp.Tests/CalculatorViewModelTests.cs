@@ -144,4 +144,42 @@ public class CalculatorViewModelTests
             }
         }
     }
+
+    [Fact]
+    public void DisplaySetter_RaisesPropertyChanged_WhenNoApplicationDispatcherIsAvailable()
+    {
+        var viewModel = new CalculatorViewModel();
+        var raisedCount = 0;
+        string? lastProperty = null;
+
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            raisedCount++;
+            lastProperty = args.PropertyName;
+        };
+
+        viewModel.Display = "42";
+
+        Assert.Equal(1, raisedCount);
+        Assert.Equal(nameof(CalculatorViewModel.Display), lastProperty);
+    }
+
+    [Fact]
+    public void OpenLogsCommand_UsesLocalAppDataPathByDefault()
+    {
+        string? openedPath = null;
+        var expectedPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "CalcApp",
+            "logs");
+
+        var viewModel = new CalculatorViewModel(
+            logPathProvider: null,
+            logDirectoryOpener: path => openedPath = path);
+
+        viewModel.OpenLogsCommand.Execute(null);
+
+        Assert.Equal(expectedPath, openedPath);
+        Assert.True(Directory.Exists(expectedPath));
+    }
 }

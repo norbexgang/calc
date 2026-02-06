@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Threading;
 using CalcApp.ViewModels;
 using Serilog;
 
@@ -73,6 +76,7 @@ public partial class MainWindow : Window
         _neonTextEffectDefault = TryFindResource(NeonTextEffectDefaultKey) as DropShadowEffect;
 
         ApplyShadowResources();
+        Loaded += OnMainWindowLoaded;
     }
 
     #endregion
@@ -143,6 +147,7 @@ public partial class MainWindow : Window
     {
         KeyMappings[Key.Decimal] = vm => vm.DecimalCommand.Execute(null);
         KeyMappings[Key.OemPeriod] = vm => vm.DecimalCommand.Execute(null);
+        KeyMappings[Key.OemComma] = vm => vm.DecimalCommand.Execute(null);
         KeyMappings[Key.Return] = vm => vm.EqualsCommand.Execute(null);
         KeyMappings[Key.Enter] = vm => vm.EqualsCommand.Execute(null);
         KeyMappings[Key.Back] = vm => vm.DeleteCommand.Execute(null);
@@ -190,6 +195,45 @@ public partial class MainWindow : Window
     #endregion
 
     #region Event Handlers
+
+    private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnMainWindowLoaded;
+
+        if (App.CurrentApp is not { IsStartupBenchmarkMode: true } app) return;
+
+        WriteStartupBenchmarkResult(app.StartupBenchmarkOutputPath, App.StartupElapsedMilliseconds);
+
+        Dispatcher.BeginInvoke(
+            static () => Application.Current?.Shutdown(),
+            DispatcherPriority.ApplicationIdle);
+    }
+
+    private static void WriteStartupBenchmarkResult(string? outputPath, long elapsedMilliseconds)
+    {
+        if (string.IsNullOrWhiteSpace(outputPath)) return;
+
+        try
+        {
+            var directory = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var line = string.Concat(
+                DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+                ",",
+                elapsedMilliseconds.ToString(CultureInfo.InvariantCulture),
+                Environment.NewLine);
+
+            File.AppendAllText(outputPath, line);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Nem sikerult a startup benchmark eredmenyt kiirni: {OutputPath}", outputPath);
+        }
+    }
 
     private void TurboToggle_Click(object sender, RoutedEventArgs e)
     {
@@ -241,12 +285,19 @@ public partial class MainWindow : Window
         if (e.Key != Key.OemPlus) return false;
 
         if (Keyboard.Modifiers == ModifierKeys.Shift)
+        {
             viewModel.OperatorCommand.Execute("+");
+            e.Handled = true;
+            return true;
+        }
         else if (Keyboard.Modifiers == ModifierKeys.None)
+        {
             viewModel.EqualsCommand.Execute(null);
+            e.Handled = true;
+            return true;
+        }
 
-        e.Handled = true;
-        return true;
+        return false;
     }
 
     private static void HandleMappedKey(CalculatorViewModel viewModel, KeyEventArgs e)

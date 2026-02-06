@@ -24,6 +24,8 @@ public sealed class CalculatorViewModel : BaseViewModel
     private const int MemoryHistoryDisplayCount = 50;
     private const double IntegerTolerance = 1e-7;
     private const double DegreesToRadians = Math.PI / 180.0;
+    private const string AppDataFolderName = "CalcApp";
+    private const string LogsFolderName = "logs";
 
     private const string ErrorString = "Error";
     private const string ZeroString = "0";
@@ -65,7 +67,6 @@ public sealed class CalculatorViewModel : BaseViewModel
     private double _memoryValue;
     private double? _lastRightOperand;
     private string? _lastOperator;
-    private bool _isDisplayUpdatePending;
 
     #endregion
 
@@ -220,16 +221,7 @@ public sealed class CalculatorViewModel : BaseViewModel
 
     private void ScheduleDisplayUpdate()
     {
-        if (_isDisplayUpdatePending) return;
-
-        _isDisplayUpdatePending = true;
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(
-            () =>
-            {
-                _isDisplayUpdatePending = false;
-                OnPropertyChanged(nameof(Display));
-            },
-            System.Windows.Threading.DispatcherPriority.Render);
+        OnPropertyChanged(nameof(Display));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -819,7 +811,10 @@ public sealed class CalculatorViewModel : BaseViewModel
     }
 
     private static string DefaultLogPathProvider()
-        => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+        => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            AppDataFolderName,
+            LogsFolderName);
 
     private static void DefaultLogDirectoryOpener(string logPath)
     {

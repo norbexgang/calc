@@ -8,40 +8,6 @@
                 <ResourceDictionary Source="Themes/Experimental2Theme.xaml"/>
                 <ResourceDictionary Source="Themes/SharedStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            
-            <!-- UI animaciok -->
-            <Storyboard x:Key="FadeOutAnimation">
-                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                               From="1.0" To="0.0" Duration="0:0:0.3">
-                    <DoubleAnimation.EasingFunction>
-                        <CubicEase EasingMode="EaseOut"/>
-                    </DoubleAnimation.EasingFunction>
-                </DoubleAnimation>
-            </Storyboard>
-            
-            <Storyboard x:Key="FadeInAnimation">
-                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                               From="0.0" To="1.0" Duration="0:0:0.3">
-                    <DoubleAnimation.EasingFunction>
-                        <CubicEase EasingMode="EaseIn"/>
-                    </DoubleAnimation.EasingFunction>
-                </DoubleAnimation>
-            </Storyboard>
-            
-            <Storyboard x:Key="ButtonClickAnimation">
-                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                               From="1.0" To="0.90" Duration="0:0:0.15" AutoReverse="True">
-                    <DoubleAnimation.EasingFunction>
-                        <CubicEase EasingMode="EaseInOut"/>
-                    </DoubleAnimation.EasingFunction>
-                </DoubleAnimation>
-                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                               From="1.0" To="0.90" Duration="0:0:0.15" AutoReverse="True">
-                    <DoubleAnimation.EasingFunction>
-                        <CubicEase EasingMode="EaseInOut"/>
-                    </DoubleAnimation.EasingFunction>
-                </DoubleAnimation>
-            </Storyboard>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
