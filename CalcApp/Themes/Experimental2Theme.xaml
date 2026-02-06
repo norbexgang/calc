@@ -1,0 +1,63 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
+
+    <!-- Deep aurora-like base with stronger neon contrast -->
+    <RadialGradientBrush x:Key="WindowBackgroundBrush" Center="0.22,0.08" GradientOrigin="0.22,0.08"
+                         RadiusX="1.15" RadiusY="1.05" po:Freeze="True">
+        <GradientStop Color="#FF102341" Offset="0.0" />
+        <GradientStop Color="#FF131A36" Offset="0.44" />
+        <GradientStop Color="#FF0A0F24" Offset="1.0" />
+    </RadialGradientBrush>
+
+    <!-- Glass card surface -->
+    <LinearGradientBrush x:Key="BorderBackgroundBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
+        <GradientStop Color="#40FFFFFF" Offset="0.0" />
+        <GradientStop Color="#16D6EEFF" Offset="0.6" />
+        <GradientStop Color="#10FFFFFF" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="BorderForegroundBrush" Color="#FFDDFBFF" po:Freeze="True" />
+
+    <!-- Glass neon button surface -->
+    <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
+        <GradientStop Color="#38FFFFFF" Offset="0.0" />
+        <GradientStop Color="#17AEEBFF" Offset="0.55" />
+        <GradientStop Color="#103F7DAA" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FFF9FFFF" po:Freeze="True" />
+    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#7F7EE8FF" po:Freeze="True" />
+    <SolidColorBrush x:Key="ButtonBorderHighlightBrush" Color="#FF00F4FF" po:Freeze="True" />
+
+    <LinearGradientBrush x:Key="ButtonGlassOverlayBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
+        <GradientStop Color="#6AFFFFFF" Offset="0.0" />
+        <GradientStop Color="#22FFFFFF" Offset="0.45" />
+        <GradientStop Color="#00FFFFFF" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AccentButtonBrush" StartPoint="0,0" EndPoint="1,1" po:Freeze="True">
+        <GradientStop Color="#FF00EFFF" Offset="0.0" />
+        <GradientStop Color="#FF00B8FF" Offset="0.4" />
+        <GradientStop Color="#FF7A5CFF" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#52F3FDFF" po:Freeze="True" />
+
+    <Color x:Key="GlowColor" po:Freeze="True">#FF00F0FF</Color>
+    <SolidColorBrush x:Key="GlowBrush" Color="{StaticResource GlowColor}" po:Freeze="True" />
+
+    <DropShadowEffect x:Key="NeonTextEffectDefault" Color="#FF8DF6FF"
+                      BlurRadius="10" ShadowDepth="0" Opacity="0.95"
+                      RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="NeonBorderEffectDefault" Color="#FF00F0FF"
+                      BlurRadius="19" ShadowDepth="0" Opacity="0.78"
+                      RenderingBias="Performance" po:Freeze="True" />
+
+    <DropShadowEffect x:Key="NeonTextEffect" Color="#FF8DF6FF"
+                      BlurRadius="10" ShadowDepth="0" Opacity="0.95"
+                      RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="NeonBorderEffect" Color="#FF00F0FF"
+                      BlurRadius="19" ShadowDepth="0" Opacity="0.78"
+                      RenderingBias="Performance" po:Freeze="True" />
+</ResourceDictionary>

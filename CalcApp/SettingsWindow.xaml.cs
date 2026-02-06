@@ -5,7 +5,7 @@ using System.Windows;
 namespace CalcApp;
 
 /// <summary>
-/// A beállítások ablak interakciós logikája.
+/// Settings window interaction logic.
 /// </summary>
 public partial class SettingsWindow : Window, INotifyPropertyChanged
 {
@@ -29,9 +29,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
     #region Properties
 
-    /// <summary>
-    /// Megadja vagy beállítja, hogy a Serilog naplózás engedélyezve van-e.
-    /// </summary>
     public bool IsSerilogEnabled
     {
         get => _isSerilogEnabled;
@@ -49,7 +46,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
     #region Events
 
-    /// <inheritdoc />
     public event PropertyChangedEventHandler? PropertyChanged;
 
     #endregion
@@ -59,6 +55,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private void LoadSettings()
     {
         _isSerilogEnabled = App.CurrentApp?.IsLoggingEnabled ?? true;
+        OnPropertyChanged(nameof(IsSerilogEnabled));
     }
 
     private static void ApplyLoggingSetting(bool enabled)
@@ -66,10 +63,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         App.CurrentApp?.SetLoggingEnabled(enabled);
     }
 
-    /// <summary>
-    /// Kiváltja a PropertyChanged eseményt.
-    /// </summary>
-    /// <param name="propertyName">A megváltozott tulajdonság neve.</param>
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

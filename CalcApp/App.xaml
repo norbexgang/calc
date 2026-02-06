@@ -5,11 +5,11 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/ExperimentalTheme.xaml"/>
+                <ResourceDictionary Source="Themes/Experimental2Theme.xaml"/>
                 <ResourceDictionary Source="Themes/SharedStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
-            <!-- Témaváltás animációk -->
+            <!-- UI animaciok -->
             <Storyboard x:Key="FadeOutAnimation">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity"
                                From="1.0" To="0.0" Duration="0:0:0.3">

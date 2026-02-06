@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using CalcApp;
 using Serilog;
 using Xunit;
@@ -14,10 +13,13 @@ public class AppAndSettingsTests
     {
         StaTestHelper.RunInSta(() =>
         {
-            // Reuse existing Application in the AppDomain if present
             var app = App.CurrentApp ?? new App();
 
-            var logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CalcApp", "logs");
+            var logsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "CalcApp",
+                "logs");
+
             if (Directory.Exists(logsPath)) Directory.Delete(logsPath, true);
 
             app.SetLoggingEnabled(true);
@@ -28,7 +30,6 @@ public class AppAndSettingsTests
             var files = Directory.GetFiles(logsPath, "log-*.json");
             Assert.NotEmpty(files);
 
-            // Cleanup
             try { Directory.Delete(Path.GetDirectoryName(logsPath)!, true); } catch { }
         });
     }

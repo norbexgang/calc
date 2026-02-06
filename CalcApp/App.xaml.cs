@@ -9,7 +9,7 @@ using Serilog.Formatting.Compact;
 namespace CalcApp;
 
 /// <summary>
-/// Az alkalmazás fő belépési pontja és globális kezelője.
+/// Main application entry point and global services.
 /// </summary>
 public partial class App : Application
 {
@@ -33,14 +33,8 @@ public partial class App : Application
 
     #region Properties
 
-    /// <summary>
-    /// Az aktuális alkalmazáspéldány elérése.
-    /// </summary>
     public static App? CurrentApp => Current as App;
 
-    /// <summary>
-    /// Megadja, hogy a naplózás engedélyezve van-e.
-    /// </summary>
     public bool IsLoggingEnabled { get; private set; } = true;
 
     #endregion
@@ -80,10 +74,6 @@ public partial class App : Application
 
     #region Public Methods
 
-    /// <summary>
-    /// Beállítja a naplózás állapotát.
-    /// </summary>
-    /// <param name="enabled">Engedélyezve legyen-e a naplózás.</param>
     public void SetLoggingEnabled(bool enabled)
     {
         if (IsLoggingEnabled == enabled) return;
@@ -140,7 +130,6 @@ public partial class App : Application
 
     private Serilog.Core.Logger CreateFileLogger()
     {
-        // Ensure the logs directory exists (tests may delete it between runs)
         Directory.CreateDirectory(_logsPath);
         var logFile = Path.Combine(_logsPath, LogFilePattern);
 
@@ -174,10 +163,10 @@ public partial class App : Application
         object sender,
         System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
-        Log.Error(e.Exception, "Váratlan hiba történt a UI szálon");
+        Log.Error(e.Exception, "Varatlan hiba tortent a UI szalon");
 
         MessageBox.Show(
-            "Váratlan hiba történt. A részletek naplózva lettek.",
+            "Varatlan hiba tortent. A reszletek naplozva lettek.",
             "Hiba",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
@@ -189,11 +178,11 @@ public partial class App : Application
     {
         if (e.ExceptionObject is Exception ex)
         {
-            Log.Error(ex, "AppDomain kezeletlen kivétel");
+            Log.Error(ex, "AppDomain kezeletlen kivetel");
         }
         else
         {
-            Log.Error("AppDomain kezeletlen kivétel: {Exception}", e.ExceptionObject);
+            Log.Error("AppDomain kezeletlen kivetel: {Exception}", e.ExceptionObject);
         }
 
         Log.CloseAndFlush();
@@ -203,7 +192,7 @@ public partial class App : Application
     {
         if (e == null) return;
 
-        Log.Error(e.Exception, "Nem figyelt Task kivétel");
+        Log.Error(e.Exception, "Nem figyelt Task kivetel");
         e.SetObserved();
     }
 
